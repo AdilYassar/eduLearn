@@ -1,6 +1,6 @@
 /* eslint-disable react/react-in-jsx-scope */
 import { FC } from 'react';
-import { TouchableOpacity, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, StyleSheet, View, ViewStyle } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import CustomText from './CustomText';
 import { Fonts } from '@utils/Constants';
@@ -9,11 +9,12 @@ import { Colors } from 'react-native/Libraries/NewAppScreen';
 interface CustomButtonProps {
   onPress: () => void;
   title: string;
-  disabled: boolean;
-  loading: boolean;
+  disabled?: boolean;
+  loading?: boolean;
+  styles?: ViewStyle;
 }
 
-const CustomButton: FC<CustomButtonProps> = ({ onPress, title, disabled, loading }) => {
+const CustomButton: FC<CustomButtonProps> = ({ onPress, title, disabled = false, loading = false, styles: customStyles }) => {
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -21,6 +22,7 @@ const CustomButton: FC<CustomButtonProps> = ({ onPress, title, disabled, loading
       activeOpacity={0.8}
       style={[
         styles.button,
+        customStyles,
         { 
           backgroundColor: disabled ? Colors.disabled : Colors.secondary,
           borderColor: disabled ? Colors.disabled : Colors.secondary, // Set border color based on disabled state

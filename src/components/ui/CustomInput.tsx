@@ -1,4 +1,4 @@
- import { Colors, Fonts } from '@utils/Constants';
+ import { Colors, Fonts } from '../../utils/Constants';
 import React, { FC } from 'react';
 import { TextInput, View, StyleSheet, TouchableOpacity } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';

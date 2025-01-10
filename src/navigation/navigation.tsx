@@ -7,19 +7,17 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { navigationRef } from '../utils/Navigation';
 import { FC } from 'react';
 import React from 'react';
+
 import IntroductionScreen from '../features/screens/IntroductionScreen';
-import SplashScreen from '@features/screens/SplashScreen';
-import CategoryScreen from '@features/screens/CategoryScreen';
-import CourseScreen from '@features/screens/CourseScreen';
-import Details from '@features/screens/Details';
-import MarkSummaryScreen from '@features/screens/MarksSummaryScreen';
-import QuizScreen from '@features/screens/QuizScreen';
-import DescriptionScreen from '@features/screens/descriptionScreen';
-import LoginScreen from '@features/screens/LoginScreen';
-import AdminLoginScreen from '@features/screens/AdminLoginScreen';
-
-
-
+import SplashScreen from '../features/screens/SplashScreen';
+import CategoryScreen from '../features/screens/CategoryScreen';
+import CourseScreen from '../features/screens/CourseScreen';
+import Details from '../features/screens/Details';
+import MarkSummaryScreen from '../features/screens/MarksSummaryScreen';
+import QuizScreen from '../features/screens/QuizScreen';
+import DescriptionScreen from '../features/screens/DescriptionScreen';
+import LoginScreen from '../features/screens/LoginScreen';
+import AdminLoginScreen from '../features/screens/AdminLoginScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -29,7 +27,7 @@ const Navigation: FC = () => {
     return (
         <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
-                initialRouteName="IntroductionScreen" // Correct placement
+                initialRouteName="SplashScreen" // Correct placement
                 screenOptions={{
                     headerShown: false, // Correct placement and syntax
                 }}

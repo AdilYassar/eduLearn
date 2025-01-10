@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Text, StyleSheet, TextStyle } from 'react-native';
-import { Fonts } from '@utils/Constants';
+import { Fonts } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 interface Props {
