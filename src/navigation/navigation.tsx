@@ -18,6 +18,9 @@ import QuizScreen from '../features/screens/QuizScreen';
 import DescriptionScreen from '../features/screens/DescriptionScreen';
 import LoginScreen from '../features/screens/LoginScreen';
 import AdminLoginScreen from '../features/screens/AdminLoginScreen';
+import DashboardScreen from '../features/screens/DashboardScreen';
+import Profile from '../features/screens/Profile';
+import TheoryScreen from '../features/screens/TheoryScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -36,10 +39,13 @@ const Navigation: FC = () => {
                 <Stack.Screen name="SplashScreen" component={SplashScreen} />
                 <Stack.Screen name="CategoryScreen" component={CategoryScreen} />
                 <Stack.Screen name="CourseScreen" component={CourseScreen} />
+                <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
                 <Stack.Screen name="Details" component={Details} />
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                 <Stack.Screen name="QuizScreen" component={QuizScreen} />
+                <Stack.Screen name="TheoryScreen" component={TheoryScreen} />
                 <Stack.Screen name="DescriptionScreen" component={DescriptionScreen} />
+                <Stack.Screen name="Profile" component={Profile} />
                 <Stack.Screen
                 options={{
                     animation:'fade',

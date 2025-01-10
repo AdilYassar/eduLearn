@@ -1,8 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Animated,
+  Alert,
+} from 'react-native';
 import Lottie from 'lottie-react-native';
 import { navigate } from '../../utils/Navigation';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '../../service/config';
 const LoginScreen = () => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -11,11 +20,22 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
 
+  // Function to store user data in AsyncStorage
+  const storeUserData = async (userData: { phone: string; email: string; name: string; age: string; accessToken: string }) => {
+    try {
+      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+      console.log('User data stored successfully');
+    } catch (error) {
+      console.error('Failed to store user data:', error);
+    }
+  };
+
+  // Function to handle login
   const handleLogin = () => {
-    const endpoint = '/api/student/login';
+    const endpoint = '/student/login';
     const payload = { phone, email, name, age, password };
 
-    fetch(`https://0243-101-53-234-27.ngrok-free.app${endpoint}`, {
+    fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -26,7 +46,8 @@ const LoginScreen = () => {
       .then((data) => {
         if (data.accessToken) {
           console.log('Student logged in successfully!', data);
-          navigate('CourseScreen');
+          storeUserData({ phone, email, name, age, accessToken: data.accessToken });
+          navigate('DashboardScreen'); // Navigate to next screen (e.g., Dashboard)
         } else {
           console.error('Login failed:', data);
           Alert.alert(data.error?.message || 'Login failed. Please check your inputs.');

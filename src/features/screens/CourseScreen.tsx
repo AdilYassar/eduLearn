@@ -1,13 +1,18 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
+import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
+import { useNavigation } from '@react-navigation/native'; // Import navigation
+import { navigate } from '../../utils/Navigation';
+import { BASE_URL } from '../../service/config';
 
-const BASE_URL = 'https://0243-101-53-234-27.ngrok-free.app';  // Use your base URL here
-const COURSES_API = '/api/courses';
+const COURSES_API = '/courses';
 
 const CourseScreen = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigation = useNavigation(); // Access navigation
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -17,8 +22,14 @@ const CourseScreen = () => {
   const fetchCourses = async () => {
     try {
       const response = await fetch(`${BASE_URL}${COURSES_API}`);
+      if (!response.ok) {
+        console.error('Failed to fetch courses. Status code:', response.status);
+        setLoading(false);
+        return;
+      }
+
       const data = await response.json();
-      setCourses(data);  // Assuming the response is an array of courses
+      setCourses(data.courses);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -27,35 +38,44 @@ const CourseScreen = () => {
   };
 
   interface Course {
-    id: number;
-    name: string;
+    _id: string;
+    title: string;
     description: string;
+    lessons: number;
   }
+
+  const handleCourseSelect = (courseId: string) => {
+   navigate('TheoryScreen', { courseId }); // Navigate to TheoryScreen with courseId
+  };
 
   const renderCourseItem = ({ item }: { item: Course }) => {
     return (
-      <View style={styles.courseCard}>
-        <Text style={styles.courseTitle}>{item.name}</Text>
-        <Text style={styles.courseDescription}>{item.description}</Text>
-        <TouchableOpacity style={styles.detailsButton}>
-          <Text style={styles.buttonText}>View Details</Text>
+      <Animated.View
+        style={styles.courseCard}
+        entering={FadeIn}
+        exiting={FadeOut}
+        layout={Layout}>
+        <TouchableOpacity onPress={() => handleCourseSelect(item._id)}>
+          <Text style={styles.courseTitle}>{item.title}</Text>
+          <Text style={styles.courseLessons}>{item.lessons} Lessons</Text>
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     );
   };
 
   return (
     <View style={styles.container}>
       <CustomHeader title="Courses" />
-      
       {loading ? (
-        <ActivityIndicator size="large" color="#007BFF" style={styles.loader} />
+        <ActivityIndicator size="large" color="#008080" style={styles.loader} />
       ) : (
         <FlatList
           data={courses}
           renderItem={renderCourseItem}
-          keyExtractor={(item) => item.id.toString()}  // Assuming each course has a unique 'id'
+          keyExtractor={(item) => item._id}
           contentContainerStyle={styles.courseList}
+          numColumns={2}
+          columnWrapperStyle={styles.columnWrapper}
         />
       )}
     </View>
@@ -65,11 +85,11 @@ const CourseScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f0fafa',
     paddingTop: 20,
   },
   courseList: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 8,
     paddingBottom: 20,
   },
   loader: {
@@ -77,37 +97,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  columnWrapper: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   courseCard: {
-    backgroundColor: '#fff',
+    flex: 1,
+    backgroundColor: '#008080',
     borderRadius: 8,
     padding: 16,
-    marginBottom: 16,
-    elevation: 4,  // Shadow for Android
-    shadowColor: '#000',  // iOS shadow color
-    shadowOpacity: 0.1,  // iOS shadow opacity
-    shadowRadius: 4,  // iOS shadow radius
-    shadowOffset: { width: 0, height: 4 },  // iOS shadow offset
+    marginHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    height: 100,
+    width: 150,
   },
   courseTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: '#ffffff',
+    textAlign: 'center',
   },
-  courseDescription: {
+  courseLessons: {
     fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-  },
-  detailsButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 10,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: '#e0f7f7',
+    marginTop: 8,
   },
 });
 

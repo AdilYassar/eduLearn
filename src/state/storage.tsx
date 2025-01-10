@@ -1,19 +1,32 @@
-import { MMKV } from 'react-native-mmkv';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
-export const tokenStorage = new MMKV({
-    id: 'token-storage',  // Ensure this ID is unique to avoid conflicts
-    encryptionKey: 'some_secret_key', // Optional: for added security
-});
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const mmkvStorage = {
-    setItem: (key: string, value: string) => {
-        tokenStorage.set(key, value);
-    },
-    getItem: (key: string): string | null => {
-        const value = tokenStorage.getString(key);
-        return value ?? null;
-    },
-    removeItem: (key: string) => {
-        tokenStorage.delete(key);
-    },
+// Store the access token in AsyncStorage
+export const storeAccessToken = async (token: string) => {
+  try {
+    await AsyncStorage.setItem('accessToken', token);
+  } catch (error) {
+    console.error('Error storing the access token:', error);
+  }
+};
+
+// Retrieve the access token from AsyncStorage
+export const getAccessToken = async (): Promise<string | null> => {
+  try {
+    const token = await AsyncStorage.getItem('accessToken');
+    return token;
+  } catch (error) {
+    console.error('Error retrieving the access token:', error);
+    return null;
+  }
+};
+
+// Remove the access token from AsyncStorage
+export const removeAccessToken = async () => {
+  try {
+    await AsyncStorage.removeItem('accessToken');
+  } catch (error) {
+    console.error('Error removing the access token:', error);
+  }
 };
