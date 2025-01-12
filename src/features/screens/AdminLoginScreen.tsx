@@ -1,21 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
 import Lottie from 'lottie-react-native';
 import { navigate } from '../../utils/Navigation';
 
 const AdminLoginScreen = () => {
-  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [age, setAge] = useState('');
   const [password, setPassword] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
 
   const handleLogin = () => {
     const endpoint = '/api/admin/login';
-    const payload = { phone, email, name, age, password };
+    const payload = { email, password }; // Only required fields for login
 
-    fetch(`https://0243-101-53-234-27.ngrok-free.app${endpoint}`, {
+    fetch(`https://1479-101-53-234-27.ngrok-free.app${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -28,14 +25,18 @@ const AdminLoginScreen = () => {
           console.log('Admin logged in successfully!', data);
           navigate('MarkSummaryScreen');
         } else {
-          console.error('Login failed:', data);
-          Alert.alert(data.error?.message || 'Login failed. Please check your inputs.');
+          const errorMessage = data.error?.message || 'Login failed. Please check your credentials.';
+          console.error('Login failed:', errorMessage);
+          Alert.alert(errorMessage);
         }
       })
-      .catch((error) => console.error('Error logging in:', error));
+      .catch((error) => {
+        console.error('Error logging in:', error);
+        Alert.alert('An error occurred during login. Please try again.');
+      });
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 2000,
@@ -46,7 +47,7 @@ const AdminLoginScreen = () => {
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       <Lottie
-        source={require('../../assets/animations/signup.json')} // Replace with actual Lottie animation file
+        source={require('../../assets/animations/signup.json')} // Ensure the correct file path
         autoPlay
         loop
         style={styles.animation}
@@ -56,34 +57,11 @@ const AdminLoginScreen = () => {
 
       <TextInput
         style={styles.input}
-        placeholder="Enter your phone number"
-        placeholderTextColor="#000"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
-      />
-      <TextInput
-        style={styles.input}
         placeholder="Enter your email"
         placeholderTextColor="#000"
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        placeholderTextColor="#000"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your age"
-        placeholderTextColor="#000"
-        keyboardType="numeric"
-        value={age}
-        onChangeText={setAge}
       />
       <TextInput
         style={styles.input}
@@ -152,7 +130,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   adminButton: {
-    backgroundColor: '#28A745', // Different color for Admin
+    backgroundColor: '#28A745', // Green color for Admin button
   },
   buttonText: {
     fontSize: 16,

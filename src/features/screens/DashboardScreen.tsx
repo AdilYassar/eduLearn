@@ -4,6 +4,8 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons'; // Use MaterialIcons for vector icons
 import { navigate } from '@utils/Navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage'; // AsyncStorage import
+import { Colors } from '@utils/Constants';
+import Svg, { Path, Text as SvgText } from 'react-native-svg'; // Importing Svg component and Text from SVG
 
 const DashboardScreen = () => {
   const [userName, setUserName] = useState<string>(''); // Local state to hold user name
@@ -41,6 +43,25 @@ const DashboardScreen = () => {
         </TouchableOpacity>
       </View>
 
+     
+
+      {/* Wave SVG under the header */}
+      <View style={styles.svgContainer}>
+      <View style={{alignItems:'center'}}>
+        <Text style={{color:Colors.teal_3400,fontWeight:'bold'}}>
+          Welcome to the Dashboard
+        </Text>
+      </View>
+        
+        <Svg width="100%" height="100" viewBox="0 0 1440 100" fill="none">
+          <Path
+            d="M0,64L48,85.3C96,107,192,149,288,160C384,171,480,149,576,138.7C672,128,768,128,864,138.7C960,149,1056,171,1152,186.7C1248,203,1344,213,1392,213.3L1440,213V320H1392C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320H0V64Z"
+            fill={Colors.teal_200}
+          />
+         
+        </Svg>
+      </View>
+
       {/* Main Content */}
       <View style={styles.content}>
         <Text style={styles.title}>Dashboard</Text>
@@ -59,7 +80,7 @@ const DashboardScreen = () => {
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigate('QuizScreen')}
+          onPress={() => navigate('BookScreen')}
         >
           <Icon name="menu-book" size={25} color="#004d40" />
           <Text style={styles.navText}>Books</Text>
@@ -80,21 +101,26 @@ const DashboardScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f6fb',
+    backgroundColor: Colors.teal_200,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
+    // backgroundColor: '#fff',
+    // borderBottomWidth: 1,
     borderBottomColor: '#d0d4dc',
   },
   headerText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: '#004d40',
+  },
+  svgContainer: {
+    height: 100, // Adjust height as needed
+    width: '100%',
+    backgroundColor: '#fff',
   },
   content: {
     flex: 1,

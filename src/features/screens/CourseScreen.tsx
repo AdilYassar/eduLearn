@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native'; // Import navigation
 import { navigate } from '../../utils/Navigation';
 import { BASE_URL } from '../../service/config';
 
-const COURSES_API = '/courses';
+const COURSES_API = '/api/courses';
 
 const CourseScreen = () => {
   const [courses, setCourses] = useState([]);
@@ -21,7 +21,7 @@ const CourseScreen = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`${BASE_URL}${COURSES_API}`);
+      const response = await fetch(`https://adef-101-53-234-27.ngrok-free.app${COURSES_API}`);
       if (!response.ok) {
         console.error('Failed to fetch courses. Status code:', response.status);
         setLoading(false);

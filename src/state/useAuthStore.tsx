@@ -1,6 +1,6 @@
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { create } from 'zustand';
-import { mmkvStorage, tokenStorage } from './storage';
+import { mmkvStorage } from './storage';
 import { resetAndNavigate } from '../utils/Navigation';
 
 interface AuthStore {

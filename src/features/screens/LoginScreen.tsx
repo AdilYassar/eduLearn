@@ -2,40 +2,48 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   StyleSheet,
-  Animated,
   Alert,
+  KeyboardTypeOptions,
 } from 'react-native';
 import Lottie from 'lottie-react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { navigate } from '../../utils/Navigation';
+import { runOnJS } from 'react-native-reanimated';
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { BASE_URL } from '../../service/config';
+import { Colors } from '@utils/Constants';
+import CustomInput from '@components/ui/CustomInput';
+
 const LoginScreen = () => {
+  const [step, setStep] = useState(0); // Track the current input field
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [password, setPassword] = useState('');
-  const [fadeAnim] = useState(new Animated.Value(0));
 
-  // Function to store user data in AsyncStorage
-  const storeUserData = async (userData: { phone: string; email: string; name: string; age: string; accessToken: string }) => {
+  const translation = useSharedValue(0); // Shared value for animation
+
+  const storeUserData = async (userData: { phone: string; email: string; name: string; age: string; accessToken: any; }) => {
     try {
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
       console.log('User data stored successfully');
     } catch (error) {
-      console.error('Failed to store user data:', error);
+      console.error('Failed to store user data: ', error);
     }
   };
 
-  // Function to handle login
   const handleLogin = () => {
-    const endpoint = '/student/login';
+    const endpoint = '/api/student/login';
     const payload = { phone, email, name, age, password };
 
-    fetch(`${BASE_URL}${endpoint}`, {
+    fetch(`https://adef-101-53-234-27.ngrok-free.app/api/student/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -47,7 +55,7 @@ const LoginScreen = () => {
         if (data.accessToken) {
           console.log('Student logged in successfully!', data);
           storeUserData({ phone, email, name, age, accessToken: data.accessToken });
-          navigate('DashboardScreen'); // Navigate to next screen (e.g., Dashboard)
+          navigate('DashboardScreen');
         } else {
           console.error('Login failed:', data);
           Alert.alert(data.error?.message || 'Login failed. Please check your inputs.');
@@ -56,18 +64,59 @@ const LoginScreen = () => {
       .catch((error) => console.error('Error logging in:', error));
   };
 
-  React.useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 2000,
-      useNativeDriver: true,
-    }).start();
-  }, [fadeAnim]);
+  const handleNext = () => {
+    if (step < inputFields.length - 1) {
+      translation.value = withTiming(-100, { duration: 500 }, () => {
+        runOnJS(setStep)(step + 1); // Use `runOnJS` to update the state after animation
+        translation.value = 0; // Reset translation
+      });
+    } else if (step === inputFields.length - 1) {
+      // Explicitly set step to inputFields.length to show the login button
+      runOnJS(setStep)(inputFields.length);
+    }
+  };
+  
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translation.value }],
+  }));
+
+  const inputFields = [
+    {
+      placeholder: 'Enter your phone number',
+      value: phone,
+      onChangeText: setPhone,
+      keyboardType: 'phone-pad',
+    },
+    {
+      placeholder: 'Enter your email',
+      value: email,
+      onChangeText: setEmail,
+      keyboardType: 'email-address',
+    },
+    {
+      placeholder: 'Enter your name',
+      value: name,
+      onChangeText: setName,
+    },
+    {
+      placeholder: 'Enter your age',
+      value: age,
+      onChangeText: setAge,
+      keyboardType: 'numeric',
+    },
+    {
+      placeholder: 'Enter your password',
+      value: password,
+      onChangeText: setPassword,
+      secureTextEntry: true,
+    },
+  ];
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <View style={styles.container}>
       <Lottie
-        source={require('../../assets/animations/signup.json')} // Replace with actual Lottie animation file
+        source={require('../../assets/animations/signup.json')}
         autoPlay
         loop
         style={styles.animation}
@@ -75,55 +124,35 @@ const LoginScreen = () => {
 
       <Text style={styles.title}>Login to Your Account</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your phone number"
-        placeholderTextColor="#000"
-        keyboardType="phone-pad"
-        value={phone}
-        onChangeText={setPhone}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        placeholderTextColor="#000"
-        keyboardType="email-address"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your name"
-        placeholderTextColor="#000"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your age"
-        placeholderTextColor="#000"
-        keyboardType="numeric"
-        value={age}
-        onChangeText={setAge}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your password"
-        placeholderTextColor="#000"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
+      {step < inputFields.length && (
+        <Animated.View style={[styles.animatedContainer, animatedStyle]}>
+          <CustomInput
+            style={styles.input}
+            placeholder={inputFields[step].placeholder}
+            placeholderTextColor="#000"
+            keyboardType={inputFields[step].keyboardType as KeyboardTypeOptions || 'default'}
+            secureTextEntry={inputFields[step].secureTextEntry || false}
+            value={inputFields[step].value}
+            onChangeText={inputFields[step].onChangeText}
+          />
+          <TouchableOpacity
+            style={[styles.button, styles.nextButton]}
+            onPress={handleNext}
+          >
+            <Text style={styles.buttonText}>Next</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
-      <View style={styles.buttonContainer}>
+      {step === inputFields.length && (
         <TouchableOpacity
           style={[styles.button, styles.studentButton]}
           onPress={handleLogin}
         >
           <Text style={styles.buttonText}>Login as Student</Text>
         </TouchableOpacity>
-      </View>
-    </Animated.View>
+      )}
+    </View>
   );
 };
 
@@ -134,7 +163,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.teal_200,
     paddingHorizontal: 20,
   },
   animation: {
@@ -161,16 +190,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
   },
-  buttonContainer: {
-    width: '100%',
-    marginTop: 20,
-  },
   button: {
     width: '100%',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 15,
+  },
+  nextButton: {
+    backgroundColor: '#6c757d',
   },
   studentButton: {
     backgroundColor: '#007BFF',
@@ -179,5 +207,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  animatedContainer: {
+    width: '100%',
+    marginBottom: 15,
   },
 });
