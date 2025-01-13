@@ -31,10 +31,10 @@ const BookScreen = () => {
   const fetchBooks = async () => {
     try {
       const response = await axios.get(
-        'https://adef-101-53-234-27.ngrok-free.app/api/books'
-      ); // Replace with your baseURL setup
+        'https://3506-101-53-234-27.ngrok-free.app/api/books'
+      );
       if (response.status === 200) {
-        setBooks(response.data.data); // Assuming the API response format
+        setBooks(response.data.data);
       } else {
         Alert.alert('Error', response.data.message || 'Failed to fetch books');
       }
@@ -71,8 +71,8 @@ const BookScreen = () => {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
-        <Text>Loading Books...</Text>
+        <ActivityIndicator size="large" color="#3498db" />
+        <Text style={styles.loadingText}>Loading Books...</Text>
       </View>
     );
   }
@@ -103,44 +103,60 @@ const BookScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 16,
+    backgroundColor: '#f9f9f9',
   },
   bookCard: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 16,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 20,
+    marginBottom: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
   },
   title: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C3E50',
     marginBottom: 8,
   },
   detail: {
     fontSize: 14,
-    marginBottom: 4,
+    color: '#7F8C8D',
+    marginBottom: 6,
   },
   button: {
-    marginTop: 10,
-    backgroundColor: '#007AFF',
-    paddingVertical: 10,
-    borderRadius: 5,
+    marginTop: 12,
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  loadingText: {
+    fontSize: 18,
+    color: '#3498db',
+    marginTop: 12,
+    fontWeight: '500',
   },
 });
 

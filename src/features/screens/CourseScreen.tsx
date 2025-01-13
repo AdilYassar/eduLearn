@@ -1,18 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
 import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
-import { useNavigation } from '@react-navigation/native'; // Import navigation
 import { navigate } from '../../utils/Navigation';
-import { BASE_URL } from '../../service/config';
 
 const COURSES_API = '/api/courses';
 
 const CourseScreen = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigation = useNavigation(); // Access navigation
 
   // Fetch courses on component mount
   useEffect(() => {
@@ -21,7 +17,7 @@ const CourseScreen = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`https://adef-101-53-234-27.ngrok-free.app${COURSES_API}`);
+      const response = await fetch(`https://3506-101-53-234-27.ngrok-free.app${COURSES_API}`);
       if (!response.ok) {
         console.error('Failed to fetch courses. Status code:', response.status);
         setLoading(false);
@@ -52,10 +48,10 @@ const CourseScreen = () => {
     return (
       <Animated.View
         style={styles.courseCard}
-        entering={FadeIn}
-        exiting={FadeOut}
-        layout={Layout}>
-        <TouchableOpacity onPress={() => handleCourseSelect(item._id)}>
+        entering={FadeIn.duration(500)}
+        exiting={FadeOut.duration(300)}
+        layout={Layout.springify()}>
+        <TouchableOpacity onPress={() => handleCourseSelect(item._id)} style={styles.cardContent}>
           <Text style={styles.courseTitle}>{item.title}</Text>
           <Text style={styles.courseLessons}>{item.lessons} Lessons</Text>
         </TouchableOpacity>
@@ -87,9 +83,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0fafa',
     paddingTop: 20,
+    paddingHorizontal: 16,
   },
   courseList: {
-    paddingHorizontal: 8,
     paddingBottom: 20,
   },
   loader: {
@@ -104,29 +100,37 @@ const styles = StyleSheet.create({
   courseCard: {
     flex: 1,
     backgroundColor: '#008080',
-    borderRadius: 8,
+    borderRadius: 16,
     padding: 16,
-    marginHorizontal: 8,
+    margin: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
+    elevation: 5,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    height: 100,
-    width: 150,
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 4 },
+    height: 160,
+    width: 160,
+    transform: [{ scale: 1 }],
+  },
+  cardContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   courseTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#ffffff',
     textAlign: 'center',
+    marginBottom: 8,
+    fontFamily: 'Roboto',
   },
   courseLessons: {
     fontSize: 14,
     color: '#e0f7f7',
     marginTop: 8,
+    fontFamily: 'Roboto',
   },
 });
 

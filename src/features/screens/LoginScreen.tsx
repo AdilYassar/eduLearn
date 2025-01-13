@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useState } from 'react';
 import {
   View,
@@ -43,7 +44,7 @@ const LoginScreen = () => {
     const endpoint = '/api/student/login';
     const payload = { phone, email, name, age, password };
 
-    fetch(`https://adef-101-53-234-27.ngrok-free.app/api/student/login`, {
+    fetch(`https://3506-101-53-234-27.ngrok-free.app/api/student/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -134,6 +135,7 @@ const LoginScreen = () => {
             secureTextEntry={inputFields[step].secureTextEntry || false}
             value={inputFields[step].value}
             onChangeText={inputFields[step].onChangeText}
+            left={<View />} // Provide an empty View as the left component
           />
           <TouchableOpacity
             style={[styles.button, styles.nextButton]}

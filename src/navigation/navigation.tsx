@@ -22,6 +22,8 @@ import DashboardScreen from '../features/screens/DashboardScreen';
 import Profile from '../features/screens/Profile';
 import TheoryScreen from '../features/screens/TheoryScreen';
 import BookScreen from '../features/screens/BookScreen';
+import QuizStart from '../features/screens/QuizStart';
+import QuizQuestions from '../features/screens/QuizQuestions';
 
 
 const Stack = createNativeStackNavigator();
@@ -42,9 +44,13 @@ const Navigation: FC = () => {
                 <Stack.Screen name="CourseScreen" component={CourseScreen} />
                 <Stack.Screen name="DashboardScreen" component={DashboardScreen} />
                 <Stack.Screen name="Details" component={Details} />
+                <Stack.Screen name="QuizQuestions" component={QuizQuestions} />
+
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                 <Stack.Screen name="BookScreen" component={BookScreen} />
                 <Stack.Screen name="QuizScreen" component={QuizScreen} />
+                <Stack.Screen name="QuizStart" component={QuizStart} />
+
                 <Stack.Screen name="TheoryScreen" component={TheoryScreen} />
                 <Stack.Screen name="DescriptionScreen" component={DescriptionScreen} />
                 <Stack.Screen name="Profile" component={Profile} />

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, Animated } from 'react-native';
 import Lottie from 'lottie-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigate } from '../../utils/Navigation';
 import { Colors } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -14,6 +15,20 @@ const Details = () => {
   const buttonFadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const checkAccessToken = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem('accessToken'); // Retrieve access token
+        if (accessToken) {
+          // If token exists, navigate to Dashboard
+          navigate('DashboardScreen');
+        }
+      } catch (error) {
+        console.error('Error checking access token:', error);
+      }
+    };
+
+    checkAccessToken();
+
     // Animate the container sliding up and fading in
     Animated.timing(containerFadeAnim, {
       toValue: 1,
@@ -50,15 +65,15 @@ const Details = () => {
       <Text style={styles.title}>Welcome! Who are you?</Text>
 
       <Animated.View style={[styles.buttonContainer, { opacity: buttonFadeAnim }]}>
-      <CustomButton
-      title='Student'
-      onPress={() => navigate('LoginScreen')}
-      styles={styles.studentButton}
-      />
         <CustomButton
-        title='Admin'
-        onPress={() => navigate('AdminLoginScreen')}
-        styles={styles.adminButton}
+          title="Student"
+          onPress={() => navigate('LoginScreen')}
+          styles={styles.studentButton}
+        />
+        <CustomButton
+          title="Admin"
+          onPress={() => navigate('AdminLoginScreen')}
+          styles={styles.adminButton}
         />
       </Animated.View>
     </Animated.View>
@@ -91,22 +106,10 @@ const styles = StyleSheet.create({
     width: '80%',
     alignItems: 'center',
   },
-  button: {
-    width: '100%',
-    paddingVertical: RFValue(12),
-    borderRadius: RFValue(8),
-    marginBottom: RFValue(15),
-    alignItems: 'center',
-  },
   studentButton: {
     backgroundColor: Colors.teal_300,
   },
   adminButton: {
     backgroundColor: Colors.secondary_dark,
-  },
-  buttonText: {
-    fontSize: RFValue(16),
-    color: 'black',
-    fontWeight: 'bold',
   },
 });

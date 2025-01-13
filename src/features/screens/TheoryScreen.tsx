@@ -1,3 +1,4 @@
+/* eslint-disable no-dupe-keys */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import {
@@ -11,7 +12,6 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LottieView from 'lottie-react-native';
-
 
 const THEORY_API = '/api/theory';
 
@@ -40,7 +40,7 @@ const TheoryScreen = () => {
 
   const fetchTheory = async () => {
     try {
-      const response = await fetch(`https://adef-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
+      const response = await fetch(`https://3506-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
       if (!response.ok) {
         console.error('Failed to fetch theory. Status code:', response.status);
         setLoading(false);
@@ -84,12 +84,12 @@ const TheoryScreen = () => {
               {theory.chapters.map((chapter, index) => (
                 <TouchableOpacity key={index} style={styles.chapterCard}>
                   <View style={styles.chapterContent}>
-                    <Icon name="book" size={20} color="#00695c" style={styles.chapterIcon} />
+                    <Icon name="book" size={24} color="#FF6347" style={styles.chapterIcon} />
                     <Text style={styles.chapterText}>
                       Chapter {index + 1}: {chapter.title}
                     </Text>
                   </View>
-                  <Icon name="chevron-right" size={24} color="#00695c" />
+                  <Icon name="chevron-right" size={28} color="#FF6347" />
                 </TouchableOpacity>
               ))}
             </>
@@ -107,77 +107,85 @@ const TheoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#F4F7FB', // Soft light blue background
+    paddingTop: 20,
+    paddingHorizontal: 16,
   },
   loaderContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#e8f5e9',
+    backgroundColor: '#F4F7FB',
   },
   loadingAnimation: {
-    width: 200,
-    height: 200,
+    width: 250,
+    height: 250,
   },
   loadingText: {
-    fontSize: 16,
-    color: '#4caf50',
-    marginTop: 10,
-    fontWeight: '500',
+    fontSize: 18,
+    color: '#FF6347',
+    marginTop: 12,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   theoryContainer: {
-    padding: 16,
+    paddingBottom: 30,
   },
   courseHeader: {
     alignItems: 'center',
-    marginBottom: 20,
-    backgroundColor: '#ffffff',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 15,
+    elevation: 6,
+    marginBottom: 30,
   },
   courseImage: {
     width: '100%',
-    height: 200,
-    borderRadius: 12,
+    height: 220,
+    borderRadius: 16,
     marginBottom: 16,
+    resizeMode: 'cover',
   },
   courseTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#00695c',
-    marginBottom: 8,
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 12,
     textAlign: 'center',
+    fontFamily: 'HelveticaNeue-Bold',
   },
   description: {
-    fontSize: 16,
-    color: '#4f4f4f',
+    fontSize: 18,
+    color: '#7F8C8D',
     textAlign: 'center',
-    lineHeight: 22,
+    lineHeight: 24,
+    fontFamily: 'HelveticaNeue',
   },
   chapterTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#004d40',
-    marginBottom: 16,
-    paddingHorizontal: 8,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#2C3E50',
+    marginBottom: 20,
+    paddingLeft: 10,
   },
   chapterCard: {
-    backgroundColor: '#ffffff',
-    padding: 16,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
     borderRadius: 12,
-    marginBottom: 12,
+    marginBottom: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 12,
     elevation: 4,
   },
   chapterContent: {
@@ -185,17 +193,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   chapterIcon: {
-    marginRight: 8,
+    marginRight: 16,
   },
   chapterText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 18,
+    color: '#34495E',
     fontWeight: '500',
+    fontFamily: 'HelveticaNeue',
   },
   noTheoryText: {
     textAlign: 'center',
-    fontSize: 16,
-    color: '#757575',
+    fontSize: 18,
+    color: '#BDC3C7',
     marginTop: 20,
   },
 });
