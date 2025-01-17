@@ -74,7 +74,7 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
       style={[
         styles.chatButton,
         {
-          backgroundColor: currentChatId === item.id ? '#041e49' : '#131314',
+          backgroundColor: currentChatId === item.id ? '#fff' : '#43F7B2FF',
         },
       ]}
     >
@@ -129,6 +129,8 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
                 contentContainerStyle={{
                   paddingHorizontal: 5,
                   paddingVertical: 5,
+                 paddingBottom: 20,
+                 paddingTop: 10,
                 }}
               />
             </View>

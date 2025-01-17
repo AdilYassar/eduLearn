@@ -20,7 +20,8 @@
     "jsx": "react-jsx",            // Enables JSX transformation in both JS and TSX files
     "target": "esnext",             // Use modern JavaScript syntax
     "module": "commonjs",           // Specifies module code generation
-    "moduleResolution": "node",     // Ensures proper module resolution for JS and TS files
+    "moduleResolution": "nodenext",   // Ensures proper module resolution for JS and TS files
+    "customConditions": [],         // Add custom conditions if needed
     "esModuleInterop": true,        // Allows default import syntax for non-ESM modules
     "resolveJsonModule": true       // Allows importing JSON files
   },

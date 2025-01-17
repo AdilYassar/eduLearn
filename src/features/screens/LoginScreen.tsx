@@ -7,7 +7,9 @@ import {
   StyleSheet,
   Alert,
   KeyboardTypeOptions,
+  Image,
 } from 'react-native';
+import * as ImagePicker from 'react-native-image-picker';
 import Lottie from 'lottie-react-native';
 import Animated, {
   useSharedValue,
@@ -29,10 +31,18 @@ const LoginScreen = () => {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [password, setPassword] = useState('');
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   const translation = useSharedValue(0); // Shared value for animation
 
-  const storeUserData = async (userData: { phone: string; email: string; name: string; age: string; accessToken: any; }) => {
+  const storeUserData = async (userData: {
+    phone: string;
+    email: string;
+    name: string;
+    age: string;
+    accessToken: any;
+    profilePhoto?: string | null;
+  }) => {
     try {
       await AsyncStorage.setItem('userData', JSON.stringify(userData));
       console.log('User data stored successfully');
@@ -56,7 +66,14 @@ const LoginScreen = () => {
       .then((data) => {
         if (data.accessToken) {
           console.log('Student logged in successfully!', data);
-          storeUserData({ phone, email, name, age, accessToken: data.accessToken });
+          storeUserData({
+            phone,
+            email,
+            name,
+            age,
+            accessToken: data.accessToken,
+            profilePhoto,
+          });
           navigate('DashboardScreen');
         } else {
           console.error('Login failed:', data);
@@ -77,7 +94,18 @@ const LoginScreen = () => {
       runOnJS(setStep)(inputFields.length);
     }
   };
-  
+
+  const handlePhotoUpload = async () => {
+    const result = await ImagePicker.launchImageLibrary({ mediaType: 'photo' });
+    if (result.assets && result.assets.length > 0) {
+      const selectedImage = result.assets[0].uri;
+      if (selectedImage) {
+        setProfilePhoto(selectedImage);
+      }
+    } else {
+      console.log('Photo selection canceled or failed.');
+    }
+  };
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translation.value }],
@@ -148,12 +176,31 @@ const LoginScreen = () => {
       )}
 
       {step === inputFields.length && (
-        <TouchableOpacity
-          style={[styles.button, styles.studentButton]}
-          onPress={handleLogin}
-        >
-          <Text style={styles.buttonText}>Login as Student</Text>
-        </TouchableOpacity>
+        <>
+          <Text style={styles.uploadTitle}>Upload Profile Photo (Optional)</Text>
+          {profilePhoto ? (
+            <Image source={{ uri: profilePhoto }} style={styles.profilePhoto} />
+          ) : (
+            <TouchableOpacity
+              style={[styles.button, styles.photoButton]}
+              onPress={handlePhotoUpload}
+            >
+              <Text style={styles.buttonText}>Upload Photo</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={[styles.button, styles.skipButton]}
+            onPress={() => setStep(step + 1)}
+          >
+            <Text style={styles.buttonText}>Skip</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.button, styles.studentButton]}
+            onPress={handleLogin}
+          >
+            <Text style={styles.buttonText}>Login as Student</Text>
+          </TouchableOpacity>
+        </>
       )}
     </View>
   );
@@ -206,6 +253,12 @@ const styles = StyleSheet.create({
   studentButton: {
     backgroundColor: '#007BFF',
   },
+  photoButton: {
+    backgroundColor: '#28a745',
+  },
+  skipButton: {
+    backgroundColor: '#ffc107',
+  },
   buttonText: {
     fontSize: 16,
     color: '#fff',
@@ -213,6 +266,17 @@ const styles = StyleSheet.create({
   },
   animatedContainer: {
     width: '100%',
+    marginBottom: 15,
+  },
+  uploadTitle: {
+    fontSize: 16,
+    color: '#000',
+    marginBottom: 10,
+  },
+  profilePhoto: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     marginBottom: 15,
   },
 });

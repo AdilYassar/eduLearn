@@ -1,27 +1,27 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
-import { useNavigation } from '@react-navigation/native';
-import { navigate } from '../../utils/Navigation';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { navigate, replace } from '../../utils/Navigation';
 import { Colors } from '@utils/Constants';
 
-const Profile = () => {
-  interface UserData {
-    name: string;
-    email: string;
-    age: string;
-    role: string;
-    isActivated: boolean;
-  }
+interface UserData {
+  name: string;
+  email: string;
+  age: string;
+  role: string;
+  isActivated: boolean;
+  profileImage?: string;
+}
 
+const Profile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const opacity = useSharedValue(0);
-  const navigation = useNavigation();
 
   useEffect(() => {
     fetchUserData();
@@ -53,10 +53,29 @@ const Profile = () => {
     }
   };
 
+  const updateProfileImage = () => {
+    launchImageLibrary({ mediaType: 'photo' }, async (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.errorCode) {
+        console.log('ImagePicker Error: ', response.errorMessage);
+      } else if (response.assets && response.assets.length > 0) {
+        const updatedUserData = { ...userData, profileImage: response.assets[0].uri };
+        setUserData(updatedUserData as UserData);
+        try {
+          await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
+          console.log('Profile photo updated successfully');
+        } catch (error) {
+          console.error('Error updating profile photo:', error);
+        }
+      }
+    });
+  };
+
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('userData');
-     navigate('LoginScreen'); // Navigate to the LoginScreen
+      navigate('IntroductionScreen');
     } catch (error) {
       console.error('Error during logout:', error);
     }
@@ -85,24 +104,27 @@ const Profile = () => {
   if (!userData) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Failed to load user data.</Text>
+        <Text style={styles.errorText}>User data not found. Please add your profile information.</Text>
       </View>
     );
   }
 
   return (
     <View style={styles.mainContainer}>
-      {/* Animation */}
-      <View style={styles.animationContainer}>
-        <LottieView
-          source={require('../../assets/animations/student.json')}
-          autoPlay
-          loop
-          style={styles.profileAnimation}
-        />
-      </View>
+      <TouchableOpacity style={styles.imageContainer} onPress={updateProfileImage}>
+        {userData?.profileImage ? (
+          <Image 
+            source={{ uri: userData.profileImage }} 
+            style={styles.profileImage} 
+            onError={(e) => console.error("Error loading profile image:", e.nativeEvent.error)} 
+          />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Text style={styles.placeholderText}>Add Photo</Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
-      {/* User Data */}
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <Text style={styles.title}>Profile</Text>
 
@@ -126,7 +148,6 @@ const Profile = () => {
         </Text>
       </ScrollView>
 
-      {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
@@ -144,18 +165,6 @@ const styles = StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: 'white',
-  },
-  animationContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'white',
-    paddingVertical: 30,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
-  },
-  profileAnimation: {
-    width: 250,
-    height: 250,
   },
   scrollContainer: {
     flexGrow: 1,
@@ -185,7 +194,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   notActivated: {
-    color: Colors.teal_400,
+    color: '#f44336',
     fontWeight: '700',
   },
   logoutButton: {
@@ -214,6 +223,27 @@ const styles = StyleSheet.create({
   loadingAnimation: {
     width: 250,
     height: 250,
+  },
+  imageContainer: {
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+  },
+  placeholderImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#757575',
+    fontSize: 16,
   },
 });
 

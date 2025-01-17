@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Lottie from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { navigate } from '../../utils/Navigation';
+import { navigate, replace } from '../../utils/Navigation';
 import { Colors } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Easing } from 'react-native-reanimated';
@@ -20,6 +20,7 @@ const Details = () => {
         const accessToken = await AsyncStorage.getItem('accessToken'); // Retrieve access token
         if (accessToken) {
           // If token exists, navigate to Dashboard
+          
           navigate('DashboardScreen');
         }
       } catch (error) {
@@ -67,12 +68,12 @@ const Details = () => {
       <Animated.View style={[styles.buttonContainer, { opacity: buttonFadeAnim }]}>
         <CustomButton
           title="Student"
-          onPress={() => navigate('LoginScreen')}
+          onPress={() => replace('LoginScreen')}
           styles={styles.studentButton}
         />
         <CustomButton
           title="Admin"
-          onPress={() => navigate('AdminLoginScreen')}
+          onPress={() => replace('AdminLoginScreen')}
           styles={styles.adminButton}
         />
       </Animated.View>

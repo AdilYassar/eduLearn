@@ -12,6 +12,7 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LottieView from 'lottie-react-native';
+import { BASE_URL } from '../../service/config';
 
 const THEORY_API = '/api/theory';
 
@@ -40,7 +41,7 @@ const TheoryScreen = () => {
 
   const fetchTheory = async () => {
     try {
-      const response = await fetch(`https://3506-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
+      const response = await fetch(`https://95a6-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
       if (!response.ok) {
         console.error('Failed to fetch theory. Status code:', response.status);
         setLoading(false);

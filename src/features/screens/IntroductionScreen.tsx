@@ -5,7 +5,7 @@ import Lottie from 'lottie-react-native';
 import CustomText from '../../components/ui/CustomText';
 import { Colors, Fonts } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { navigate } from '../../utils/Navigation';
+import { navigate, replace } from '../../utils/Navigation';
 import { Easing } from 'react-native-reanimated';
 import CustomButton from '../../components/ui/CustomButton';
 
@@ -71,7 +71,7 @@ const IntroductionScreen = () => {
         <View style={{ marginTop: 20 }}>
           <CustomButton  
             title="Get Started"
-            onPress={() => navigate('Details')} 
+            onPress={() => replace('Details')} 
           />
         </View>
       </Animated.View>
