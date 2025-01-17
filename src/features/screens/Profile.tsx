@@ -7,6 +7,7 @@ import LottieView from 'lottie-react-native';
 import { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { navigate } from '../../utils/Navigation';
+import { Colors } from '@utils/Constants';
 
 const Profile = () => {
   interface UserData {
@@ -184,11 +185,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   notActivated: {
-    color: '#f44336',
+    color: Colors.teal_400,
     fontWeight: '700',
   },
   logoutButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: Colors.teal_400,
     paddingVertical: 15,
     marginHorizontal: 20,
     marginBottom: 20,

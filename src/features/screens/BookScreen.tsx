@@ -11,6 +11,7 @@ import {
 import axios from 'axios'; // For API calls
 import RNFS from 'react-native-fs'; // For file handling
 import FileViewer from 'react-native-file-viewer'; // For opening files
+import { BASE_URL } from '@service/config';
 
 interface Book {
   _id: string;
@@ -31,7 +32,7 @@ const BookScreen = () => {
   const fetchBooks = async () => {
     try {
       const response = await axios.get(
-        'https://3506-101-53-234-27.ngrok-free.app/api/books'
+        `${BASE_URL}/api/books`
       );
       if (response.status === 200) {
         setBooks(response.data.data);

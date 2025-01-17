@@ -4,6 +4,7 @@ import { useRoute } from '@react-navigation/native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import { navigate } from '../../utils/Navigation';
+import { BASE_URL } from '@service/config';
 
 interface QuizItem {
   _id: string;
@@ -26,7 +27,7 @@ const QuizStart = () => {
   useEffect(() => {
     const fetchQuizById = async () => {
       try {
-        const response = await fetch(`https://3506-101-53-234-27.ngrok-free.app/api/quiz/${quizId}`, {
+        const response = await fetch(`${BASE_URL}/api/quiz/${quizId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

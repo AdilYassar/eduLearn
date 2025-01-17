@@ -1,19 +1,39 @@
 {
   "extends": "@react-native/typescript-config/tsconfig.json",
   "compilerOptions": {
-    "typeRoots": ["node_modules/@types","src/types"],
+    "typeRoots": ["node_modules/@types", "src/types"],
     "types": ["jest"],
     "baseUrl": "./src/",
     "paths": {
-      "@assets/*":["assets/*"],
-      "@features/*":["features/*"],
-      "@navigation/*":["navigation/*"],
-      "@state/*":["state/*"],
-      "@components/*":["components/*"],
-      "@styles/*":["styles/*"],
-      "@types/*":["types/*"],
-      "@service/*":["service/*"],
-      "@utils/*":["utils/*"],
-    }
-  }
+      "@assets/*": ["assets/*"],
+      "@features/*": ["features/*"],
+      "@navigation/*": ["navigation/*"],
+      "@state/*": ["state/*"],
+      "@components/*": ["components/*"],
+      "@styles/*": ["styles/*"],
+      "@types/*": ["types/*"],
+      "@service/*": ["service/*"],
+      "@utils/*": ["utils/*"]
+    },
+    "allowJs": true,               // Allows JavaScript files (.js, .jsx)
+    "checkJs": false,              // Optional: If you want to check JavaScript files for types
+    "jsx": "react-jsx",            // Enables JSX transformation in both JS and TSX files
+    "target": "esnext",             // Use modern JavaScript syntax
+    "module": "commonjs",           // Specifies module code generation
+    "moduleResolution": "node",     // Ensures proper module resolution for JS and TS files
+    "esModuleInterop": true,        // Allows default import syntax for non-ESM modules
+    "resolveJsonModule": true       // Allows importing JSON files
+  },
+  "include": [
+    "src/**/*", 
+    "assets/**/*", 
+    "features/**/*", 
+    "navigation/**/*", 
+    "state/**/*", 
+    "components/**/*", 
+    "styles/**/*", 
+    "types/**/*", 
+    "service/**/*", 
+    "utils/**/*"
+  ]
 }

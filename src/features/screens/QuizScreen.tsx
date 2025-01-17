@@ -4,6 +4,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import { navigate } from '../../utils/Navigation';
 import Animated, { Easing, FadeIn } from 'react-native-reanimated';
+import { BASE_URL } from '@service/config';
 
 const QuizScreen = () => {
   const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
@@ -13,7 +14,7 @@ const QuizScreen = () => {
   useEffect(() => {
     const fetchAllQuizzes = async () => {
       try {
-        const response = await fetch('https://3506-101-53-234-27.ngrok-free.app/api/allquiz', {
+        const response = await fetch(`${BASE_URL}/api/allquiz`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',

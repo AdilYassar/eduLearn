@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -5,6 +6,7 @@ import { Colors } from '../../utils/Constants';
 import { navigate } from '../../utils/Navigation';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import { BASE_URL } from '@service/config';
 
 const Category = () => {
   const [categories, setCategories] = useState([]);
@@ -14,7 +16,7 @@ const Category = () => {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const response = await fetch('https://3506-101-53-234-27.ngrok-free.app/api/categories');
+        const response = await fetch(`${BASE_URL}/api/categories`);
         const data = await response.json();
         if (data.categories) {
           setCategories(data.categories);

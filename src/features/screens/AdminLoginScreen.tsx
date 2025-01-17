@@ -2,17 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Animated, Alert } from 'react-native';
 import Lottie from 'lottie-react-native';
 import { navigate } from '../../utils/Navigation';
+import { BASE_URL } from '@service/config';
 
 const AdminLoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fadeAnim] = useState(new Animated.Value(0));
-
+  
   const handleLogin = () => {
     const endpoint = '/api/admin/login';
     const payload = { email, password }; // Only required fields for login
 
-    fetch(`https://1479-101-53-234-27.ngrok-free.app${endpoint}`, {
+    fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

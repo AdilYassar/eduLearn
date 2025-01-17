@@ -5,6 +5,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
+import { BASE_URL } from '@service/config';
 
 const Branch = () => {
   const [branches, setBranches] = useState([]); // State to hold branch data
@@ -14,7 +15,7 @@ const Branch = () => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await fetch('https://3506-101-53-234-27.ngrok-free.app/api/branches'); // Replace with your API endpoint for branches
+        const response = await fetch(`${BASE_URL}/api/branches`); // Replace with your API endpoint for branches
         const data = await response.json();
         if (data.branches) {
           setBranches(data.branches);

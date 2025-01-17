@@ -20,6 +20,7 @@ import { runOnJS } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@utils/Constants';
 import CustomInput from '@components/ui/CustomInput';
+import { BASE_URL } from '@service/config';
 
 const LoginScreen = () => {
   const [step, setStep] = useState(0); // Track the current input field
@@ -44,7 +45,7 @@ const LoginScreen = () => {
     const endpoint = '/api/student/login';
     const payload = { phone, email, name, age, password };
 
-    fetch(`https://3506-101-53-234-27.ngrok-free.app/api/student/login`, {
+    fetch(`${BASE_URL}/api/student/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

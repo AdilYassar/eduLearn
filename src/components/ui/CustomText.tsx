@@ -16,18 +16,20 @@ interface Props {
     | 'h8'
     | 'h9'
     | 'body';
-  fontFamily?: Fonts;
-  fontSize?: number;
+   
+  
   style?: TextStyle | TextStyle[];
   children?: React.ReactNode;
   numberOfLines?: number;
   onLayout?: (event: object) => void;
+  fontFamily: string;
+  size?: number;
 }
 
 const CustomText: React.FC<Props> = ({
   variant = 'body',
   fontFamily = Fonts.Regular,
-  fontSize,
+  size = RFValue(14),
   style,
   children,
   numberOfLines,
@@ -39,34 +41,34 @@ const CustomText: React.FC<Props> = ({
   // Switch-case to set font size based on the variant
   switch (variant) {
     case 'h1':
-      computedFontSize = RFValue(fontSize || 32);
+      computedFontSize = RFValue(size || 32);
       break;
     case 'h2':
-      computedFontSize = RFValue(fontSize || 28);
+      computedFontSize = RFValue(size || 28);
       break;
     case 'h3':
-      computedFontSize = RFValue(fontSize || 24);
+      computedFontSize = RFValue(size || 24);
       break;
     case 'h4':
-      computedFontSize = RFValue(fontSize || 20);
+      computedFontSize = RFValue(size || 20);
       break;
     case 'h5':
-      computedFontSize = RFValue(fontSize || 18);
+      computedFontSize = RFValue(size || 18);
       break;
     case 'h6':
-      computedFontSize = RFValue(fontSize || 16);
+      computedFontSize = RFValue(size || 16);
       break;
     case 'h7':
-      computedFontSize = RFValue(fontSize || 14);
+      computedFontSize = RFValue(size || 14);
       break;
     case 'h8':
-      computedFontSize = RFValue(fontSize || 12);
+      computedFontSize = RFValue(size || 12);
       break;
     case 'h9':
-      computedFontSize = RFValue(fontSize || 10);
+      computedFontSize = RFValue(size || 10);
       break;
     default:
-      computedFontSize = RFValue(fontSize || 14); // Default size for 'body'
+      computedFontSize = RFValue(size || 14); // Default size for 'body'
       break;
   }
 

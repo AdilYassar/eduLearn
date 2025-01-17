@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
 import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
 import { navigate } from '../../utils/Navigation';
+import { BASE_URL } from '@service/config';
 
 const COURSES_API = '/api/courses';
 
@@ -17,7 +18,7 @@ const CourseScreen = () => {
 
   const fetchCourses = async () => {
     try {
-      const response = await fetch(`https://3506-101-53-234-27.ngrok-free.app${COURSES_API}`);
+      const response = await fetch(`${BASE_URL}${COURSES_API}`);
       if (!response.ok) {
         console.error('Failed to fetch courses. Status code:', response.status);
         setLoading(false);

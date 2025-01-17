@@ -56,9 +56,9 @@ const DashboardScreen = () => {
           <Text style={styles.navText}>Books</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.navItem} onPress={() => navigate('Profile')}>
-          <Icon name="person" size={25} color={Colors.primary_dark} />
-          <Text style={styles.navText}>Profile</Text>
+        <TouchableOpacity style={styles.navItem} onPress={() => navigate('Ai')}>
+          <Icon name="chat" size={25} color={Colors.primary_dark} />
+          <Text style={styles.navText}>ChatAi</Text>
         </TouchableOpacity>
       </View>
     </View>
