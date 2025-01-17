@@ -13,6 +13,7 @@ import { Colors } from '@utils/Constants';
 import Category from '../../components/dashboard/Category';
 import Branch from '@components/dashboard/Branch';
 import TimeTable from '@components/dashboard/TimeTable';
+import SuggestionBox from '@components/dashboard/SuggestionBox';
 
 const DashboardScreen = () => {
   const [userName, setUserName] = useState<string>('');
@@ -36,6 +37,7 @@ const DashboardScreen = () => {
   // Data for the FlatList
   const content = [
     { id: 'header', component: 'header' },
+    { id: 'SuggestionBox', component: <SuggestionBox /> }, 
     { id: 'branch', component: <Branch /> },
     { id: 'category', component: <Category /> },
     { id: 'timetable', component: <TimeTable /> },

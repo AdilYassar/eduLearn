@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.21.0",
     "@homielab/react-native-auto-scroll": "^0.0.10",
     "@r0b0t3d/react-native-collapsible": "^1.4.3",
     "@react-native-async-storage/async-storage": "^2.1.0",
