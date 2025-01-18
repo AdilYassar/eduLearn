@@ -43,7 +43,7 @@ const SuggestionComponent = () => {
       )}
 
       <TouchableOpacity style={styles.refreshButton} onPress={fetchSuggestion}>
-        <Icon name="refresh" size={24} color="#007BFF" />
+        <Icon name="check" size={24} color="#007BFF" />
       </TouchableOpacity>
     </View>
   );

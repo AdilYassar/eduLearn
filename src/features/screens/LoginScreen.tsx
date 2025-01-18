@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -51,11 +51,21 @@ const LoginScreen = () => {
     }
   };
 
+  const validateFields = () => {
+    if (!phone || !email || !name || !age || !password) {
+      Alert.alert('Error', 'Please fill all the fields to proceed.');
+      return false;
+    }
+    return true;
+  };
+
   const handleLogin = () => {
+    if (!validateFields()) return; // Ensure all fields are filled
+
     const endpoint = '/api/student/login';
     const payload = { phone, email, name, age, password };
 
-    fetch(`${BASE_URL}/api/student/login`, {
+    fetch(`${BASE_URL}${endpoint}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,6 +93,39 @@ const LoginScreen = () => {
       .catch((error) => console.error('Error logging in:', error));
   };
 
+  const checkExistingUser = async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken'); // Retrieve access token
+      const userDataString = await AsyncStorage.getItem('userData');
+
+      if (accessToken && userDataString) {
+        const userData = JSON.parse(userDataString);
+
+        // Validate credentials with the backend
+        fetch(`${BASE_URL}/api/student/validate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ phone: userData.phone, email: userData.email }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.valid) {
+              navigate('DashboardScreen');
+            } else {
+              console.error('Validation failed:', data);
+              Alert.alert('Session expired. Please log in again.');
+            }
+          })
+          .catch((error) => console.error('Error validating user:', error));
+      }
+    } catch (error) {
+      console.error('Error checking access token:', error);
+    }
+  };
+
   const handleNext = () => {
     if (step < inputFields.length - 1) {
       translation.value = withTiming(-100, { duration: 500 }, () => {
@@ -106,6 +149,10 @@ const LoginScreen = () => {
       console.log('Photo selection canceled or failed.');
     }
   };
+
+  useEffect(() => {
+    checkExistingUser();
+  }, []);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translation.value }],
@@ -160,7 +207,9 @@ const LoginScreen = () => {
             style={styles.input}
             placeholder={inputFields[step].placeholder}
             placeholderTextColor="#000"
-            keyboardType={inputFields[step].keyboardType as KeyboardTypeOptions || 'default'}
+            keyboardType={
+              (inputFields[step].keyboardType as KeyboardTypeOptions) || 'default'
+            }
             secureTextEntry={inputFields[step].secureTextEntry || false}
             value={inputFields[step].value}
             onChangeText={inputFields[step].onChangeText}
@@ -190,7 +239,7 @@ const LoginScreen = () => {
           )}
           <TouchableOpacity
             style={[styles.button, styles.skipButton]}
-            onPress={() => setStep(step + 1)}
+            onPress={handleLogin}
           >
             <Text style={styles.buttonText}>Skip</Text>
           </TouchableOpacity>

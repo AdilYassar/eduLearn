@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, Image, ImageSou
 import React, { useState } from 'react';
 import { Bars2Icon, Bars3BottomLeftIcon, CheckBadgeIcon } from 'react-native-heroicons/solid';
 import { RFValue } from 'react-native-responsive-fontsize';
-import aiLogo from '../../assets/ai2.png';
+import aiLogo from '../../assets/images/logo.png';
 import CustomText from '../ui/CustomText';
 import { useDispatch } from 'react-redux';
 import { clearAllChats, clearChat } from '../../redux/reducers/chatSlice';

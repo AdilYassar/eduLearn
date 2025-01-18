@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import { BASE_URL } from '@service/config';
@@ -17,8 +18,8 @@ const QuizQuestions = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
-  const [isSubmitted, setIsSubmitted] = useState(false); // Track submission state
-  const [score, setScore] = useState(0); // Track score
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
 
   const route = useRoute();
   const { quizId } = route.params as { quizId: string };
@@ -38,15 +39,12 @@ const QuizQuestions = () => {
         }
 
         const data = await response.json();
-        console.log('Quiz Questions fetched:', data);
-
         if (data?.questions) {
           setQuestions(data.questions);
         } else {
           setError('No questions available for this quiz');
         }
       } catch (err) {
-        console.error('Error fetching quiz questions:', err);
         setError('Error fetching quiz questions');
       } finally {
         setLoading(false);
@@ -62,6 +60,28 @@ const QuizQuestions = () => {
     }
   };
 
+  const updateMarksSummary = async (newQuizData: { quizId: string; score: number; total: number }) => {
+    try {
+      const userDataString = await AsyncStorage.getItem('userData');
+      if (userDataString) {
+        const userData = JSON.parse(userDataString);
+
+        const marksSummary = userData.marksSummary || [];
+        const updatedMarksSummary = [...marksSummary, newQuizData];
+
+        const updatedUserData = {
+          ...userData,
+          marksSummary: updatedMarksSummary,
+        };
+
+        await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
+        console.log('Marks summary updated successfully:', updatedMarksSummary);
+      }
+    } catch (error) {
+      console.error('Error updating marks summary:', error);
+    }
+  };
+
   const handleSubmitQuiz = () => {
     let calculatedScore = 0;
     questions.forEach((question) => {
@@ -70,7 +90,14 @@ const QuizQuestions = () => {
       }
     });
     setScore(calculatedScore);
-    setIsSubmitted(true); // Mark quiz as submitted
+    setIsSubmitted(true);
+
+    const newQuizData = {
+      quizId,
+      score: calculatedScore,
+      total: questions.length,
+    };
+    updateMarksSummary(newQuizData);
   };
 
   const renderQuestion = ({ item }: { item: QuestionItem }) => {
@@ -86,9 +113,12 @@ const QuizQuestions = () => {
           return (
             <TouchableOpacity
               key={index}
-              style={[styles.optionText, isSelected && (isCorrect ? styles.selectedCorrect : styles.selectedIncorrect)]}
+              style={[
+                styles.optionText,
+                isSelected && (isCorrect ? styles.selectedCorrect : styles.selectedIncorrect),
+              ]}
               onPress={() => handleAnswerSelection(item._id, option)}
-              disabled={isSubmitted || !!userAnswer} // Disable after selection or after submission
+              disabled={isSubmitted || !!userAnswer}
             >
               <Text style={styles.optionTextStyle}>{index + 1}. {option}</Text>
             </TouchableOpacity>
@@ -135,6 +165,7 @@ const QuizQuestions = () => {
     </View>
   );
 };
+
 
 export default QuizQuestions;
 

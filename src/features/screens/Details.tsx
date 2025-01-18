@@ -15,20 +15,7 @@ const Details = () => {
   const buttonFadeAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const checkAccessToken = async () => {
-      try {
-        const accessToken = await AsyncStorage.getItem('accessToken'); // Retrieve access token
-        if (accessToken) {
-          // If token exists, navigate to Dashboard
-          
-          navigate('DashboardScreen');
-        }
-      } catch (error) {
-        console.error('Error checking access token:', error);
-      }
-    };
 
-    checkAccessToken();
 
     // Animate the container sliding up and fading in
     Animated.timing(containerFadeAnim, {

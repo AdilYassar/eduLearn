@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { navigate, replace } from '../../utils/Navigation';
+import { navigate } from '../../utils/Navigation';
 import { Colors } from '@utils/Constants';
 
 interface UserData {
@@ -16,6 +16,8 @@ interface UserData {
   role: string;
   isActivated: boolean;
   profileImage?: string;
+  marksSummary?: { [quizId: string]: { score: number; total: number } };
+  enrolledCourses?: { courseId: string; enrolledAt: string }[];
 }
 
 const Profile = () => {
@@ -88,6 +90,25 @@ const Profile = () => {
     };
   });
 
+  const renderEnrolledCourse = ({ item }: { item: { courseId: string; enrolledAt: string } }) => {
+    return (
+      <View style={styles.courseItem}>
+        <Text style={styles.courseId}>Course ID: {item.courseId}</Text>
+        <Text style={styles.enrolledAt}>Enrolled At: {new Date(item.enrolledAt).toLocaleString()}</Text>
+      </View>
+    );
+  };
+
+  const renderMarksSummary = ({ item }: { item: [string, { score: number; total: number }] }) => {
+    const [quizId, { score, total }] = item;
+    return (
+      <View style={styles.marksItem}>
+        <Text style={styles.quizId}>Quiz ID: {quizId}</Text>
+        <Text style={styles.quizScore}>Score: {score}/{total}</Text>
+      </View>
+    );
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -146,6 +167,30 @@ const Profile = () => {
         >
           {userData.isActivated ? 'Activated' : 'Not Activated'}
         </Text>
+
+        <Text style={styles.sectionTitle}>Enrolled Courses</Text>
+        {userData.enrolledCourses && userData.enrolledCourses.length > 0 ? (
+          <FlatList
+            data={userData.enrolledCourses}
+            renderItem={renderEnrolledCourse}
+            keyExtractor={(item) => item.courseId}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.noCoursesText}>No courses enrolled yet.</Text>
+        )}
+
+        <Text style={styles.sectionTitle}>Marks Summary</Text>
+        {userData.marksSummary && Object.entries(userData.marksSummary).length > 0 ? (
+          <FlatList
+            data={Object.entries(userData.marksSummary)}
+            renderItem={renderMarksSummary}
+            keyExtractor={(item) => item[0]}
+            scrollEnabled={false}
+          />
+        ) : (
+          <Text style={styles.noMarksText}>No quizzes attempted yet.</Text>
+        )}
       </ScrollView>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
@@ -244,6 +289,57 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#757575',
     fontSize: 16,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#333',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  courseItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  courseId: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  enrolledAt: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
+  },
+  noCoursesText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  marksItem: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  quizId: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  quizScore: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
+  },
+  noMarksText: {
+    fontSize: 16,
+    color: '#777',
+    textAlign: 'center',
+    marginTop: 10,
   },
 });
 

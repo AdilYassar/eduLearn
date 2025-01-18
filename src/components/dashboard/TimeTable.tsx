@@ -314,6 +314,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   modalTitle: {
     fontSize: 20,
@@ -331,12 +336,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginBottom: 20,
+    justifyContent: 'space-between',
   },
   dayButton: {
     padding: 10,
     margin: 5,
     borderRadius: 5,
     backgroundColor: '#f0f0f0',
+    flex: 1,
+    minWidth: '30%',
+    alignItems: 'center',
   },
   selectedDayButton: {
     backgroundColor: '#007BFF',

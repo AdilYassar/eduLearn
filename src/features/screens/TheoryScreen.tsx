@@ -41,7 +41,7 @@ const TheoryScreen = () => {
 
   const fetchTheory = async () => {
     try {
-      const response = await fetch(`https://95a6-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
+      const response = await fetch(`https://f0c5-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
       if (!response.ok) {
         console.error('Failed to fetch theory. Status code:', response.status);
         setLoading(false);

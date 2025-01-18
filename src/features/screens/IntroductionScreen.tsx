@@ -62,7 +62,7 @@ const IntroductionScreen = () => {
         style={styles.animation}
       />
       <Animated.View style={[styles.textContainer, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-        <CustomText variant="h4" fontSize={RFValue(18)} style={styles.text}>
+        <CustomText variant="h4" size={RFValue(18)} style={styles.text}>
           Ready to Learn Something New Today?
         </CustomText>
         <Text style={styles.subText}>
@@ -71,7 +71,7 @@ const IntroductionScreen = () => {
         <View style={{ marginTop: 20 }}>
           <CustomButton  
             title="Get Started"
-            onPress={() => replace('Details')} 
+            onPress={() => navigate('Details')} 
           />
         </View>
       </Animated.View>

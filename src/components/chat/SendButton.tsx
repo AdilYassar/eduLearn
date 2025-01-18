@@ -147,7 +147,7 @@ const SendButton: React.FC<SendButtonProps> = ({
             body: JSON.stringify({
                 model: 'meta-llama/Meta-Llama-3-8B-Instruct',
                 messages: [...messages, mes],
-                max_token: 500,
+                max_token: 5000000000000000000000000000000000000000000000000,
                 stream: true,
             })
         });

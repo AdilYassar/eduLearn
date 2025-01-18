@@ -80,7 +80,7 @@ const Category = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.headerText}>Categories</Text>
+      <Text style={styles.headerText}>Categories For quizzes</Text>
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary_dark} />
       ) : (

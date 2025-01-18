@@ -1,9 +1,10 @@
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Alert } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import CustomHeader from '@components/ui/CustomHeader';
 import Animated, { Layout, FadeIn, FadeOut } from 'react-native-reanimated';
 import { navigate } from '../../utils/Navigation';
-import { BASE_URL } from '@service/config';
+import { BASE_URL } from '../../service/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const COURSES_API = '/api/courses';
 
@@ -42,9 +43,51 @@ const CourseScreen = () => {
   }
 
   const handleCourseSelect = (courseId: string) => {
-   navigate('TheoryScreen', { courseId }); // Navigate to TheoryScreen with courseId
+    navigate('TheoryScreen', { courseId });
   };
 
+  const handleEnrollCourse = async (courseId: string, courseTitle: string) => {
+    try {
+      // Retrieve the user data from AsyncStorage
+      const userDataString = await AsyncStorage.getItem('userData');
+      console.log('User Data:', userDataString);
+  
+      if (!userDataString) {
+        Alert.alert('Error', 'You must be logged in to enroll in a course.');
+        return;
+      }
+  
+      // Parse the user data
+      const userData = JSON.parse(userDataString);
+  
+      // Check if the user has an enrolledCourses array
+      if (!userData.enrolledCourses) {
+        userData.enrolledCourses = [];
+      }
+  
+      // Check if the course is already enrolled
+      if (userData.enrolledCourses.some(course => course.courseId === courseId)) {
+        Alert.alert('Notice', 'You are already enrolled in this course.');
+        return;
+      }
+  
+      // Add the course ID, course name, and enrolledAt timestamp to the enrolledCourses array
+      const enrolledAt = new Date().toISOString();  // ISO string for date and time
+      userData.enrolledCourses.push({ courseId, courseTitle, enrolledAt });
+  
+      // Save the updated user data back to AsyncStorage
+      await AsyncStorage.setItem('userData', JSON.stringify(userData));
+  
+      console.log('Course enrolled successfully:', courseId);
+      Alert.alert('Success', 'Course enrolled successfully!');
+    } catch (error) {
+      console.error('Error enrolling in the course:', error);
+      Alert.alert('Error', 'Failed to enroll in the course. Please try again.');
+    }
+  };
+  
+  
+  
   const renderCourseItem = ({ item }: { item: Course }) => {
     return (
       <Animated.View
@@ -55,6 +98,11 @@ const CourseScreen = () => {
         <TouchableOpacity onPress={() => handleCourseSelect(item._id)} style={styles.cardContent}>
           <Text style={styles.courseTitle}>{item.title}</Text>
           <Text style={styles.courseLessons}>{item.lessons} Lessons</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.enrollButton}
+          onPress={() => handleEnrollCourse(item._id)}>
+          <Text style={styles.enrollButtonText}>Enroll</Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -132,6 +180,19 @@ const styles = StyleSheet.create({
     color: '#e0f7f7',
     marginTop: 8,
     fontFamily: 'Roboto',
+  },
+  enrollButton: {
+    backgroundColor: '#ffffff',
+    padding: 8,
+    borderRadius: 8,
+    marginTop: 10,
+    width: '80%',
+    alignItems: 'center',
+  },
+  enrollButtonText: {
+    color: '#008080',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });
 

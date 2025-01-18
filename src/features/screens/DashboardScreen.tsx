@@ -51,7 +51,7 @@ const DashboardScreen = () => {
             Welcome, {userName || 'Loading...'}
           </Text>
           <TouchableOpacity onPress={() => navigate('Profile')}>
-            <Icon name="account-circle" size={30} color="black" />
+            <Icon name="account-circle" size={30} color={Colors.primary_dark} />
           </TouchableOpacity>
         </View>
       );

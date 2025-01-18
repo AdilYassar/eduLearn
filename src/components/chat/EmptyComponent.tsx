@@ -156,8 +156,8 @@ const styles = StyleSheet.create({
 
   },
   imgContainer: {
-    width: RFValue(100),
-    height: RFValue(100),
+    width: RFValue(50),
+    height: RFValue(50),
   },
   img: {
     width: '100%',
