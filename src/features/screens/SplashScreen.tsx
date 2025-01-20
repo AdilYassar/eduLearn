@@ -13,7 +13,7 @@ const SplashScreen = () => {
   useEffect(() => {
     // Set a timeout to navigate after 3 seconds
     const timer = setTimeout(() => {
-     navigate('IntroductionScreen'); // Replace 'NextScreen' with your target screen name
+     navigate('HomeScreen'); // Replace 'NextScreen' with your target screen name
     }, 3000);
 
     // Clear the timer if the component unmounts
@@ -38,7 +38,7 @@ const SplashScreen = () => {
       />
 
      
-      <CustomText  variant="h1"  fontSize={RFValue(20)} >
+      <CustomText  variant="h1"  size={RFValue(20)} >
         Welcome to EduLearn
       </CustomText>
     </View>

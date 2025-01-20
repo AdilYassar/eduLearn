@@ -26,6 +26,11 @@ import QuizStart from '../features/screens/QuizStart';
 import QuizQuestions from '../features/screens/QuizQuestions';
 import MetaAi from '../features/screens/MetaAi';
 import Ai from '../features/screens/Ai';
+import HomeScreen from '../components/meet/screens/HomeScreen';
+import JoinCallScreen from '../components/meet/screens/JoinCallScreen';
+import LiveCallScreen from '../components/meet/screens/LiveCallScreen';
+import PrepareCallScreen from '../components/meet/screens/PrepareCallScreen';
+import { WSProvider } from '@components/meet/components/serviceComponent/api/WSProvider';
 
 
 const Stack = createNativeStackNavigator();
@@ -33,6 +38,7 @@ const Stack = createNativeStackNavigator();
 // create a component
 const Navigation: FC = () => {
     return (
+        <WSProvider>
         <NavigationContainer ref={navigationRef}>
             <Stack.Navigator
                 initialRouteName="SplashScreen" // Correct placement
@@ -49,6 +55,10 @@ const Navigation: FC = () => {
                 <Stack.Screen name="QuizQuestions" component={QuizQuestions} />
                 <Stack.Screen name="MetaAi" component={MetaAi} />
                 <Stack.Screen name="Ai" component={Ai} />
+                <Stack.Screen name="HomeScreen" component={HomeScreen} />
+                <Stack.Screen name="JoinCallScreen" component={JoinCallScreen} />
+                <Stack.Screen name="LiveCallScreen" component={LiveCallScreen} />
+                <Stack.Screen name="PrepareCallScreen" component={PrepareCallScreen} />
 
 
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
@@ -71,6 +81,7 @@ const Navigation: FC = () => {
                  name="AdminLoginScreen" component={AdminLoginScreen} />
             </Stack.Navigator>
         </NavigationContainer>
+        </WSProvider>
     );
 };
 

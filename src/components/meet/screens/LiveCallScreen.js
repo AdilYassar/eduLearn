@@ -1,12 +1,12 @@
 import { View, Text } from 'react-native'
 import React from 'react'
 
-const MarksSummaryScreen = () => {
+const LiveCallScreen = () => {
   return (
     <View>
-      <Text>MarksSummaryScreen</Text>
+      <Text>LiveCallScreen</Text>
     </View>
   )
 }
 
-export default MarksSummaryScreen
+export default LiveCallScreen

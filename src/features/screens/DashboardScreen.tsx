@@ -95,7 +95,15 @@ const DashboardScreen = () => {
           <Icon name="chat" size={25} color={Colors.primary_dark} />
           <Text style={styles.navText}>ChatAi</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigate('HomeScreen')}
+        >
+          <Icon name="call" size={25} color={Colors.primary_dark} />
+          <Text style={styles.navText}>Call</Text>
+        </TouchableOpacity>
       </View>
+      
     </View>
   );
 };
