@@ -1,7 +1,7 @@
 import { Platform, StyleSheet } from 'react-native';
-import {Colors, screenHeight, screenWidth} from '../utils/Constants';
+import { screenHeight, screenWidth} from '../utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
-
+import {Colors} from '../../../utils/Constants'
 
 export const prepareStyles = StyleSheet.create({
   image: {
@@ -13,7 +13,7 @@ export const prepareStyles = StyleSheet.create({
   joinButton: {
     padding: 15,
     paddingHorizontal: 20,
-    backgroundColor: '#0957D0',
+    backgroundColor: Colors.teal_900,
     borderRadius: 10,
     margin: 10,
   },
@@ -25,7 +25,7 @@ export const prepareStyles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: Colors.teal_400,
   },
   meetingCode: {
     fontFamily: 'Roboto-Regular',
@@ -113,12 +113,15 @@ export const prepareStyles = StyleSheet.create({
   },
   joinContainer: {
     alignItems: 'center',
-    backgroundColor: '#E8EDF5',
+    backgroundColor: Colors.teal_600,
     paddingTop: 10,
     position: 'absolute',
     bottom: 0,
     width: '100%',
     paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+    borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
   },
   joiningText: {
     fontFamily: 'Roboto-Medium',
