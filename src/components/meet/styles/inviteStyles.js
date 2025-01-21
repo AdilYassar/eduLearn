@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
-import {Colors, screenHeight, screenWidth} from '../utils/Constants';
+import {screenHeight, screenWidth} from '../utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
+import { Colors } from '@utils/Constants';
 
 
 
@@ -8,7 +9,7 @@ export const inviteStyles = StyleSheet.create({
     container: {
       flex: 0.7,
       justifyContent: 'center',
-      backgroundColor: '#121212',
+      backgroundColor: Colors.teal_300,
       alignItems: 'flex-start',
       paddingHorizontal: 20,
     },
@@ -19,7 +20,7 @@ export const inviteStyles = StyleSheet.create({
       marginBottom: 8,
     },
     subText: {
-      color: '#AAAAAA',
+      color: '#000',
       fontSize: RFValue(10),
       fontFamily: 'OpenSans-Regular',
       textAlign: 'left',
@@ -28,7 +29,7 @@ export const inviteStyles = StyleSheet.create({
     linkContainer: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#292929',
+      backgroundColor: Colors.teal_700,
       borderRadius: 2,
       width: '90%',
       padding: 14,
@@ -45,7 +46,7 @@ export const inviteStyles = StyleSheet.create({
     shareButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#95C9FF',
+      backgroundColor: Colors.teal_700,
       borderRadius: 40,
       paddingVertical: 12,
       paddingHorizontal: 20,

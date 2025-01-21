@@ -10,7 +10,12 @@ export const useCallStore = create(
             participants: [],
             micOn: false,
             videoOn: false,
-
+            clear:()=>{
+                set({
+                    sessionId:null,
+                    participants:[]
+                })
+            },
             // Add a session ID
             addSessionId: (id) => {
                 set({ sessionId: id });
