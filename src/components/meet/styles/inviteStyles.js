@@ -7,6 +7,7 @@ import { Colors } from '@utils/Constants';
 
 export const inviteStyles = StyleSheet.create({
     container: {
+      marginTop: screenHeight * 0.1,
       flex: 0.7,
       justifyContent: 'center',
       backgroundColor: Colors.teal_300,
@@ -34,6 +35,7 @@ export const inviteStyles = StyleSheet.create({
       width: '90%',
       padding: 14,
       marginBottom: 20,
+      borderRadius: 40,
     },
     linkText: {
       color: 'white',

@@ -72,7 +72,7 @@ const UserView = ({ containerDimensions, localStream }) => {
 
               {/* Add the two icons and the "You" label */}
               <View style={styles.iconsContainer}>
-                <Icon name="more_vert" size={RFValue(30)} color="black" style={styles.icon} />
+                <Icon name="menu" size={RFValue(30)} color="black" style={styles.icon} />
               
               </View>
               <View style={styles.nameContainer}>
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     width: '24%',
     zIndex: 99,
     elevation: 10,
-    borderRadius: 10,
+    borderRadius: 20,
     position: 'absolute',
     backgroundColor: 'black',
     justifyContent: 'center',

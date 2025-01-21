@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
-import {Colors, screenHeight, screenWidth} from '../utils/Constants';
+import {screenHeight, screenWidth} from '../utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
+import { Colors } from '@utils/Constants';
 
 
 export const peopleStyles = StyleSheet.create({
@@ -8,14 +9,14 @@ export const peopleStyles = StyleSheet.create({
       flex: 1,
       flexDirection: 'row',
       flexWrap: 'wrap',
-      backgroundColor: '#121212',
+      backgroundColor:Colors.teal_300 ,
       justifyContent: 'center',
     },
     card: {
       justifyContent: 'center',
       alignItems: 'center',
       borderRadius: 10,
-      backgroundColor: '#2E3030',
+      backgroundColor: Colors.teal_800,
       overflow: 'hidden',
       marginHorizontal: 5,
       marginVertical: 5,
