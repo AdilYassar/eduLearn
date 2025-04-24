@@ -102,6 +102,13 @@ const DashboardScreen = () => {
           <Icon name="call" size={25} color={Colors.primary_dark} />
           <Text style={styles.navText}>Call</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => navigate('PodcastLoginScreen')}
+        >
+          <Icon name="mic" size={25} color={Colors.primary_dark} />
+          <Text style={styles.navText}>Podcasts</Text>
+        </TouchableOpacity>
       </View>
       
     </View>

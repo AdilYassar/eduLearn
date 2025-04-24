@@ -31,6 +31,7 @@ import JoinCallScreen from '../components/meet/screens/JoinCallScreen';
 import LiveCallScreen from '../components/meet/screens/LiveCallScreen';
 import PrepareCallScreen from '../components/meet/screens/PrepareCallScreen';
 import { WSProvider } from '@components/meet/components/serviceComponent/api/WSProvider';
+import PodcastLoginScreen from '@components/Podcasts/screens/PodcastLoginScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -59,7 +60,7 @@ const Navigation: FC = () => {
                 <Stack.Screen name="JoinCallScreen" component={JoinCallScreen} />
                 <Stack.Screen name="LiveCallScreen" component={LiveCallScreen} />
                 <Stack.Screen name="PrepareCallScreen" component={PrepareCallScreen} />
-
+                <Stack.Screen name="PodcastLoginScreen" component={PodcastLoginScreen} />
 
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                 <Stack.Screen name="BookScreen" component={BookScreen} />

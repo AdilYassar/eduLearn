@@ -13,7 +13,7 @@ const SplashScreen = () => {
   useEffect(() => {
     // Set a timeout to navigate after 3 seconds
     const timer = setTimeout(() => {
-     navigate('HomeScreen'); // Replace 'NextScreen' with your target screen name IntroductionScreen
+     navigate('DashboardScreen'); // Replace 'NextScreen' with your target screen name IntroductionScreen
     }, 3000);
 
     // Clear the timer if the component unmounts
