@@ -2,6 +2,10 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+project.ext.react = [
+    enableHermes: true,  // Set this to true to enable Hermes
+]
+
 react {
     // Custom font support
     project.ext.vectoricons = [
@@ -12,7 +16,7 @@ react {
 }
 
 // Disable Proguard for release unless explicitly needed
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 // Use default JavaScriptCore engine for Hermes fallback
 def jscFlavor = 'org.webkit:android-jsc:+'
@@ -57,10 +61,12 @@ android {
     }
 }
 
+
+
 dependencies {
     implementation("com.facebook.react:react-android")
 
-    if (hermesEnabled.toBoolean()) {
+    if (project.ext.react.enableHermes) { // Updated check for consistency
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor

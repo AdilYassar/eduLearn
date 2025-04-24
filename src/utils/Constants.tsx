@@ -10,7 +10,7 @@ export enum Colors {
     secondary_dark = '#00796b',  // Darker teal for secondary elements
 
     // Text and UI colors in teal
-    text = '#004d40',          // Dark teal for text (high contrast)
+    text = '#000',          // Dark teal for text (high contrast)
     text_light = '#00796b',    // Lighter teal for secondary text
     disabled = '#80cbc4',      // Muted teal for disabled elements
     border = '#b2dfdb',        // Light teal for borders

@@ -28,7 +28,7 @@ interface Props {
 
 const CustomText: React.FC<Props> = ({
   variant = 'body',
-  fontFamily = Fonts.Regular,
+  fontFamily = Fonts.Regular,  // Default fontFamily set here
   size = RFValue(14),
   style,
   children,

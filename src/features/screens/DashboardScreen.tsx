@@ -104,7 +104,7 @@ const DashboardScreen = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigate('PodcastLoginScreen')}
+          onPress={() => navigate('PodcastSplashScreen')}
         >
           <Icon name="mic" size={25} color={Colors.primary_dark} />
           <Text style={styles.navText}>Podcasts</Text>

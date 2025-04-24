@@ -31,7 +31,9 @@ import JoinCallScreen from '../components/meet/screens/JoinCallScreen';
 import LiveCallScreen from '../components/meet/screens/LiveCallScreen';
 import PrepareCallScreen from '../components/meet/screens/PrepareCallScreen';
 import { WSProvider } from '@components/meet/components/serviceComponent/api/WSProvider';
-import PodcastLoginScreen from '@components/Podcasts/screens/PodcastLoginScreen';
+import PodcastLoginScreen from '@components/Podcasts/features/auth/PodcastLoginScreen';
+import PodcastSplashScreen from '@components/Podcasts/features/auth/PodcastSplashScreen';
+import PodcastRegisterScreen from '@components/Podcasts/features/auth/PodcastRegisterScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -61,12 +63,12 @@ const Navigation: FC = () => {
                 <Stack.Screen name="LiveCallScreen" component={LiveCallScreen} />
                 <Stack.Screen name="PrepareCallScreen" component={PrepareCallScreen} />
                 <Stack.Screen name="PodcastLoginScreen" component={PodcastLoginScreen} />
-
+                <Stack.Screen name="PodcastSplashScreen" component={PodcastSplashScreen} />
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                 <Stack.Screen name="BookScreen" component={BookScreen} />
                 <Stack.Screen name="QuizScreen" component={QuizScreen} />
                 <Stack.Screen name="QuizStart" component={QuizStart} />
-
+                <Stack.Screen name="PodcastRegisterScreen" component={PodcastRegisterScreen} />
                 <Stack.Screen name="TheoryScreen" component={TheoryScreen} />
                 <Stack.Screen name="DescriptionScreen" component={DescriptionScreen} />
                 <Stack.Screen name="Profile" component={Profile} />
