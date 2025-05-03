@@ -34,6 +34,9 @@ import { WSProvider } from '@components/meet/components/serviceComponent/api/WSP
 import PodcastLoginScreen from '@components/Podcasts/features/auth/PodcastLoginScreen';
 import PodcastSplashScreen from '@components/Podcasts/features/auth/PodcastSplashScreen';
 import PodcastRegisterScreen from '@components/Podcasts/features/auth/PodcastRegisterScreen';
+import PodcastHomeScreen from '@components/Podcasts/features/home/PodcastHomeScreen';
+import PodcastSearchScreen from '@components/Podcasts/features/search/PodcastSearchScreen';
+import PodcastFavouriteScreen from '@components/Podcasts/features/favourite/PodcastFavouriteScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -72,6 +75,16 @@ const Navigation: FC = () => {
                 <Stack.Screen name="TheoryScreen" component={TheoryScreen} />
                 <Stack.Screen name="DescriptionScreen" component={DescriptionScreen} />
                 <Stack.Screen name="Profile" component={Profile} />
+                <Stack.Screen name="PodcastHomeScreen" component={PodcastHomeScreen} />
+                <Stack.Screen name="PodcastSearchScreen" component={PodcastSearchScreen} />
+                <Stack.Screen name="PodcastFavouriteScreen" component={PodcastFavouriteScreen} />
+
+
+
+
+
+
+
                 <Stack.Screen
                 options={{
                     animation:'fade',
