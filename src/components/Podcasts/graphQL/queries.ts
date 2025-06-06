@@ -11,7 +11,7 @@ export const LOGIN_MUTATION = gql`
           name
           isAdmin
           id
-          favoritePodcastsCount
+          favouritePodcastsCount  # Changed from favoritePodcastsCount
         }
       }
     }
@@ -27,7 +27,7 @@ export const REGISTER_MUTATION = gql`
         createdAt
         id
         isAdmin
-        favoritePodcastsCount
+        favouritePodcastsCount  # Changed from favoritePodcastsCount
       }
     }
   }

@@ -37,6 +37,7 @@ import PodcastRegisterScreen from '@components/Podcasts/features/auth/PodcastReg
 import PodcastHomeScreen from '@components/Podcasts/features/home/PodcastHomeScreen';
 import PodcastSearchScreen from '@components/Podcasts/features/search/PodcastSearchScreen';
 import PodcastFavouriteScreen from '@components/Podcasts/features/favourite/PodcastFavouriteScreen';
+import UserBottomTab from '@components/Podcasts/features/tabs/UserBottomTab';
 
 
 const Stack = createNativeStackNavigator();
@@ -78,7 +79,7 @@ const Navigation: FC = () => {
                 <Stack.Screen name="PodcastHomeScreen" component={PodcastHomeScreen} />
                 <Stack.Screen name="PodcastSearchScreen" component={PodcastSearchScreen} />
                 <Stack.Screen name="PodcastFavouriteScreen" component={PodcastFavouriteScreen} />
-
+                <Stack.Screen name="UserBottomTab" component={UserBottomTab} />
 
 
 
