@@ -37,6 +37,7 @@ import {
   STABLE_DIFFUSION_URL,
 } from '../../redux/API';
 
+
 const windowHeight = Dimensions.get('window').height;
 
 interface SendButtonProps {
