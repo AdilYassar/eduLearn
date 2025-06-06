@@ -1,11 +1,12 @@
-import { View, Text } from 'react-native'
+import {  Text } from 'react-native'
 import React from 'react'
+import CustomSafeAreaView from '@components/ui/CustomSafeAreaView'
 
 const PodcastFavouriteScreen = () => {
   return (
-    <View>
-      <Text>PodcastFavouriteScreen</Text>
-    </View>
+  <CustomSafeAreaView>
+    <Text>PodcastFavouirteScreen</Text>
+    </CustomSafeAreaView>
   )
 }
 

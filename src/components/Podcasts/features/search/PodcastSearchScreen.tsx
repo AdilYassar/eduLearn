@@ -1,11 +1,12 @@
-import { View, Text } from 'react-native'
+import {  Text } from 'react-native'
 import React from 'react'
+import CustomSafeAreaView from '@components/ui/CustomSafeAreaView'
 
 const PodcastSearchScreen = () => {
   return (
-    <View>
-      <Text>PodcastSearchScreen</Text>
-    </View>
+    <CustomSafeAreaView>
+    <Text>PodcastSearchScreen</Text>
+    </CustomSafeAreaView>
   )
 }
 
