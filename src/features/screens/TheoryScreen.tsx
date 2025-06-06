@@ -1,5 +1,3 @@
-/* eslint-disable no-dupe-keys */
-/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -12,9 +10,12 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LottieView from 'lottie-react-native';
-import { BASE_URL } from '../../service/config';
 
-const THEORY_API = '/api/theory';
+import { BASE_URL } from '@service/config';
+import { askAI } from '@components/dashboard/askAi';
+import { navigate } from '@utils/Navigation';
+
+const THEORY_API = '/theory';
 
 interface Chapter {
   title: string;
@@ -34,24 +35,39 @@ const TheoryScreen = () => {
 
   const [theory, setTheory] = useState<Theory | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
 
   useEffect(() => {
     fetchTheory();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTheory = async () => {
     try {
-      const response = await fetch(`https://f0c5-101-53-234-27.ngrok-free.app${THEORY_API}/${courseId}`);
+      const response = await fetch(`${BASE_URL}${THEORY_API}/${courseId}`);
       if (!response.ok) {
-        console.error('Failed to fetch theory. Status code:', response.status);
-        setLoading(false);
-        return;
+        throw new Error(`Failed to fetch theory. Status code: ${response.status}`);
       }
-
       const data = await response.json();
       setTheory(data.theory);
-    } catch (error) {
-      console.error('Error fetching theory:', error);
+    } catch (err) {
+      console.error('Error fetching theory:', err);
+      setError('Failed to load course details.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChapterClick = async (chapterTitle: string) => {
+    setLoading(true);
+    try {
+      const prompt = `You are an expert teacher known for crafting comprehensive, engaging, and progressively structured explanations. Your task is to create a detailed guide on the topic: '${chapterTitle}'. Begin with a simple, beginner-friendly explanation to establish foundational understanding. Then transition to a more intermediate-level discussion to deepen the learner's knowledge. Finally, provide an advanced-level explanation to explore the complexities and nuances of the topic in depth. Ensure each level builds upon the previous one, using clear examples and concise language throughout.`;
+      const generatedContent = await askAI(prompt);
+      navigate('DescriptionScreen', { generatedContent});
+    } catch (err) {
+      console.error('Error generating chapter content:', err);
+      setError('Failed to generate content. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +83,9 @@ const TheoryScreen = () => {
             loop
             style={styles.loadingAnimation}
           />
-          <Text style={styles.loadingText}>Fetching Course Details...</Text>
+          <Text style={styles.loadingText}>
+            {error || 'Fetching Course Details...'}
+          </Text>
         </View>
       ) : (
         <ScrollView contentContainerStyle={styles.theoryContainer}>
@@ -83,7 +101,11 @@ const TheoryScreen = () => {
               </View>
               <Text style={styles.chapterTitle}>Chapters</Text>
               {theory.chapters.map((chapter, index) => (
-                <TouchableOpacity key={index} style={styles.chapterCard}>
+                <TouchableOpacity
+                  key={index}
+                  style={styles.chapterCard}
+                  onPress={() => handleChapterClick(chapter.title)}
+                >
                   <View style={styles.chapterContent}>
                     <Icon name="book" size={24} color="#FF6347" style={styles.chapterIcon} />
                     <Text style={styles.chapterText}>
@@ -95,15 +117,16 @@ const TheoryScreen = () => {
               ))}
             </>
           ) : (
-            <Text style={styles.noTheoryText}>
-              No theory available for this course.
-            </Text>
+            <Text style={styles.noTheoryText}>No theory available for this course.</Text>
           )}
         </ScrollView>
       )}
     </View>
   );
 };
+
+
+
 
 const styles = StyleSheet.create({
   container: {
