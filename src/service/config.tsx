@@ -1,2 +1,2 @@
-export const BASE_URL = 'https://ba3c8e5be3a3.ngrok-free.app';
-export const GEMINI_API_KEY = 'AIzaSyAiGFt95-gKZshSskE7Ja-_Gv5_lbnQpuI'
+export const BASE_URL = 'https://833fc9ec84c2.ngrok-free.app'; // Update this with your actual ngrok URL
+export const GEMINI_API_KEY = 'AIzaSyDbUzvrPX4g75DQKHKqSw-R0ma0Smlkrd0';

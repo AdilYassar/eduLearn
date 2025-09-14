@@ -4,50 +4,33 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import { navigate } from '../../utils/Navigation';
 import Animated, { Easing, FadeIn } from 'react-native-reanimated';
-import { BASE_URL } from '@service/config';
+import { useQuiz } from '@service/hooks/useQuiz';
+
+interface QuizItem {
+  _id: string;
+  title: string;
+  description?: string;
+}
 
 const QuizScreen = () => {
   const [quizzes, setQuizzes] = useState<QuizItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { getAllQuizzes, loading } = useQuiz();
 
   // Fetch all quizzes when the component mounts
   useEffect(() => {
     const fetchAllQuizzes = async () => {
       try {
-        const response = await fetch(`${BASE_URL}/api/allquiz`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(`API request failed with status: ${response.status}`);
+        const result = await getAllQuizzes();
+        if (result) {
+          setQuizzes(result);
         }
-
-        const data = await response.json();
-        console.log('API response:', data); // Log the response data
-
-        if (data?.quizzes && Array.isArray(data.quizzes)) {
-          setQuizzes(data.quizzes);
-        } else {
-          console.log('No quizzes found');
-        }
-      } catch (error) {
-        console.error('Error fetching quizzes:', error);
-      } finally {
-        setLoading(false);
+      } catch (fetchError) {
+        console.error('Error fetching quizzes:', fetchError);
       }
     };
 
     fetchAllQuizzes();
-  }, []);
-
-  interface QuizItem {
-    _id: string;
-    title: string;
-    description: string;
-  }
+  }, [getAllQuizzes]);
 
   const handleQuizClick = (quizId: string) => {
     // Navigate to the QuizStartScreen with the quizId

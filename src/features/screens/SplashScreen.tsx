@@ -225,7 +225,7 @@ const SplashScreen = () => {
     
     // Set a timeout to navigate after 4 seconds
     const timer = setTimeout(() => {
-      navigate('DashboardScreen');
+      navigate('LoginScreen');
     }, 4000);
     
     return () => clearTimeout(timer);

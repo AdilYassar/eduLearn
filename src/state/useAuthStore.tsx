@@ -1,7 +1,7 @@
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { create } from 'zustand';
 import { mmkvStorage } from './storage';
-import { resetAndNavigate } from '../utils/Navigation';
+import { performCompleteLogout } from '@service/authUtils';
 
 interface AuthStore {
     user: Record<string, any> | null;
@@ -16,8 +16,7 @@ export const useAuthStore = create<AuthStore>()(
             setUser: (user) => set({ user }),
             logout: () => {
                 set({ user: null });
-                tokenStorage.clearAll();
-                resetAndNavigate('LoginScreen'); // Ensure this function is imported
+                performCompleteLogout();
             },
         }),
         {

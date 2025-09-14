@@ -88,24 +88,20 @@ const QuizQuestions = () => {
     setSubmitting(true);
     
     try {
-      // Get access token directly from 'accessToken' key
-      const token = await AsyncStorage.getItem('accessToken');
-      
-      console.log('Token retrieved:', token ? `Found token of length ${token.length}` : 'No token found');
-      
-      if (!token) {
-        setError('Authentication required. Please log in again.');
-        Alert.alert('Error', 'Authentication required. Please log in again.');
-        setSubmitting(false);
+      // Get authentication token
+      const userDataString = await AsyncStorage.getItem('userData');
+      if (!userDataString) {
+        Alert.alert('Authentication Error', 'Please login again');
+        navigate('Login');
         return;
       }
-
-      // Check if token looks valid (should be a JWT)
-      if (!token.includes('.') || token.split('.').length !== 3) {
-        console.log('Invalid token format detected:', token.substring(0, 50));
-        setError('Invalid authentication token. Please log in again.');
-        Alert.alert('Error', 'Invalid authentication token. Please log in again.');
-        setSubmitting(false);
+      
+      const userData = JSON.parse(userDataString);
+      const token = userData.accessToken;
+      
+      if (!token) {
+        Alert.alert('Authentication Error', 'Please login again');
+        navigate('Login');
         return;
       }
 
@@ -126,19 +122,9 @@ const QuizQuestions = () => {
         ...(courseId && { courseId }), // Include courseId if provided
       };
 
-      console.log('Submitting quiz with data:', JSON.stringify(submissionData, null, 2));
-      console.log('Using token length:', token.length);
-      console.log('Token start:', token.substring(0, 50) + '...');
-
       const result = await submitQuiz(submissionData, token);
       
-      console.log('Quiz submission result:', result);
-      
       if (result) {
-        console.log('Quiz submitted successfully!');
-        console.log('Score:', result.submission.correctAnswers, '/', result.submission.totalQuestions);
-        console.log('Percentage:', result.submission.percentage + '%');
-        console.log('Grade:', result.submission.grade);
         setSubmissionResult(result);
         
         // Update local marks summary for offline access
@@ -157,13 +143,11 @@ const QuizQuestions = () => {
           [{ text: 'OK' }]
         );
       } else {
-        console.log('Quiz submission failed - no result returned');
         Alert.alert('Submission Failed', 'Failed to submit quiz. Please try again.');
       }
-    } catch (submitError: any) {
+    } catch (submitError) {
       console.error('Error submitting quiz:', submitError);
-      console.error('Error details:', JSON.stringify(submitError, null, 2));
-      Alert.alert('Error', `An error occurred while submitting the quiz: ${submitError.message || 'Unknown error'}`);
+      Alert.alert('Error', 'An error occurred while submitting the quiz. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -207,38 +191,36 @@ const QuizQuestions = () => {
         <Text style={styles.questionText}>{item.text}</Text>
         {item.options?.map((option, optionIndex) => {
           const isSelected = userAnswer === option;
-          const isCorrect = option === item.correctAnswer;
+          let optionStyle = [styles.optionButton];
+          let textStyle = [styles.optionText];
           
-          // Determine styles based on selection and submission state
-          const getOptionStyle = () => {
-            if (isSubmitted) {
-              if (isSelected) {
-                return isCorrect
-                  ? [styles.optionButton, styles.selectedCorrect]
-                  : [styles.optionButton, styles.selectedIncorrect];
-              } else if (isCorrect) {
-                return [styles.optionButton, styles.correctAnswerHighlight];
+          if (isSubmitted) {
+            const isCorrect = option === item.correctAnswer;
+            if (isSelected) {
+              if (isCorrect) {
+                optionStyle.push(styles.selectedCorrect);
+                textStyle.push(styles.correctAnswerText);
+              } else {
+                optionStyle.push(styles.selectedIncorrect);
+                textStyle.push(styles.incorrectAnswerText);
               }
-              return styles.optionButton;
-            } else if (isSelected) {
-              return [styles.optionButton, styles.selectedOption];
+            } else if (isCorrect) {
+              optionStyle.push(styles.correctAnswerHighlight);
+              textStyle.push(styles.correctAnswerText);
             }
-            return styles.optionButton;
-          };
+          } else if (isSelected) {
+            optionStyle.push(styles.selectedOption);
+            textStyle.push(styles.selectedOptionText);
+          }
 
           return (
             <TouchableOpacity
               key={optionIndex}
-              style={getOptionStyle()}
+              style={optionStyle}
               onPress={() => handleAnswerSelection(item._id, option)}
               disabled={isSubmitted}
             >
-              <Text style={[
-                styles.optionText,
-                isSelected && !isSubmitted && styles.selectedOptionText,
-                isSubmitted && option === item.correctAnswer && styles.correctAnswerText,
-                isSubmitted && isSelected && option !== item.correctAnswer && styles.incorrectAnswerText,
-              ]}>
+              <Text style={textStyle}>
                 {String.fromCharCode(65 + optionIndex)}. {option}
               </Text>
             </TouchableOpacity>
@@ -295,13 +277,13 @@ const QuizQuestions = () => {
       
       <View style={styles.submitButtonContainer}>
         {!submissionResult ? (
-          <TouchableOpacity
-            onPress={handleSubmitQuiz}
+          <TouchableOpacity 
+            onPress={handleSubmitQuiz} 
             style={[
               styles.submitButton,
-              Object.keys(selectedAnswers).length === questions.length
-                ? styles.submitButtonActive
-                : styles.submitButtonInactive,
+              Object.keys(selectedAnswers).length === questions.length 
+                ? styles.submitButtonActive 
+                : styles.submitButtonInactive
             ]}
             disabled={submitting || Object.keys(selectedAnswers).length !== questions.length}
           >
@@ -321,8 +303,8 @@ const QuizQuestions = () => {
             <Text style={styles.percentageText}>
               {submissionResult.submission.percentage}% - Grade: {submissionResult.submission.grade}
             </Text>
-            <TouchableOpacity
-              style={styles.backButton}
+            <TouchableOpacity 
+              style={styles.backButton} 
               onPress={() => navigate('QuizScreen')}
             >
               <Text style={styles.backButtonText}>Back to Quizzes</Text>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,42 +8,35 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import axios from 'axios'; // For API calls
 import RNFS from 'react-native-fs'; // For file handling
 import FileViewer from 'react-native-file-viewer'; // For opening files
-import { BASE_URL } from '@service/config';
+import { useLearningMaterials } from '@service/hooks/useLearningMaterials';
 
 interface Book {
   _id: string;
   title: string;
-  author: string;
-  publishedDate: string;
-  pages: number;
-  genre: string;
-  language: string;
-  pdf: string; // Base64-encoded PDF
+  author?: string;
+  publishedDate?: string;
+  pages?: number;
+  genre?: string;
+  language?: string;
+  pdf: string; // Base64-encoded PDF or URL
 }
 
 const BookScreen = () => {
   const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const { getAllBooks, loading } = useLearningMaterials();
 
   // Fetch books from API
   const fetchBooks = async () => {
     try {
-      const response = await axios.get(
-        `${BASE_URL}/api/books`
-      );
-      if (response.status === 200) {
-        setBooks(response.data.data);
-      } else {
-        Alert.alert('Error', response.data.message || 'Failed to fetch books');
+      const result = await getAllBooks();
+      if (result) {
+        setBooks(result);
       }
-    } catch (error) {
-      console.error('Error fetching books:', error);
+    } catch (fetchError) {
+      console.error('Error fetching books:', fetchError);
       Alert.alert('Error', 'An error occurred while fetching books');
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -51,16 +44,19 @@ const BookScreen = () => {
   const displayPdf = async (base64Pdf: string, title: string) => {
     try {
       const path = `${RNFS.DocumentDirectoryPath}/${title}.pdf`;
-      const pdfData = atob(base64Pdf); // Decode Base64 to binary data
+      
+      // For React Native, we need to handle base64 differently
+      // Remove data URL prefix if present
+      const cleanBase64 = base64Pdf.replace(/^data:application\/pdf;base64,/, '');
 
       // Save the PDF to the file system
-      await RNFS.writeFile(path, pdfData, 'ascii');
+      await RNFS.writeFile(path, cleanBase64, 'base64');
       console.log(`PDF saved at ${path}`);
 
       // Open the PDF
       await FileViewer.open(path, { showOpenWithDialog: true });
-    } catch (error) {
-      console.error('Error downloading or opening PDF:', error);
+    } catch (pdfError) {
+      console.error('Error downloading or opening PDF:', pdfError);
       Alert.alert('Error', 'Failed to download or open PDF');
     }
   };
@@ -83,13 +79,13 @@ const BookScreen = () => {
       {books.map((book) => (
         <View key={book._id} style={styles.bookCard}>
           <Text style={styles.title}>{book.title}</Text>
-          <Text style={styles.detail}>Author: {book.author}</Text>
+          <Text style={styles.detail}>Author: {book.author || 'Unknown'}</Text>
           <Text style={styles.detail}>
-            Published: {new Date(book.publishedDate).toDateString()}
+            Published: {book.publishedDate ? new Date(book.publishedDate).toDateString() : 'Unknown'}
           </Text>
-          <Text style={styles.detail}>Pages: {book.pages}</Text>
-          <Text style={styles.detail}>Genre: {book.genre}</Text>
-          <Text style={styles.detail}>Language: {book.language}</Text>
+          <Text style={styles.detail}>Pages: {book.pages || 'Unknown'}</Text>
+          <Text style={styles.detail}>Genre: {book.genre || 'Unknown'}</Text>
+          <Text style={styles.detail}>Language: {book.language || 'Unknown'}</Text>
           <TouchableOpacity
             style={styles.button}
             onPress={() => displayPdf(book.pdf, book.title)}

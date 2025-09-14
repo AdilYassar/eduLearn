@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,16 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from '@utils/Navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@utils/Constants';
+import { useUser } from '@service/hooks/useUser';
 import Category from '../../components/dashboard/Category';
 import Branch from '@components/dashboard/Branch';
 import TimeTable from '@components/dashboard/TimeTable';
 import SuggestionBox from '@components/dashboard/SuggestionBox';
+import NewsComponent from '../../components/ui/NewsComponent';
 
 const DashboardScreen = () => {
   const [userName, setUserName] = useState<string>('');
+  const { getUserProfile } = useUser();
 
   useEffect(() => {
     fetchUserData();
@@ -24,23 +27,39 @@ const DashboardScreen = () => {
 
   const fetchUserData = async () => {
     try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      
+      if (accessToken) {
+        // Try to get user data from API
+        const userProfile = await getUserProfile(accessToken);
+        if (userProfile) {
+          setUserName(userProfile.name || userProfile.email);
+          return;
+        }
+      }
+
+      // Fallback to stored user data
       const storedUserData = await AsyncStorage.getItem('userData');
-      if (!storedUserData) return;
+      if (!storedUserData) {
+        return;
+      }
 
       const parsedUserData = JSON.parse(storedUserData);
       setUserName(parsedUserData.name);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
+    } catch (fetchError) {
+      console.error('Error fetching user data:', fetchError);
     }
   };
 
   // Data for the FlatList
   const content = [
     { id: 'header', component: 'header' },
-    { id: 'SuggestionBox', component: <SuggestionBox /> }, 
+    { id: 'SuggestionBox', component: <SuggestionBox /> },
+    
     { id: 'branch', component: <Branch /> },
     { id: 'category', component: <Category /> },
     { id: 'timetable', component: <TimeTable /> },
+    { id: 'news', component: <NewsComponent /> },
   ];
 
   const renderItem = ({ item }: { item: { id: string; component: any } }) => {
