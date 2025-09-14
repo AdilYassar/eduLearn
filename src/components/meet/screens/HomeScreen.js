@@ -84,6 +84,8 @@ const HomeScreen = () => {
                         <Image
                             source={require('../../../assets/bg.png')}
                             style={homeStyles.img}
+                            onError={(error) => console.log('Image loading error:', error)}
+                            defaultSource={require('../../../assets/bg.png')} // fallback image
                         />
                         <Text style={homeStyles.title}>Video Calls with Fellow Students</Text>
                         <Text style={homeStyles.subTitle}>

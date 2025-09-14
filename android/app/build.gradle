@@ -22,6 +22,32 @@ def enableProguardInReleaseBuilds = true
 def jscFlavor = 'org.webkit:android-jsc:+'
 
 android {
+    packagingOptions {
+        pickFirst '**/libc++_shared.so'
+        pickFirst '**/libjsc.so'
+        // Fix for AppCompat version conflicts
+        pickFirst '**/META-INF/androidx.appcompat_appcompat.version'
+        pickFirst '**/META-INF/androidx.core_core.version'
+        pickFirst '**/META-INF/androidx.lifecycle_lifecycle-runtime.version'
+    }
+
+    // Add resolution strategy to force AndroidX
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core:1.13.1'
+            force 'androidx.appcompat:appcompat:1.6.1'
+            force 'androidx.activity:activity:1.8.0'
+        }
+        // Force exclude old support libraries globally
+        exclude group: 'com.android.support', module: 'appcompat-v7'
+        exclude group: 'com.android.support', module: 'support-v4'
+        exclude group: 'com.android.support', module: 'support-compat'
+        exclude group: 'com.android.support', module: 'support-core-utils'
+        exclude group: 'com.android.support', module: 'support-core-ui'
+        exclude group: 'com.android.support', module: 'animated-vector-drawable'
+        exclude group: 'com.android.support', module: 'support-vector-drawable'
+    }
+
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
@@ -61,13 +87,19 @@ android {
     }
 }
 
-
-
 dependencies {
-    implementation("com.facebook.react:react-android")
+    implementation("com.facebook.react:react-android") {
+        exclude group: 'com.android.support'
+    }
+    
+    // Force AndroidX AppCompat
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
 
-    if (project.ext.react.enableHermes) { // Updated check for consistency
-        implementation("com.facebook.react:hermes-android")
+    if (project.ext.react.enableHermes) {
+        implementation("com.facebook.react:hermes-android") {
+            exclude group: 'com.android.support'
+        }
     } else {
         implementation jscFlavor
     }

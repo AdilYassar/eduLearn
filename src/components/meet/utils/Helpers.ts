@@ -16,20 +16,25 @@ export const requestPermissions = async (): Promise<{
   isMicrophoneGranted: boolean;
 }> => {
   try {
+    console.log('🔐 Requesting permissions...');
     const permissionsToRequest =
       Platform.OS === 'ios'
         ? [
             PERMISSIONS.IOS.CAMERA,
             PERMISSIONS.IOS.MICROPHONE,
-            PERMISSIONS.IOS.PHOTO_LIBRARY,
           ]
         : [
             PERMISSIONS.ANDROID.CAMERA,
             PERMISSIONS.ANDROID.RECORD_AUDIO,
-            PERMISSIONS.ANDROID.READ_EXTERNAL_STORAGE,
+            // Removed READ_EXTERNAL_STORAGE as it's not needed for WebRTC
+            // and can cause permission issues on newer Android versions
           ];
 
+    console.log('📱 Platform:', Platform.OS);
+    console.log('🔑 Requesting permissions:', permissionsToRequest);
+
     const results = await requestMultiple(permissionsToRequest);
+    console.log('📋 Raw permission results:', results);
 
     for (const [permission, status] of Object.entries(results)) {
       logPermissionStatus(permission as Permission, status as PermissionStatus);
@@ -45,9 +50,12 @@ export const requestPermissions = async (): Promise<{
         ? results[PERMISSIONS.IOS.MICROPHONE] === RESULTS.GRANTED
         : results[PERMISSIONS.ANDROID.RECORD_AUDIO] === RESULTS.GRANTED;
 
-    return { isCameraGranted, isMicrophoneGranted };
+    const result = { isCameraGranted, isMicrophoneGranted };
+    console.log('✅ Final permission result:', result);
+    
+    return result;
   } catch (error) {
-    console.error('Error requesting permissions:', error);
+    console.error('❌ Error requesting permissions:', error);
     return { isCameraGranted: false, isMicrophoneGranted: false };
   }
 };

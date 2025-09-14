@@ -50,8 +50,9 @@ export const useCallStore = create(
                         p.userId === updatedParticipant.userId
                             ? {
                                   ...p,
-                                  micOn: updatedParticipant.micOn,
-                                  videoOn: updatedParticipant.videoOn,
+                                  micOn: updatedParticipant.micOn !== undefined ? updatedParticipant.micOn : p.micOn,
+                                  videoOn: updatedParticipant.videoOn !== undefined ? updatedParticipant.videoOn : p.videoOn,
+                                  streamURL: updatedParticipant.streamURL || p.streamURL,
                               }
                             : p
                     ),
@@ -68,6 +69,43 @@ export const useCallStore = create(
                     return p;
                 });
                 set({ participants: updatedParticipants });
+            },
+
+            // Initialize current user as participant
+            initializeCurrentUser: (user, localStream) => {
+                const { participants } = get();
+                const currentUserParticipant = {
+                    userId: user.id,
+                    name: user.name,
+                    photo: user.photo,
+                    micOn: true,
+                    videoOn: true,
+                    streamURL: localStream,
+                    isCurrentUser: true
+                };
+                
+                // Add current user if not already present
+                if (!participants.find(p => p.userId === user.id)) {
+                    set({ participants: [currentUserParticipant, ...participants] });
+                }
+            },
+
+            // Get other participants (excluding current user)
+            getOtherParticipants: () => {
+                const { participants } = get();
+                return participants.filter(p => !p.isCurrentUser);
+            },
+
+            // Update participants from server session info
+            updateParticipantsFromServer: (serverParticipants) => {
+                if (Array.isArray(serverParticipants)) {
+                    set({ participants: serverParticipants });
+                }
+            },
+
+            // Clear all participants
+            clearParticipants: () => {
+                set({ participants: [] });
             },
 
             // Toggle mic or video state

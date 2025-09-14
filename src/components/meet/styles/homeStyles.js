@@ -1,6 +1,10 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import {Colors, screenHeight, screenWidth} from '../../../utils/Constants';
 import {RFValue} from 'react-native-responsive-fontsize';
+
+// Add safety check for dimensions
+const safeWidth = screenWidth && !isNaN(screenWidth) ? screenWidth : 400;
+const safeHeight = screenHeight && !isNaN(screenHeight) ? screenHeight : 800;
 
 export const homeStyles = StyleSheet.create({
     container: {
@@ -25,12 +29,12 @@ export const homeStyles = StyleSheet.create({
       alignSelf: 'center',
     },
     img: {
-      width: screenWidth * 0.5,
-      height: screenHeight * 0.3,
+      width: safeWidth * 0.5,
+      height: safeHeight * 0.3,
       resizeMode: 'contain',
       alignSelf: 'center',
       margin: 15,
-      marginTop: screenHeight * 0.1,
+      marginTop: safeHeight * 0.1,
     },
     buttonText: {
       color: '#fff',

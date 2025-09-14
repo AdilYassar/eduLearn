@@ -7,7 +7,7 @@ const PodcastHomeScreen = () => {
   return (
     <CustomSafeAreaView>
       <View style={styles.content}>
-
+      
       </View>
       <LottieView
         source={require('../../../../assets/animations/music.json')}

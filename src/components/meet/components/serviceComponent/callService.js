@@ -3,5 +3,5 @@
 
 
 
-export const SERVER_URL = 'https://1aba-101-53-234-27.ngrok-free.app';
-export const SOCKET_URL = 'wss://1aba-101-53-234-27.ngrok-free.app';
+export const SERVER_URL = 'https://ba3c8e5be3a3.ngrok-free.app';
+export const SOCKET_URL = 'wss://ba3c8e5be3a3.ngrok-free.app';

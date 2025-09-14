@@ -12,7 +12,15 @@ import CallFooter from '../components/ui/CallFooter'
 const LiveCallScreen = () => {
 
   const {containerDimensions, onContainerLayout} = useContainerDimensions()
-  const {participants, localStream, toggleMic, toggleVideo, switchCamera} =  useWebRTC();
+  const {participants, localStream, toggleMic, toggleVideo, switchCamera, getOtherParticipants, sessionId} =  useWebRTC();
+  
+  // Get other participants (excluding current user)
+  const otherParticipants = getOtherParticipants ? getOtherParticipants() : participants.filter(p => !p.isCurrentUser);
+
+  // Debug logging
+  console.log('🔍 LiveCallScreen Debug - Session ID:', sessionId);
+  console.log('🔍 LiveCallScreen Debug - All participants:', participants);
+  console.log('🔍 LiveCallScreen Debug - Other participants:', otherParticipants);
 
   return (
     <View style = {styles.container}>
@@ -31,9 +39,9 @@ const LiveCallScreen = () => {
 
 
     {
-      participants.length > 1 ? (
+      otherParticipants.length > 0 ? (
         <People
-        people = {participants}
+        people = {otherParticipants}
         containerDimensions={containerDimensions}
         
          />

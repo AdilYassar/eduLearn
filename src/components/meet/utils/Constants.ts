@@ -1,7 +1,17 @@
 import {Dimensions} from 'react-native';
 
-export const screenHeight = Dimensions.get('screen').height;
-export const screenWidth = Dimensions.get('screen').width;
+// Add safety checks to prevent NaN values
+const getScreenDimensions = () => {
+  const screen = Dimensions.get('screen');
+  return {
+    height: screen.height || 800, // fallback to 800 if NaN
+    width: screen.width || 400,   // fallback to 400 if NaN
+  };
+};
+
+const screen = getScreenDimensions();
+export const screenHeight = screen.height;
+export const screenWidth = screen.width;
 export const multiColor = [
   '#0B3D91',
   '#1E4DFF',

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Image, Animated, PanResponder, TouchableOpacity } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useCallStore } from '../serviceComponent/callStore';
 import { useUserStore } from '../serviceComponent/zustandStore';
@@ -13,6 +13,20 @@ const UserView = ({ containerDimensions, localStream }) => {
 
   const [pan, setPan] = useState(new Animated.ValueXY({ x: 0, y: 0 })); // Pan state for translation
   const [position, setPosition] = useState({ x: 0, y: 0 }); // Store final position
+
+  // Function to validate image URLs
+  const isValidImageUrl = (url) => {
+    if (!url || typeof url !== 'string') return false;
+    
+    // Check if it's a valid URL format
+    try {
+      const urlObj = new URL(url);
+      return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+    } catch {
+      // If it's not a valid URL, check if it's a local asset or data URI
+      return url.startsWith('data:') || url.startsWith('file:') || url.startsWith('asset:');
+    }
+  };
 
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -41,6 +55,22 @@ const UserView = ({ containerDimensions, localStream }) => {
   // Debugging to ensure localStream and user are valid
   console.log("Local Stream:", localStream);
   console.log("User:", user);
+  console.log("Video On:", videoOn);
+  console.log("Local Stream Tracks:", localStream?.getTracks()?.length);
+  console.log("Local Stream Video Tracks:", localStream?.getVideoTracks()?.length);
+  console.log("Local Stream Audio Tracks:", localStream?.getAudioTracks()?.length);
+
+  // Check if stream is actually valid and has tracks
+  const hasValidStream = localStream && 
+                        localStream.getTracks && 
+                        localStream.getTracks().length > 0 &&
+                        localStream.getVideoTracks().length > 0;
+
+  console.log("Has Valid Stream:", hasValidStream);
+  console.log("Video On:", videoOn);
+  console.log("Local Stream:", !!localStream);
+  console.log("Final Condition:", videoOn && hasValidStream);
+  console.log("Stream URL:", localStream?.toURL ? localStream.toURL() : 'No toURL method');
 
   return (
     <Animated.View
@@ -54,20 +84,46 @@ const UserView = ({ containerDimensions, localStream }) => {
     >
       {user && (
         <>
-          {videoOn && localStream ? (
-            <RTCView
-              streamURL={localStream.toURL()}
-              style={styles.localVideo}
-              mirror={true}
-              objectFit="cover"
-              zOrder={2}
-            />
+          {videoOn && hasValidStream ? (
+            <View style={styles.videoContainer}>
+              <RTCView
+                streamURL={localStream.toURL()}
+                style={styles.localVideo}
+                mirror={true}
+                objectFit="cover"
+                zOrder={2}
+                onError={(error) => {
+                  console.error('❌ RTCView Error:', error);
+                }}
+                onLoad={() => {
+                  console.log('✅ RTCView loaded successfully');
+                }}
+              />
+              <TouchableOpacity 
+                style={styles.debugButton}
+                onPress={() => {
+                  console.log('🔍 Debug Button Pressed');
+                  console.log('Video On:', videoOn);
+                  console.log('Has Valid Stream:', hasValidStream);
+                  console.log('Local Stream:', localStream);
+                  console.log('Stream URL:', localStream?.toURL ? localStream.toURL() : 'No toURL method');
+                }}
+              >
+                <Text style={styles.debugText}>🔍</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
             <View style={styles.noVideo}>
-              {user?.photo ? (
-                <Image source={{ uri: user?.photo }} style={styles.image} />
+              {user?.photo && isValidImageUrl(user.photo) ? (
+                <Image 
+                  source={{ uri: user.photo }} 
+                  style={styles.image}
+                  onError={(error) => {
+                    console.warn('❌ Failed to load user photo:', user.photo, error);
+                  }}
+                />
               ) : (
-                <Text style={styles.initial}>{user?.name?.charAt(0)}</Text>
+                <Text style={styles.initial}>{user?.name?.charAt(0) || 'U'}</Text>
               )}
 
               {/* Add the two icons and the "You" label */}
@@ -153,6 +209,27 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600',
+    color: 'white',
+  },
+  videoContainer: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+  },
+  debugButton: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  debugText: {
+    fontSize: 24,
     color: 'white',
   },
 });
