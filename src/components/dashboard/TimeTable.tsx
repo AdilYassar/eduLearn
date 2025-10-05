@@ -25,7 +25,11 @@ interface DaySchedule {
   classes: Class[];
 }
 
-const TimeTable = () => {
+interface TimeTableProps {
+  bgColor?: string;
+}
+
+const TimeTable: React.FC<TimeTableProps> = ({ bgColor = '#F4F7FB' }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [timetable, setTimetable] = useState<DaySchedule[]>([]);
   const [selectedDay, setSelectedDay] = useState<string>('');
@@ -107,7 +111,7 @@ const TimeTable = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       {/* Add Timetable Button */}
       <TouchableOpacity
         style={styles.addButton}
@@ -234,7 +238,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F4F7FB',
   },
   addButton: {
     backgroundColor: Colors.primary_dark,
@@ -252,15 +255,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dayContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: 'transparent',
     padding: 15,
-    borderRadius: 10,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    marginHorizontal: 16,
   },
   dayText: {
     fontSize: 18,
@@ -314,11 +312,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 20,
     borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
   },
   modalTitle: {
     fontSize: 20,

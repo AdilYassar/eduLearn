@@ -62,13 +62,7 @@ const LoadingDots = () => {
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 10,
-    alignSelf: 'center',
-    marginLeft: 20,
-    height: 14,
   },
   dot: {
     width: RFValue(5),

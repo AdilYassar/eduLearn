@@ -4,7 +4,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { askAI } from '../dashboard/askAi'; // Adjust the import path
 import { Colors } from '@utils/Constants';
 
-const SuggestionComponent = () => {
+interface SuggestionComponentProps {
+  bgColor?: string;
+}
+
+const SuggestionComponent: React.FC<SuggestionComponentProps> = ({ bgColor = Colors.primary_light }) => {
   const [suggestion, setSuggestion] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -31,7 +35,7 @@ const SuggestionComponent = () => {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container]}>
       <Text style={styles.title}>Today's Suggestion</Text>
 
       {loading ? (
@@ -51,27 +55,25 @@ const SuggestionComponent = () => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: Colors.primary_light,
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    padding: 20,
+    marginHorizontal: 16,
     alignItems: 'center',
     marginBottom: 20,
-    marginTop:20
+    marginTop: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#2C3E50',
+    color: '#1a1a1a',
     marginBottom: 10,
   },
   suggestionText: {
     fontSize: 16,
-    color: '#000',
+    color: '#2C3E50',
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -84,7 +86,9 @@ const styles = StyleSheet.create({
   refreshButton: {
     padding: 10,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
   },
 });
 

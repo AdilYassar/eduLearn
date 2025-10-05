@@ -7,7 +7,11 @@ import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from '
 import LinearGradient from 'react-native-linear-gradient';
 import { BASE_URL } from '@service/config';
 
-const Branch = () => {
+interface BranchProps {
+  bgColor?: string;
+}
+
+const Branch: React.FC<BranchProps> = ({ bgColor = '#fff' }) => {
   const [branches, setBranches] = useState([]); // State to hold branch data
   const [loading, setLoading] = useState(true); // State to handle loading state
   const [numColumns, setNumColumns] = useState(3);  // Setting columns for the grid layout
@@ -73,7 +77,7 @@ const Branch = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       <Text style={styles.headerText}>Main Domains We Specialize in</Text>
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary_dark} />
@@ -95,7 +99,6 @@ export default Branch;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
     paddingHorizontal: RFValue(10),
   },
   headerText: {

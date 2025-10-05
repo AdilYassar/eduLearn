@@ -1,85 +1,111 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   FlatList,
+  Animated,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { navigate } from '@utils/Navigation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@utils/Constants';
 import { useUser } from '@service/hooks/useUser';
-import Category from '../../components/dashboard/Category';
-import Branch from '@components/dashboard/Branch';
 import TimeTable from '@components/dashboard/TimeTable';
 import SuggestionBox from '@components/dashboard/SuggestionBox';
 import NewsComponent from '../../components/ui/NewsComponent';
+import MoodSelector from '@components/dashboard/MoodSelector';
+import Courses from '@components/dashboard/Courses';
+import QuizChallenge from '@components/dashboard/QuizChallenge';
 
 const DashboardScreen = () => {
   const [userName, setUserName] = useState<string>('');
+  const [backgroundColor, setBackgroundColor] = useState<string[]>(['#E8F5E9', '#F1F8F2']); // Default happy mood - light mint
+  const [componentBgColor, setComponentBgColor] = useState<string[]>(['#E8F5E9', '#F1F8F2']); // Default happy mood
+  const [fadeAnim] = useState(new Animated.Value(1));
   const { getUserProfile } = useUser();
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        console.log('📱 DashboardScreen: Fetching user data...');
+        const accessToken = await AsyncStorage.getItem('accessToken');
+        console.log('📱 DashboardScreen: Access token exists:', !!accessToken);
+        
+        if (accessToken) {
+          // Try to get user data from API
+          const userProfile = await getUserProfile(accessToken);
+          console.log('📱 DashboardScreen: User profile from API:', userProfile);
+          if (userProfile && userProfile.student) {
+            const name = userProfile.student.name || userProfile.student.email;
+            console.log('📱 DashboardScreen: Setting userName to:', name);
+            setUserName(name);
+            return;
+          }
+        }
 
-  const fetchUserData = async () => {
-    try {
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      
-      if (accessToken) {
-        // Try to get user data from API
-        const userProfile = await getUserProfile(accessToken);
-        if (userProfile) {
-          setUserName(userProfile.name || userProfile.email);
+        // Fallback to stored user data
+        const storedUserData = await AsyncStorage.getItem('userData');
+        console.log('📱 DashboardScreen: Stored userData exists:', !!storedUserData);
+        if (!storedUserData) {
+          console.log('📱 DashboardScreen: No stored user data found');
           return;
         }
-      }
 
-      // Fallback to stored user data
-      const storedUserData = await AsyncStorage.getItem('userData');
-      if (!storedUserData) {
-        return;
+        const parsedUserData = JSON.parse(storedUserData);
+        console.log('📱 DashboardScreen: Parsed user data:', parsedUserData);
+        console.log('📱 DashboardScreen: Setting userName to:', parsedUserData.name);
+        setUserName(parsedUserData.name);
+      } catch (fetchError) {
+        console.error('📱 DashboardScreen: Error fetching user data:', fetchError);
       }
+    };
 
-      const parsedUserData = JSON.parse(storedUserData);
-      setUserName(parsedUserData.name);
-    } catch (fetchError) {
-      console.error('Error fetching user data:', fetchError);
-    }
+    fetchUserData();
+  }, [getUserProfile]);
+
+  const handleMoodChange = (bgColor: string[], compBgColor: string[]) => {
+    // Fade animation for smooth background color transition
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 0.7,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+
+    setBackgroundColor(bgColor);
+    setComponentBgColor(compBgColor);
   };
 
   // Data for the FlatList
   const content = [
-    { id: 'header', component: 'header' },
-    { id: 'SuggestionBox', component: <SuggestionBox /> },
-    
-    { id: 'branch', component: <Branch /> },
-    { id: 'category', component: <Category /> },
-    { id: 'timetable', component: <TimeTable /> },
-    { id: 'news', component: <NewsComponent /> },
+    { id: 'moodSelector', component: <MoodSelector userName={userName} onMoodChange={handleMoodChange} /> },
+    { id: 'courses', component: <Courses bgColor={componentBgColor} /> },
+    { id: 'quizChallenge', component: <QuizChallenge bgColor={componentBgColor[0]} /> },
+    { id: 'SuggestionBox', component: <SuggestionBox bgColor={componentBgColor[0]} /> },
+    { id: 'timetable', component: <TimeTable bgColor={componentBgColor[0]} /> },
+    { id: 'news', component: <NewsComponent bgColor={componentBgColor[0]} /> },
   ];
 
   const renderItem = ({ item }: { item: { id: string; component: any } }) => {
-    if (item.component === 'header') {
-      return (
-        <View style={styles.header}>
-          <Text style={styles.headerText}>
-            Welcome, {userName || 'Loading...'}
-          </Text>
-          <TouchableOpacity onPress={() => navigate('Profile')}>
-            <Icon name="account-circle" size={30} color={Colors.primary_dark} />
-          </TouchableOpacity>
-        </View>
-      );
-    }
     return item.component;
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={backgroundColor}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.container}
+    >
       {/* Main Content */}
       <FlatList
         data={content}
@@ -130,7 +156,7 @@ const DashboardScreen = () => {
         </TouchableOpacity>
       </View>
       
-    </View>
+    </LinearGradient>
   );
 };
 
@@ -141,21 +167,9 @@ const styles = StyleSheet.create({
     borderBottomEndRadius: 30,
     borderBottomStartRadius: 30,
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: Colors.primary_dark,
-  },
   content: {
     flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingVertical: 20,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
   },
@@ -165,9 +179,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 30,
     paddingVertical: 15,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#d0d4dc',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderTopWidth: 0,
+    marginHorizontal: 10,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   navItem: {
     alignItems: 'center',
@@ -176,6 +196,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.primary_dark,
     marginTop: 5,
+    fontFamily: 'Inter-Medium',
   },
 });
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -14,6 +13,8 @@ import CustomText from '../../components/ui/CustomText';
 import { Colors } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { navigate } from '../../utils/Navigation';
+import { checkAuthStatus } from '@service/authUtils';
+import { BASE_URL } from '@service/config';
 
 const { width, height } = Dimensions.get('window');
 
@@ -223,12 +224,32 @@ const SplashScreen = () => {
     // Start all animations in sequence
     startAnimationSequence();
     
-    // Set a timeout to navigate after 4 seconds
-    const timer = setTimeout(() => {
-      navigate('LoginScreen');
-    }, 4000);
+    // Check authentication and navigate accordingly
+    const checkAuthAndNavigate = async () => {
+      try {
+        console.log('SplashScreen: Checking authentication status...');
+        const isAuthenticated = await checkAuthStatus(BASE_URL);
+        
+        // Wait for animations to complete (4 seconds)
+        setTimeout(() => {
+          if (isAuthenticated) {
+            console.log('SplashScreen: User is authenticated, navigating to dashboard');
+            navigate('DashboardScreen');
+          } else {
+            console.log('SplashScreen: User is not authenticated, navigating to introduction');
+            navigate('IntroductionScreen');
+          }
+        }, 4000);
+      } catch (error) {
+        console.error('SplashScreen: Error checking authentication:', error);
+        // On error, navigate to introduction screen
+        setTimeout(() => {
+          navigate('IntroductionScreen');
+        }, 4000);
+      }
+    };
     
-    return () => clearTimeout(timer);
+    checkAuthAndNavigate();
   }, [startAnimationSequence]);
   
   // Animation interpolations
@@ -391,7 +412,7 @@ const SplashScreen = () => {
           <CustomText 
             variant="h1" 
             size={RFValue(24)}
-            fontFamily="Okra-Bold"
+            fontFamily="Inter-Bold"
             style={styles.welcomeText}
           >
             Welcome to EduLearn
@@ -405,7 +426,7 @@ const SplashScreen = () => {
             <CustomText 
               variant="h3" 
               size={RFValue(16)}
-              fontFamily="Okra-Regular"
+              fontFamily="Inter-Regular"
               style={styles.subtitleText}
             >
               Learning Made Beautiful

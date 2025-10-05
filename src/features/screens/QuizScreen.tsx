@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     color: Colors.primary_dark,
     textAlign: 'center',
     marginBottom: RFValue(20),
-    fontFamily: 'Roboto',
+    fontFamily: 'Inter-Bold',
   },
   listContent: {
     paddingBottom: RFValue(20),
@@ -108,12 +108,12 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.primary_dark,
     marginBottom: RFValue(10),
-    fontFamily: 'Roboto',
+    fontFamily: 'Inter-SemiBold',
   },
   quizDescription: {
     fontSize: RFValue(14),
     color: Colors.secondary_dark,
-    fontFamily: 'Roboto',
+    fontFamily: 'Inter-Regular',
   },
   noQuizzesText: {
     fontSize: RFValue(16),

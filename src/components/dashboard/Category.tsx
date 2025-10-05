@@ -8,7 +8,11 @@ import Animated, { FadeIn, useSharedValue, useAnimatedStyle, withSpring } from '
 import LinearGradient from 'react-native-linear-gradient';
 import { BASE_URL } from '@service/config';
 
-const Category = () => {
+interface CategoryProps {
+  bgColor?: string;
+}
+
+const Category: React.FC<CategoryProps> = ({ bgColor = '#fff' }) => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [numColumns, setNumColumns] = useState(3);  // Initially set to 3 columns for 35% width.
@@ -79,7 +83,7 @@ const Category = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       <Text style={styles.headerText}>Categories For quizzes</Text>
       {loading ? (
         <ActivityIndicator size="large" color={Colors.primary_dark} />
@@ -100,7 +104,6 @@ const Category = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#fff',
     paddingHorizontal: RFValue(10),
   },
   headerText: {
@@ -109,6 +112,7 @@ const styles = StyleSheet.create({
     color: Colors.primary_dark,
     marginBottom: RFValue(15),
     textAlign: 'center',
+    fontFamily: 'Inter-Bold',
   },
   listContent: {
     // Optional styling for list content
@@ -151,6 +155,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: 'Black',
     textAlign: 'center',
+    fontFamily: 'Inter-Medium',
   },
 });
 

@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 24,
     fontWeight: 'bold',
+    fontFamily: 'Inter-Bold',
   },
 });
 

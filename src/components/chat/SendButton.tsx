@@ -14,6 +14,7 @@ import {
   Text,
   Alert,
   PermissionsAndroid,
+  Image,
 } from 'react-native';
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { RFValue } from 'react-native-responsive-fontsize';
@@ -29,16 +30,22 @@ import {
   selectCurrentChatId,
   updateAssistantMessage,
 } from '../../redux/reducers/chatSlice';
-import { PaperAirplaneIcon, MicrophoneIcon, StopIcon } from 'react-native-heroicons/solid';
+import { PaperAirplaneIcon, StopIcon } from 'react-native-heroicons/solid';
 import uuid from 'react-native-uuid';
 import axios from 'axios';
 import { Colors } from '@utils/Constants';
+
+// Import audio icon
+const audioIcon = require('../../assets/images/audio.png');
 import { InferenceClient } from '@huggingface/inference';
 import {
   HUGGING_API_KEY,
   STABLE_DIFFUSION_KEY,
   STABLE_DIFFUSION_URL,
 } from '../../redux/API';
+
+// Import Voice Recording Modal
+import VoiceRecordingModal from './VoiceRecordingModal';
 
 // Voice Recognition imports with safer loading
 let Voice: any = null;
@@ -116,6 +123,8 @@ interface SendButtonProps {
     id: string;
     isMessageRead: boolean;
   }>;
+  presetMessage?: string;
+  onMessageSent?: () => void;
 }
 
 const SendButton: React.FC<SendButtonProps> = ({
@@ -125,6 +134,8 @@ const SendButton: React.FC<SendButtonProps> = ({
   length,
   setHeightOfMessageBox,
   messages,
+  presetMessage,
+  onMessageSent,
 }) => {
   const dispatch = useDispatch();
   const chats = useSelector(selectChats) as Array<{ id: string }>;
@@ -137,14 +148,39 @@ const SendButton: React.FC<SendButtonProps> = ({
   // Voice-related states
   const [isListening, setIsListening] = useState<boolean>(false);
   const [recognizedText, setRecognizedText] = useState<string>('');
-  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [speechToTextResult, setSpeechToTextResult] = useState<string>('');
   const [isVoiceMode, setIsVoiceMode] = useState<boolean>(false);
   const [voiceAvailable, setVoiceAvailable] = useState<boolean>(false);
   const [hasPermissions, setHasPermissions] = useState<boolean>(false);
   const [voiceInitialized, setVoiceInitialized] = useState<boolean>(false);
+  
+  // Voice recording modal states
+  const [showVoiceModal, setShowVoiceModal] = useState<boolean>(false);
+  const [recordingDuration, setRecordingDuration] = useState<number>(0);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  // Track if current message is from voice input
+  const [isCurrentMessageFromVoice, setIsCurrentMessageFromVoice] = useState<boolean>(false);
+  
+  // Flag to prevent recovery when intentionally stopping
+  const isIntentionallyStoppingRef = useRef<boolean>(false);
 
   const client = new InferenceClient(HUGGING_API_KEY);
+
+  // Handle preset message from cards
+  useEffect(() => {
+    if (presetMessage && presetMessage.trim() !== '') {
+      setMessage(presetMessage);
+      // Focus on the text input
+      if (TextInputRef.current) {
+        TextInputRef.current.focus();
+      }
+      // Clear the preset message after setting
+      if (onMessageSent) {
+        onMessageSent();
+      }
+    }
+  }, [presetMessage, onMessageSent]);
 
   // Initialize modules once
   useEffect(() => {
@@ -243,13 +279,6 @@ const SendButton: React.FC<SendButtonProps> = ({
         if (typeof Tts.setDefaultPitch === 'function') {
           await Tts.setDefaultPitch(1.0);
         }
-
-        // Set up event listeners
-        if (typeof Tts.addEventListener === 'function') {
-          Tts.addEventListener('tts-start', () => setIsSpeaking(true));
-          Tts.addEventListener('tts-finish', () => setIsSpeaking(false));
-          Tts.addEventListener('tts-cancel', () => setIsSpeaking(false));
-        }
         
         console.log('TTS initialized successfully');
       } catch (error) {
@@ -285,26 +314,44 @@ const SendButton: React.FC<SendButtonProps> = ({
   const onSpeechEnd = useCallback((e: any) => {
     console.log('Speech recognition ended', e);
     setIsListening(false);
+    
+    // Set flag to ignore subsequent errors from the ending session
+    isIntentionallyStoppingRef.current = true;
+    setTimeout(() => {
+      isIntentionallyStoppingRef.current = false;
+    }, 1000);
   }, []);
 
   const onSpeechError = useCallback((e: any) => {
     console.log('Speech recognition error:', e);
-    setIsListening(false);
-    setIsVoiceMode(false);
     
     const errorCode = e?.error?.code || e?.code || '';
     const errorMessage = e?.error?.message || e?.message || '';
     
+    // If we're intentionally stopping, ignore all errors
+    if (isIntentionallyStoppingRef.current) {
+      console.log('Ignoring error during intentional stop:', errorCode);
+      return;
+    }
+    
+    setIsListening(false);
+    setIsVoiceMode(false);
+    setShowVoiceModal(false);
+    
+    // Clear recording timer
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    
     // Handle specific error codes
     switch (errorCode) {
       case '7': // ERROR_NO_MATCH
-        Alert.alert('No Speech Detected', 'Please try speaking again.');
-        break;
       case '6': // ERROR_SPEECH_TIMEOUT
-        Alert.alert('Speech Timeout', 'No speech was detected. Please try again.');
-        break;
+      case '11': // Didn't understand
       case '5': // ERROR_CLIENT
-        Alert.alert('Client Error', 'Please restart the app and try again.');
+        // Just stop silently, don't show alerts or try to recover
+        console.log(`Error ${errorCode}: Stopping silently`);
         break;
       case '4': // ERROR_SERVER
         Alert.alert('Server Error', 'Please check your internet connection.');
@@ -338,6 +385,23 @@ const SendButton: React.FC<SendButtonProps> = ({
       setMessage(result);
       setIsTyping(!!result);
       setIsVoiceMode(false);
+      setIsListening(false);
+      setShowVoiceModal(false); // Close the modal when we get results
+      setIsCurrentMessageFromVoice(true); // Mark that this message came from voice
+      
+      // Clear recording timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      // Set flag to ignore subsequent errors
+      isIntentionallyStoppingRef.current = true;
+      setTimeout(() => {
+        isIntentionallyStoppingRef.current = false;
+      }, 1000);
+      
+      // REMOVED: Auto-send functionality - user will manually send
     }
   }, []);
 
@@ -435,6 +499,13 @@ const SendButton: React.FC<SendButtonProps> = ({
 
     return () => {
       clearTimeout(timer);
+      
+      // Clear recording timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
       if (Voice && voiceInitialized) {
         try {
           // Clean up event handlers
@@ -507,11 +578,24 @@ const SendButton: React.FC<SendButtonProps> = ({
       // Wait a bit before starting
       await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Reset flag before starting new session
+      isIntentionallyStoppingRef.current = false;
+
       // Reset states
       setIsVoiceMode(true);
       setRecognizedText('');
       setSpeechToTextResult('');
       setMessage('');
+      setRecordingDuration(0);
+      setShowVoiceModal(true);
+      
+      // Start recording timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
       
       // Start voice recognition with proper locale
       const locale = Platform.OS === 'ios' ? 'en-US' : 'en-US';
@@ -543,6 +627,13 @@ const SendButton: React.FC<SendButtonProps> = ({
       console.error('Error starting voice recognition:', error);
       setIsVoiceMode(false);
       setIsListening(false);
+      setShowVoiceModal(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
       
       const errorMessage = error?.message || '';
       
@@ -569,9 +660,19 @@ const SendButton: React.FC<SendButtonProps> = ({
 
   // Stop Voice Recognition
   const stopListening = async () => {
+    // Set flag to ignore errors during stop
+    isIntentionallyStoppingRef.current = true;
+    
     if (!Voice) {
       setIsVoiceMode(false);
       setIsListening(false);
+      setShowVoiceModal(false);
+      
+      // Reset flag after a delay
+      setTimeout(() => {
+        isIntentionallyStoppingRef.current = false;
+      }, 1000);
+      
       return;
     }
 
@@ -582,10 +683,35 @@ const SendButton: React.FC<SendButtonProps> = ({
       }
       setIsVoiceMode(false);
       setIsListening(false);
+      setShowVoiceModal(false);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      // Reset flag after a delay to allow for any delayed error events
+      setTimeout(() => {
+        isIntentionallyStoppingRef.current = false;
+      }, 1000);
+      
     } catch (error) {
       console.error('Error stopping voice recognition:', error);
       setIsVoiceMode(false);
       setIsListening(false);
+      setShowVoiceModal(false);
+      
+      // Reset flag
+      setTimeout(() => {
+        isIntentionallyStoppingRef.current = false;
+      }, 1000);
+      
+      // Clear timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
     }
   };
 
@@ -614,19 +740,6 @@ const SendButton: React.FC<SendButtonProps> = ({
       }
     } catch (error) {
       console.error('TTS Error:', error);
-    }
-  };
-
-  // Stop current speech
-  const stopSpeaking = async () => {
-    if (!Tts || typeof Tts.stop !== 'function') {
-      return;
-    }
-
-    try {
-      await Tts.stop();
-    } catch (error) {
-      console.error('Error stopping TTS:', error);
     }
   };
 
@@ -687,6 +800,7 @@ const SendButton: React.FC<SendButtonProps> = ({
           role: 'user',
           id: uuid.v4() as string,
           isMessageRead: false,
+          isVoiceMessage: isCurrentMessageFromVoice, // Add voice flag
         },
       })
     );
@@ -700,6 +814,7 @@ const SendButton: React.FC<SendButtonProps> = ({
       role: 'user',
       id: length + 1,
       isMessageRead: false,
+      isVoiceMessage: isCurrentMessageFromVoice, // Add voice flag
     };
 
     if (!identifyImageApi(message)) {
@@ -714,6 +829,9 @@ const SendButton: React.FC<SendButtonProps> = ({
         messageId: length + 1,
       })
     );
+    
+    // Reset voice flag after sending
+    setIsCurrentMessageFromVoice(false);
   };
 
   const fetchResponse = async (
@@ -723,6 +841,7 @@ const SendButton: React.FC<SendButtonProps> = ({
       role: string;
       id: number;
       isMessageRead: boolean;
+      isVoiceMessage?: boolean;
     },
     selectedChatId: string
   ) => {
@@ -732,10 +851,11 @@ const SendButton: React.FC<SendButtonProps> = ({
       addAssistantMessage({
         chatId: selectedChatId,
         message: {
-          content: 'loading ...',
+          content: '',
           time: mes.time,
           role: 'assistant',
           id: id.toString(),
+          isLoading: true,
         },
       })
     );
@@ -760,13 +880,14 @@ const SendButton: React.FC<SendButtonProps> = ({
             time: new Date().toString(),
             role: 'assistant',
             id: id.toString(),
+            isVoiceMessage: mes.isVoiceMessage, // Mark assistant response as voice if user sent via voice
           },
           messageId: id.toString(),
         })
       );
 
       // Speak the AI response if it was a voice message
-      if (speechToTextResult.length > 0) {
+      if (mes.isVoiceMessage || speechToTextResult.length > 0) {
         await speakText(content);
         setSpeechToTextResult(''); // Reset after speaking
       }
@@ -783,13 +904,14 @@ const SendButton: React.FC<SendButtonProps> = ({
             time: new Date().toString(),
             role: 'assistant',
             id: id.toString(),
+            isVoiceMessage: mes.isVoiceMessage, // Mark error message as voice too if original was voice
           },
           messageId: id.toString(),
         })
       );
 
       // Speak error message if it was a voice message
-      if (speechToTextResult.length > 0) {
+      if (mes.isVoiceMessage || speechToTextResult.length > 0) {
         await speakText(errorMessage);
         setSpeechToTextResult('');
       }
@@ -812,10 +934,11 @@ const SendButton: React.FC<SendButtonProps> = ({
       addAssistantMessage({
         chatId: selectedChatId,
         message: {
-          content: 'loading ...',
+          content: '',
           time: mes.time,
           role: 'assistant',
           id: id.toString(),
+          isLoading: true,
         },
       })
     );
@@ -900,6 +1023,15 @@ const SendButton: React.FC<SendButtonProps> = ({
         },
       ]}
     >
+      {/* Voice Recording Modal */}
+      <VoiceRecordingModal
+        isVisible={showVoiceModal}
+        onClose={stopListening}
+        isListening={isListening}
+        recognizedText={recognizedText}
+        recordingDuration={recordingDuration}
+      />
+
       {/* Voice Mode Indicator */}
       {isVoiceMode && (
         <View style={styles.voiceIndicator}>
@@ -909,16 +1041,6 @@ const SendButton: React.FC<SendButtonProps> = ({
           {recognizedText.length > 0 && (
             <Text style={styles.recognizedText}>"{recognizedText}"</Text>
           )}
-        </View>
-      )}
-
-      {/* Speaking Indicator */}
-      {isSpeaking && (
-        <View style={styles.speakingIndicator}>
-          <Text style={styles.speakingText}>🔊 Speaking...</Text>
-          <TouchableOpacity onPress={stopSpeaking} style={styles.stopSpeakingButton}>
-            <Text style={styles.stopSpeakingText}>Stop</Text>
-          </TouchableOpacity>
         </View>
       )}
 
@@ -951,7 +1073,11 @@ const SendButton: React.FC<SendButtonProps> = ({
             {isListening ? (
               <StopIcon color="#fff" size={20} />
             ) : (
-              <MicrophoneIcon color="#fff" size={20} />
+              <Image
+                source={audioIcon}
+                style={styles.audioIcon}
+                resizeMode="contain"
+              />
             )}
           </TouchableOpacity>
         )}
@@ -1028,12 +1154,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: RFValue(14),
     color: '#000',
+    fontFamily: 'Inter-Regular',
   },
   voiceModeTextInput: {
     color: '#666',
   },
   voiceButton: {
-    backgroundColor: '#ff6b6b',
+    backgroundColor: '#3B82F6',
     borderRadius: 25,
     height: 50,
     width: 50,
@@ -1043,10 +1170,10 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   voiceButtonActive: {
-    backgroundColor: '#ff4757',
+    backgroundColor: '#2563EB',
   },
   voiceButtonListening: {
-    backgroundColor: '#ff3742',
+    backgroundColor: '#1d4ed8',
   },
   sendButtonWrapper: {
     justifyContent: 'center',
@@ -1074,6 +1201,7 @@ const styles = StyleSheet.create({
     color: '#22c063',
     fontWeight: 'bold',
     textAlign: 'center',
+    fontFamily: 'Inter-SemiBold',
   },
   recognizedText: {
     fontSize: RFValue(11),
@@ -1081,33 +1209,11 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginTop: 5,
+    fontFamily: 'Inter-Regular',
   },
-  speakingIndicator: {
-    backgroundColor: '#e8f4fd',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#3498db',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  speakingText: {
-    fontSize: RFValue(12),
-    color: '#3498db',
-    fontWeight: 'bold',
-  },
-  stopSpeakingButton: {
-    backgroundColor: '#e74c3c',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 5,
-  },
-  stopSpeakingText: {
-    color: '#fff',
-    fontSize: RFValue(10),
-    fontWeight: 'bold',
+  audioIcon: {
+    width: 24,
+    height: 24,
   },
 });
 

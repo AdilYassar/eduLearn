@@ -146,7 +146,8 @@ const styles = StyleSheet.create({
   },
   touchable:{
     fontSize:RFValue(12),
-    color:'white'
+    color:'white',
+    fontFamily: 'Inter-Regular',
   },
   touchableItem:{
     backgroundColor:'rgba(0,0,0,3)',

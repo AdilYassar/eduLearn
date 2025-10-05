@@ -1,5 +1,5 @@
 module.exports = {
-    assets: ['./assets/fonts'], // Path to your assets folder (e.g., fonts or other custom assets)
+    assets: ['./src/assets/fonts'], // Path to your assets folder
 
     getTransformModulePath() {
       return require.resolve('react-native-typescript-transformer');
@@ -7,8 +7,6 @@ module.exports = {
     getSourceExts() {
       return ['js', 'jsx', 'ts', 'tsx', 'json', 'svg'];
     },
-
-
   };
 
   

@@ -14,7 +14,7 @@ import { navigate } from '../../utils/Navigation';
 import { useAuth } from '@service/hooks/useAuth';
 import { Colors } from '@utils/Constants';
 import { BASE_URL } from '@service/config';
-import { checkAuthStatus, saveAuthData } from '@service/authUtils';
+import { saveAuthData } from '@service/authUtils';
 
 const LoginScreen = () => {
   const [isLogin, setIsLogin] = useState(true); // Toggle between login and register
@@ -27,24 +27,8 @@ const LoginScreen = () => {
   const { loginStudent, registerStudent, loading, error } = useAuth();
 
   useEffect(() => {
-    checkExistingUser();
+    // Removed authentication check - now handled in SplashScreen
   }, []);
-
-  const checkExistingUser = async () => {
-    try {
-      console.log('LoginScreen: Checking authentication status...');
-      const isAuthenticated = await checkAuthStatus(BASE_URL);
-      
-      if (isAuthenticated) {
-        console.log('LoginScreen: User is authenticated, navigating to dashboard');
-        navigate('DashboardScreen');
-      } else {
-        console.log('LoginScreen: User is not authenticated, staying on login screen');
-      }
-    } catch (authError) {
-      console.error('LoginScreen: Error checking authentication status:', authError);
-    }
-  };
 
   const validateLoginFields = () => {
     if (!email || !password) {

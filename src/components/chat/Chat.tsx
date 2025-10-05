@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { View, Dimensions, StyleProp, ViewStyle, ListRenderItem } from 'react-native';
+import { View, Dimensions, StyleSheet } from 'react-native';
 import React from 'react';
 import useKeyboardOffsetHeight from '../../helpers/useKeyboardOffsetHeight';
 import getMessageHeightOffset from '../../helpers/useKeyboardOffsetHeight';
 import { FlashList } from '@shopify/flash-list';
 import MessageBubble from './MessageBubble';
-import EmptyComponent from './EmptyComponent';
+import DashboardEmptyState from './DashboardEmptyState';
 
 const windowHeight = Dimensions.get('window').height;
 
@@ -22,35 +22,46 @@ interface ChatProps {
   isTyping: boolean;
   messages: Message[];
   heightOfMessageBox: number;
+  userName?: string;
+  onCardPress?: (text: string) => void;
 }
 
-const Chat: React.FC<ChatProps> = ({ isTyping, messages, heightOfMessageBox }) => {
+const Chat: React.FC<ChatProps> = ({ isTyping, messages, heightOfMessageBox, userName, onCardPress }) => {
   const keyboardOffsetHeight = useKeyboardOffsetHeight();
 
-  const renderMessageBubble: ListRenderItem<Message> = ({ item, index }) => {
+  const renderMessageBubble = ({ item, index }: { item: Message; index: number }) => {
     return <MessageBubble message={item} />;
   };
 
   // Calculate chat list height with padding for better layout
-  const calculatedHeight = windowHeight * 0.76 * keyboardOffsetHeight - 0.95 - getMessageHeightOffset(heightOfMessageBox || 0, windowHeight);
+  const calculatedHeight = windowHeight * 0.76 * keyboardOffsetHeight - 0.95 - getMessageHeightOffset();
   const listHeight = calculatedHeight > 0 ? calculatedHeight : windowHeight * 0.6;
 
   return (
-    <View style={{ height: listHeight, flex: 1 }}>
+    <View style={styles.container}>
       {messages?.length === 0 ? (
-        <EmptyComponent isTyping={isTyping} /> // Now isTyping is defined
+        <DashboardEmptyState isTyping={isTyping} userName={userName} onCardPress={onCardPress} />
       ) : (
-        <FlashList 
-          indicatorStyle="black" 
+        <FlashList
+          indicatorStyle="black"
           data={[...messages].reverse()}
           inverted
           estimatedItemSize={40}
           renderItem={renderMessageBubble}
-          contentContainerStyle={{ paddingTop: 20 }} // Add top padding to start messages lower
+          contentContainerStyle={styles.listContent}
         />
       )}
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  listContent: {
+    paddingTop: 20,
+  },
+});
 
 export default Chat;

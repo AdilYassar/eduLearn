@@ -1,0 +1,61 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "src/assets/fonts/Inter-Bold.ttf",
+      "sha1": "9461e7c083137c2abe6d198f784fb0d341a527a1"
+    },
+    {
+      "path": "src/assets/fonts/Inter-Medium.ttf",
+      "sha1": "c1d25d8c10adb45a970e71c387bbd6380f10992d"
+    },
+    {
+      "path": "src/assets/fonts/Inter-Regular.ttf",
+      "sha1": "6e3430f906a4b42b4b63fd8f33e498a43d9f8d84"
+    },
+    {
+      "path": "src/assets/fonts/Inter-SemiBold.ttf",
+      "sha1": "b4bdaf6bdd6a479b46c452a7bbae13f5cb2079bf"
+    },
+    {
+      "path": "src/assets/fonts/Okra-Bold.ttf",
+      "sha1": "fef01f34e3de57171aaef4d21430736a97a57e83"
+    },
+    {
+      "path": "src/assets/fonts/Okra-ExtraBold.ttf",
+      "sha1": "adb4b210b7bd6d118afc77ab7267aa6eb5af2477"
+    },
+    {
+      "path": "src/assets/fonts/Okra-Medium.ttf",
+      "sha1": "08cb46edd036cd9c7d5fb56ee346bf41cc75d26e"
+    },
+    {
+      "path": "src/assets/fonts/Okra-MediumLight.ttf",
+      "sha1": "aceb493dbf84ad53714a4ea5145b3258bc78907d"
+    },
+    {
+      "path": "src/assets/fonts/Okra-Regular.ttf",
+      "sha1": "add9f3d25f9629e6b375eb5cf4f33d5c3554d75c"
+    },
+    {
+      "path": "src/assets/fonts/Satoshi-Black.otf",
+      "sha1": "d92baad4dab9ca55bc72f1a8a0a6de72829e709f"
+    },
+    {
+      "path": "src/assets/fonts/Satoshi-Bold.otf",
+      "sha1": "57a9e1c24984708865f7d0c31a03773912fb975f"
+    },
+    {
+      "path": "src/assets/fonts/Satoshi-Light.otf",
+      "sha1": "3b1b977f00db442bdf30f63603112e6e251b7dda"
+    },
+    {
+      "path": "src/assets/fonts/Satoshi-Medium.otf",
+      "sha1": "704faccb5fff19f25c0b914d42d135ab75794a24"
+    },
+    {
+      "path": "src/assets/fonts/Satoshi-Regular.otf",
+      "sha1": "7dcb59994f2bee1a4ef1f6c079ba0e99b409878b"
+    }
+  ]
+}

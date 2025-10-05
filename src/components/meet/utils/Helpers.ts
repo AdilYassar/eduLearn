@@ -117,7 +117,34 @@ export const requestMicrophonePermission = async (): Promise<boolean> => {
 };
 
 export const peerConstraints = {
-  iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+  iceServers: [
+    // Google STUN servers (for NAT traversal)
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    
+    // Metered.ca TURN servers (for restrictive firewalls/NATs)
+    {
+      urls: 'turn:a.relay.metered.ca:80',
+      username: '9596e1fb42dde4f3f7efce7d',
+      credential: 'v4hkX3Mmo/vV9NeI',
+    },
+    {
+      urls: 'turn:a.relay.metered.ca:80?transport=tcp',
+      username: '9596e1fb42dde4f3f7efce7d',
+      credential: 'v4hkX3Mmo/vV9NeI',
+    },
+    {
+      urls: 'turn:a.relay.metered.ca:443',
+      username: '9596e1fb42dde4f3f7efce7d',
+      credential: 'v4hkX3Mmo/vV9NeI',
+    },
+    {
+      urls: 'turns:a.relay.metered.ca:443?transport=tcp',
+      username: '9596e1fb42dde4f3f7efce7d',
+      credential: 'v4hkX3Mmo/vV9NeI',
+    },
+  ],
 };
 
 export const sessionConstraints = {

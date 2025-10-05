@@ -91,7 +91,7 @@ dependencies {
     implementation("com.facebook.react:react-android") {
         exclude group: 'com.android.support'
     }
-    
+
     // Force AndroidX AppCompat
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
@@ -110,17 +110,7 @@ dependencies {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+This below is debug gradle 
 
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
@@ -184,8 +174,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        
-        // Enable multidex for large apps
+
+    // Enable multidex for large apps
         multiDexEnabled true
     }
 
@@ -228,7 +218,7 @@ android {
             zipAlignEnabled true
         }
     }
-    
+
     // Enable APK splitting for different architectures
     splits {
         abi {
@@ -244,11 +234,11 @@ dependencies {
     implementation("com.facebook.react:react-android") {
         exclude group: 'com.android.support'
     }
-    
+
     // Force AndroidX AppCompat
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
-    
+
     // Add multidex support
     implementation 'androidx.multidex:multidex:2.0.1'
 

@@ -35,7 +35,11 @@ interface NewsResponse {
   articles: NewsArticle[];
 }
 
-const NewsComponent: React.FC = () => {
+interface NewsComponentProps {
+  bgColor?: string;
+}
+
+const NewsComponent: React.FC<NewsComponentProps> = ({ bgColor = '#fff' }) => {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -219,7 +223,7 @@ const NewsComponent: React.FC = () => {
         <CustomText
           variant="h6"
           weight="semibold"
-          color={Colors.text}
+          color="#1a1a1a"
           numberOfLines={3}
           style={styles.horizontalTitleText}
         >
@@ -230,7 +234,7 @@ const NewsComponent: React.FC = () => {
           <CustomText
             variant="body"
             weight="regular"
-            color={Colors.text_light}
+            color="#2C3E50"
             numberOfLines={4}
             style={styles.horizontalDescriptionText}
           >
@@ -242,7 +246,7 @@ const NewsComponent: React.FC = () => {
           <CustomText
             variant="caption"
             weight="regular"
-            color={Colors.disabled}
+            color="#555555"
             style={styles.timeText}
           >
             {formatTimeAgo(item.publishedAt)}
@@ -251,7 +255,7 @@ const NewsComponent: React.FC = () => {
             <CustomText
               variant="caption"
               weight="regular"
-              color={Colors.disabled}
+              color="#555555"
               style={styles.horizontalSourceText}
               numberOfLines={1}
             >
@@ -268,7 +272,7 @@ const NewsComponent: React.FC = () => {
       <CustomText
         variant="h4"
         weight="bold"
-        color={Colors.text}
+        color="#1a1a1a"
         style={styles.headerTitle}
       >
         Tech News & Trends
@@ -276,7 +280,7 @@ const NewsComponent: React.FC = () => {
       <CustomText
         variant="body"
         weight="regular"
-        color={Colors.text_light}
+        color="#2C3E50"
         style={styles.headerSubtitle}
       >
         Latest technology news and modern trends
@@ -329,7 +333,7 @@ const NewsComponent: React.FC = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: bgColor }]}>
       {renderHeader()}
       <FlatList
         data={filteredArticles}
@@ -355,8 +359,6 @@ const NewsComponent: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-   
   },
   loadingContainer: {
     flex: 1,
@@ -382,21 +384,13 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   newsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 16,
     marginBottom: 16,
+    marginHorizontal: 16,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
     borderWidth: 1,
-    borderColor: Colors.border,
-
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   cardContent: {
     flexDirection: 'row',
@@ -456,15 +450,17 @@ const styles = StyleSheet.create({
     marginRight: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.primary,
-    backgroundColor: 'transparent',
+    borderColor: 'rgba(255, 255, 255, 0.4)',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   filterButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.6)',
   },
   filterText: {
     fontSize: RFValue(12),
+    color: '#1a1a1a',
+    fontWeight: '600',
   },
   // Horizontal layout styles
   horizontalList: {
@@ -476,23 +472,15 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   horizontalNewsCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 16,
     marginRight: 16,
     marginBottom: 16,
     width: screenWidth * 0.75,
     height: screenWidth * 0.85,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.4)',
   },
   horizontalImageContainer: {
     width: '100%',

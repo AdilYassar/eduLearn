@@ -281,14 +281,14 @@ const styles = StyleSheet.create({
     color: '#2C3E50',
     marginBottom: 6,
     textAlign: 'center',
-    fontFamily: 'HelveticaNeue-Bold',
+    fontFamily: 'Inter-Bold',
   },
   description: {
     fontSize: 16,
     color: '#7F8C8D',
     textAlign: 'center',
     lineHeight: 20,
-    fontFamily: 'HelveticaNeue',
+    fontFamily: 'Inter-Regular',
   },
   chapterTitle: {
     fontSize: 22,
