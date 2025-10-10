@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import { useUserStore } from '../../service/userStore';
 import InquiryModal from './InquiryModal';
@@ -7,7 +7,8 @@ import { Colors } from '../../utils/Constants';
 import { CircleUser, Menu } from 'lucide-react-native';
 import { headerStyles } from '../../styles/headerStyles';
 import { navigate } from '../../navigation/NavigationUtil';
-import {SafeAreaView} from 'react-native-safe-area-context'
+import {SafeAreaView} from 'react-native-safe-area-context';
+
 const HomeHeader = () => {
   const [visible, setVisible] = useState(false);
   const { user } = useUserStore();
@@ -20,7 +21,7 @@ const HomeHeader = () => {
       }
     };
     checkUserName();
-  }, []);
+  }, [user?.name]);
 
   const handleNavigation = () => {
     const storedName = user?.name;
@@ -46,11 +47,19 @@ const HomeHeader = () => {
           </Text>
         </TouchableOpacity>
 
-        <CircleUser
-          size={RFValue(20)}
-          color={Colors.text}
-          onPress={() => setVisible(true)}
-        />
+        <TouchableOpacity onPress={() => setVisible(true)}>
+          {user?.photo ? (
+            <Image
+              source={{ uri: user.photo }}
+              style={headerStyles.avatarIcon}
+            />
+          ) : (
+            <CircleUser
+              size={RFValue(20)}
+              color={Colors.text}
+            />
+          )}
+        </TouchableOpacity>
       </View>
       <InquiryModal onClose={() => setVisible(false)} visible={visible} />
     </>

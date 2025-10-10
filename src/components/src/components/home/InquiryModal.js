@@ -1,9 +1,10 @@
-import { View, Text, Alert, Modal, TouchableOpacity, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, ScrollView, Platform, TextInput } from 'react-native'
+import { View, Text, Alert, Modal, TouchableOpacity, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, ScrollView, Platform, TextInput, Image } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { useUserStore } from '../../service/userStore'
 import {inquiryStyles} from '../../styles/inquiryStyles'
 import { v4 as uuidv4 } from 'uuid';
 import 'react-native-get-random-values'
+import { AVATAR_OPTIONS, getDefaultAvatarUrl } from '../../../../utils/AvatarConstants';
 
 
 const InquiryModal = ({visible,onClose}) => {
@@ -17,13 +18,13 @@ const InquiryModal = ({visible,onClose}) => {
         const storedName = user?.name;
         const storedProfilePhotoUrl = user?.photo;
         setName(storedName || '');
-        setProfilePhotoUrl(storedProfilePhotoUrl || '');
-
-        
-
-    }
+        setProfilePhotoUrl(storedProfilePhotoUrl || getDefaultAvatarUrl());
+        }
     }, [visible, user?.name, user?.photo]);
 
+    const handleAvatarSelect = (avatarUrl) => {
+        setProfilePhotoUrl(avatarUrl);
+    };
 
     const handleSave = () => {
         if(name && profilePhotoUrl){
@@ -36,7 +37,7 @@ const InquiryModal = ({visible,onClose}) => {
         
         }
         else{
-            Alert.alert('Error','Please enter both name and profile photo URL.');
+            Alert.alert('Error','Please enter your name and select an avatar.');
         }
     
     }
@@ -64,37 +65,54 @@ const InquiryModal = ({visible,onClose}) => {
     >
         <View style = {inquiryStyles.modalContent}>
         <Text style={inquiryStyles.title}>Enter Your Details</Text>
+        <Text style={inquiryStyles.label}>Your Name:</Text>
         <TextInput
         style={inquiryStyles.input}
-        placeholder='Your Name'
+        placeholder="Enter your full name"
         value={name}
-        placeholderTextColor={'#888'}
+        placeholderTextColor={'#000'}
         onChangeText={setName}
 
          />
-         <TextInput
-        style={inquiryStyles.input}
-        placeholder='Please add a URL of your photo'
-        value={profilePhotoUrl}
-        placeholderTextColor={'#888'}
-        onChangeText={setProfilePhotoUrl}
-         />
-        <View style={inquiryStyles.buttonContainer}>
-            <TouchableOpacity style={inquiryStyles.button} onPress={handleSave}>
-                <Text style={inquiryStyles.buttonText}>
-                    Save
-                </Text>
-            </TouchableOpacity>
-                   <TouchableOpacity style={[inquiryStyles.button, inquiryStyles.cancelButton]} onPress={onClose}>
-                <Text style={inquiryStyles.buttonText}>
-                    Cancel
-                </Text>
-            </TouchableOpacity>
-        </View>
-
-
+         <Text style={inquiryStyles.label}>Select Your Avatar:</Text>
+         <View style={inquiryStyles.avatarGrid}>
+             {AVATAR_OPTIONS.map((avatarUrl, index) => (
+                 <TouchableOpacity
+                     key={index}
+                     style={[
+                         inquiryStyles.avatarOption,
+                         profilePhotoUrl === avatarUrl && inquiryStyles.selectedAvatar,
+                     ]}
+                     onPress={() => handleAvatarSelect(avatarUrl)}
+                 >
+                     <Image
+                         source={{ uri: avatarUrl }}
+                         style={inquiryStyles.avatarImage}
+                     />
+                     {profilePhotoUrl === avatarUrl && (
+                         <View style={inquiryStyles.checkmark}>
+                             <Text style={inquiryStyles.checkmarkText}>✓</Text>
+                         </View>
+                     )}
+                 </TouchableOpacity>
+             ))}
+         </View>
         </View>
     </ScrollView>
+    
+    {/* Fixed buttons at the bottom */}
+    <View style={inquiryStyles.fixedButtonContainer}>
+        <TouchableOpacity style={inquiryStyles.button} onPress={handleSave}>
+            <Text style={inquiryStyles.buttonText}>
+                Save
+            </Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[inquiryStyles.button, inquiryStyles.cancelButton]} onPress={onClose}>
+            <Text style={inquiryStyles.cancelButtonText}>
+                Cancel
+            </Text>
+        </TouchableOpacity>
+    </View>
 
     </KeyboardAvoidingView>
     </View>
@@ -103,7 +121,7 @@ const InquiryModal = ({visible,onClose}) => {
    
 
     </Modal>
-  )
-}
+  );
+};
 
-export default InquiryModal
+export default InquiryModal;

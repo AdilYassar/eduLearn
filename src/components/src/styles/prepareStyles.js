@@ -248,4 +248,19 @@ export const prepareStyles = StyleSheet.create({
     color: '#FFFFFF',
     fontFamily: 'Roboto-Bold',
   },
+  userPhoto: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 3,
+    borderColor: '#007AFF',
+    shadowColor: '#007AFF',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
 });

@@ -43,7 +43,11 @@ const LiveMeetScreen = () => {
     </View>
 
 
-    <MeetFooter toggleMic={toggleMic} toggleVideo={toggleVideo} />
+    <MeetFooter 
+      toggleMic={toggleMic} 
+      toggleVideo={toggleVideo} 
+      participants={participants}
+    />
     </View>
   )
 }

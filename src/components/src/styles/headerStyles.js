@@ -25,5 +25,12 @@ export const headerStyles = StyleSheet.create({
     textContainer: {
       width: '80%',
     },
+    avatarIcon: {
+      width: RFValue(20),
+      height: RFValue(20),
+      borderRadius: RFValue(10),
+      borderWidth: 1,
+      borderColor: Colors.text,
+    },
   });
   

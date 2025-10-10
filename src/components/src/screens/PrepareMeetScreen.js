@@ -33,6 +33,7 @@ import { joinStyles } from '../styles/joinStyles';
 import { replace } from '../../../utils/Navigation';
 import { useLegalModals } from '../hooks/useLegalModals';
 import LegalModal from '../components/ui/LegalModal';
+import ShareModal from '../../ui/ShareModal';
 import { 
   PrivacyPolicyContent, 
   TermsOfServiceContent, 
@@ -45,6 +46,7 @@ const PrepareMeetScreen = () => {
   const { user } = useUserStore();
   const [localStream, setLocalStream] = useState(null);
   const [participants, setParticipants] = useState([]);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
   
   // Legal modals hook
   const {
@@ -224,11 +226,18 @@ const PrepareMeetScreen = () => {
               />
             ) : (
               <View style={prepareStyles.avatarContainer}>
-                <View style={prepareStyles.avatar}>
-                  <Text style={prepareStyles.avatarText}>
-                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </Text>
-                </View>
+                {user?.photo ? (
+                  <Image 
+                    source={{ uri: user.photo }} 
+                    style={prepareStyles.userPhoto}
+                  />
+                ) : (
+                  <View style={prepareStyles.avatar}>
+                    <Text style={prepareStyles.avatarText}>
+                      {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </Text>
+                  </View>
+                )}
               </View>
             )}
             <View style={prepareStyles.toggleContainer}>
@@ -285,7 +294,9 @@ const PrepareMeetScreen = () => {
           <View style={prepareStyles.flexRowBetween}>
             <Info size={RFValue(18)} color={'#000'} />
             <Text style={joinStyles.Info}>Meeting ID: {addHyphens(sessionId)}</Text>
-            <Share size={RFValue(18)} color={'#000'} />
+            <TouchableOpacity onPress={() => setShareModalVisible(true)}>
+              <Share size={RFValue(18)} color={'#000'} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -355,6 +366,16 @@ const PrepareMeetScreen = () => {
         title="Data Processing Agreement"
         content={<DataProcessingContent />}
         onAccept={closeDataProcessingModal}
+      />
+      
+      <ShareModal
+        visible={shareModalVisible}
+        onClose={() => setShareModalVisible(false)}
+        meetingData={{
+          meetingId: sessionId,
+          meetingLink: `https://eduLearn.edu/join/${sessionId}`,
+          startTime: new Date().toLocaleTimeString()
+        }}
       />
     </View>
   );
