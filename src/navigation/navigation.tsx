@@ -26,11 +26,7 @@ import QuizStart from '../features/screens/QuizStart';
 import QuizQuestions from '../features/screens/QuizQuestions';
 import MetaAi from '../features/screens/MetaAi';
 import Ai from '../features/screens/Ai';
-import HomeScreen from '../components/meet/screens/HomeScreen';
-import JoinCallScreen from '../components/meet/screens/JoinCallScreen';
-import LiveCallScreen from '../components/meet/screens/LiveCallScreen';
-import PrepareCallScreen from '../components/meet/screens/PrepareCallScreen';
-import { WSProvider } from '@components/meet/components/serviceComponent/api/WSProvider';
+
 import PodcastLoginScreen from '@components/Podcasts/features/auth/PodcastLoginScreen';
 import PodcastSplashScreen from '@components/Podcasts/features/auth/PodcastSplashScreen';
 import PodcastRegisterScreen from '@components/Podcasts/features/auth/PodcastRegisterScreen';
@@ -38,6 +34,11 @@ import PodcastHomeScreen from '@components/Podcasts/features/home/PodcastHomeScr
 import PodcastSearchScreen from '@components/Podcasts/features/search/PodcastSearchScreen';
 import PodcastFavouriteScreen from '@components/Podcasts/features/favourite/PodcastFavouriteScreen';
 import UserBottomTab from '@components/Podcasts/features/tabs/UserBottomTab';
+import { WSProvider } from '@components/src/service/api/WSProvider';
+import HomeScreen from '@components/src/screens/HomeScreen';
+import PrepareMeetScreen from '@components/src/screens/PrepareMeetScreen';
+import LiveMeetScreen from '@components/src/screens/LiveMeetScreen';
+import JoinMeetScreen from '@components/src/screens/JoinMeetScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -62,10 +63,6 @@ const Navigation: FC = () => {
                 <Stack.Screen name="QuizQuestions" component={QuizQuestions} />
                 <Stack.Screen name="MetaAi" component={MetaAi} />
                 <Stack.Screen name="Ai" component={Ai} />
-                <Stack.Screen name="HomeScreen" component={HomeScreen} />
-                <Stack.Screen name="JoinCallScreen" component={JoinCallScreen} />
-                <Stack.Screen name="LiveCallScreen" component={LiveCallScreen} />
-                <Stack.Screen name="PrepareCallScreen" component={PrepareCallScreen} />
                 <Stack.Screen name="PodcastLoginScreen" component={PodcastLoginScreen} />
                 <Stack.Screen name="PodcastSplashScreen" component={PodcastSplashScreen} />
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
@@ -80,6 +77,20 @@ const Navigation: FC = () => {
                 <Stack.Screen name="PodcastSearchScreen" component={PodcastSearchScreen} />
                 <Stack.Screen name="PodcastFavouriteScreen" component={PodcastFavouriteScreen} />
                 <Stack.Screen name="UserBottomTab" component={UserBottomTab} />
+                 <Stack.Screen name="HomeScreen" component={HomeScreen} />
+                  <Stack.Screen name="PrepareMeetScreen" component={PrepareMeetScreen} options={{ headerShown: false }} />
+                 <Stack.Screen name="LiveMeetScreen" component={LiveMeetScreen} />
+                  <Stack.Screen name="JoinMeetScreen" component={JoinMeetScreen} options={{ headerShown: false }} />
+
+
+
+
+
+
+
+
+
+
 
 
 
