@@ -1,17 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, FlatList, ActivityIndicator, Alert, RefreshControl, PermissionsAndroid, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieView from 'lottie-react-native';
 import { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import { launchImageLibrary } from 'react-native-image-picker';
-import Svg, { Circle, G } from 'react-native-svg';
-import { User, Mail, Phone, Calendar, Shield, Hash, CheckCircle, XCircle, Clock, LogOut } from 'lucide-react-native';
+import Geolocation from '@react-native-community/geolocation';
+import { User, Mail, Phone, Calendar, Shield, Hash, CheckCircle, XCircle, Clock, LogOut, ArrowLeft, Settings, Heart, Download, Globe, MapPin, Play, Monitor, Trash2, History, FileText, Star, Scan, MessageCircle, UserPlus, MessageSquare, HeadphonesIcon } from 'lucide-react-native';
 import { navigate } from '../../utils/Navigation';
 import { Colors } from '@utils/Constants';
 import { performCompleteLogout } from '@service/authUtils';
 import { useUser } from '@service/hooks/useUser';
+import UserProgressSection from '../../components/ui/UserProgressSection';
 
 interface UserData {
   _id?: string;
@@ -49,6 +50,39 @@ interface EnrollmentStats {
   lastEnrollment?: any;
 }
 
+interface DownloadItem {
+  id: string;
+  name: string;
+  type: string;
+  url: string;
+  downloadedAt: Date;
+  fileSize?: number;
+  localPath?: string;
+}
+
+interface FavoriteItem {
+  id: string;
+  name: string;
+  type: 'course' | 'book' | 'video' | 'quiz';
+  addedAt: Date;
+  thumbnail?: string;
+}
+
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  address?: string;
+  city?: string;
+  country?: string;
+  lastUpdated: Date;
+}
+
+interface LanguageOption {
+  code: string;
+  name: string;
+  nativeName: string;
+}
+
 const Profile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [enrollmentStats, setEnrollmentStats] = useState<EnrollmentStats | null>(null);
@@ -56,15 +90,25 @@ const Profile = () => {
   const [refreshing, setRefreshing] = useState(false);
   const opacity = useSharedValue(0);
 
-  // Chart colors for statistics
-  const statColors = {
-    color1: '#5B4CDB',
-    color2: '#4DBAB8',
-    color3: '#F5A962',
-    color4: '#E8C368',
-    color5: '#F4988C',
-    color6: '#D95F9F',
-  };
+  // New state for tracking features
+  const [downloads, setDownloads] = useState<DownloadItem[]>([]);
+  const [favorites, setFavorites] = useState<FavoriteItem[]>([]);
+  const [location, setLocation] = useState<LocationData | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
+  const [languages] = useState<LanguageOption[]>([
+    { code: 'en', name: 'English', nativeName: 'English' },
+    { code: 'es', name: 'Spanish', nativeName: 'Español' },
+    { code: 'fr', name: 'French', nativeName: 'Français' },
+    { code: 'de', name: 'German', nativeName: 'Deutsch' },
+    { code: 'it', name: 'Italian', nativeName: 'Italiano' },
+    { code: 'pt', name: 'Portuguese', nativeName: 'Português' },
+    { code: 'ru', name: 'Russian', nativeName: 'Русский' },
+    { code: 'zh', name: 'Chinese', nativeName: '中文' },
+    { code: 'ja', name: 'Japanese', nativeName: '日本語' },
+    { code: 'ko', name: 'Korean', nativeName: '한국어' },
+    { code: 'ar', name: 'Arabic', nativeName: 'العربية' },
+    { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
+  ]);
 
   // Use the user hook for API calls
   const {
@@ -77,7 +121,50 @@ const Profile = () => {
 
   useEffect(() => {
     fetchUserData();
+    loadStoredData();
   }, []);
+
+  const loadStoredData = async () => {
+    try {
+      // Load downloads
+      const storedDownloads = await AsyncStorage.getItem('userDownloads');
+      if (storedDownloads) {
+        const parsedDownloads = JSON.parse(storedDownloads).map((download: any) => ({
+          ...download,
+          downloadedAt: new Date(download.downloadedAt),
+        }));
+        setDownloads(parsedDownloads);
+      }
+
+      // Load favorites
+      const storedFavorites = await AsyncStorage.getItem('userFavorites');
+      if (storedFavorites) {
+        const parsedFavorites = JSON.parse(storedFavorites).map((favorite: any) => ({
+          ...favorite,
+          addedAt: new Date(favorite.addedAt),
+        }));
+        setFavorites(parsedFavorites);
+      }
+
+      // Load location
+      const storedLocation = await AsyncStorage.getItem('userLocation');
+      if (storedLocation) {
+        const parsedLocation = JSON.parse(storedLocation);
+        setLocation({
+          ...parsedLocation,
+          lastUpdated: new Date(parsedLocation.lastUpdated),
+        });
+      }
+
+      // Load selected language
+      const storedLanguage = await AsyncStorage.getItem('selectedLanguage');
+      if (storedLanguage) {
+        setSelectedLanguage(storedLanguage);
+      }
+    } catch (error) {
+      console.error('Error loading stored data:', error);
+    }
+  };
 
   useEffect(() => {
     if (userData) {
@@ -88,7 +175,6 @@ const Profile = () => {
   const fetchUserData = async () => {
     try {
       setLoading(true);
-      
       // Get access token
       const accessToken = await AsyncStorage.getItem('accessToken');
       if (!accessToken) {
@@ -103,7 +189,6 @@ const Profile = () => {
       // Fetch user profile data from API
       const profileData = await getUserProfile(accessToken);
       console.log('📡 User Profile API Response:', profileData);
-      
       if (profileData) {
         // Handle the response based on API structure from README
         let userProfileData;
@@ -112,7 +197,7 @@ const Profile = () => {
           userProfileData = profileData.student;
           console.log('👤 Student Profile Data:', userProfileData);
         } else if (profileData.user) {
-          // If response has user field (from /api/user/profile endpoint)  
+          // If response has user field (from /api/user/profile endpoint)
           userProfileData = profileData.user;
           console.log('👤 Generic User Profile Data:', userProfileData);
         } else {
@@ -120,16 +205,15 @@ const Profile = () => {
           userProfileData = profileData;
           console.log('👤 Direct User Profile Data:', userProfileData);
         }
-        
+
         setUserData(userProfileData);
 
         // Also fetch enrollment statistics
         console.log('📊 Fetching enrollment statistics...');
         const statsData = await getEnrollmentStats(accessToken);
         console.log('📊 Enrollment Stats API Response:', statsData);
-        
         if (statsData) {
-          setEnrollmentStats(statsData);
+          setEnrollmentStats(statsData as EnrollmentStats);
         }
       } else {
         console.error('❌ Failed to fetch user profile');
@@ -171,6 +255,197 @@ const Profile = () => {
   const handleLogout = async () => {
     console.log('Profile: Starting logout process...');
     await performCompleteLogout();
+  };
+
+  // Location functions
+  const requestLocationPermission = async () => {
+    if (Platform.OS === 'android') {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Location Permission',
+            message: 'This app needs access to your location to show your current location.',
+            buttonNeutral: 'Ask Me Later',
+            buttonNegative: 'Cancel',
+            buttonPositive: 'OK',
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true; // iOS handles permissions automatically
+  };
+
+  const getCurrentLocation = async () => {
+    const hasPermission = await requestLocationPermission();
+    if (!hasPermission) {
+      Alert.alert('Permission Denied', 'Location permission is required to get your current location.');
+      return;
+    }
+
+    Geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        const locationData: LocationData = {
+          latitude,
+          longitude,
+          lastUpdated: new Date(),
+        };
+
+        // Try to get address from coordinates (simplified)
+        locationData.address = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+        locationData.city = 'Current Location';
+        locationData.country = 'Unknown';
+
+        setLocation(locationData);
+        AsyncStorage.setItem('userLocation', JSON.stringify(locationData));
+
+        Alert.alert('Location Updated', `Your location has been updated: ${locationData.address}`);
+      },
+      (error) => {
+        console.error('Location error:', error);
+        Alert.alert('Location Error', 'Unable to get your current location. Please try again.');
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
+    );
+  };
+
+  // Cache clearing function
+  const clearAllCache = async () => {
+    Alert.alert(
+      'Clear Cache',
+      'This will clear all cached data including downloads, favorites, and temporary files. This action cannot be undone.',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Get all keys from AsyncStorage
+              const keys = await AsyncStorage.getAllKeys();
+
+              // Filter out essential keys that should not be cleared
+              const essentialKeys = ['accessToken', 'refreshToken', 'userData'];
+              const keysToClear = keys.filter(key => !essentialKeys.includes(key));
+
+              // Clear non-essential data
+              await AsyncStorage.multiRemove(keysToClear);
+
+              // Reset local state
+              setDownloads([]);
+              setFavorites([]);
+              setLocation(null);
+
+              Alert.alert('Cache Cleared', 'All cached data has been successfully cleared.');
+            } catch (error) {
+              console.error('Error clearing cache:', error);
+              Alert.alert('Error', 'Failed to clear cache. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Language selection function
+  const selectLanguage = () => {
+    Alert.alert(
+      'Select Language',
+      'Choose your preferred language:',
+      [
+        ...languages.map(lang => ({
+          text: lang.nativeName,
+          onPress: () => {
+            setSelectedLanguage(lang.code);
+            AsyncStorage.setItem('selectedLanguage', lang.code);
+            Alert.alert('Language Changed', `Language changed to ${lang.nativeName}`);
+          },
+        })),
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ]
+    );
+  };
+
+  // Navigation functions for downloads and favorites
+  const navigateToDownloads = () => {
+    // You can create a separate DownloadsScreen or show a modal
+    Alert.alert(
+      'Downloads',
+      `You have ${downloads.length} downloaded items.\n\nRecent downloads:\n${downloads.slice(0, 3).map(d => `• ${d.name} (${d.downloadedAt.toLocaleDateString()})`).join('\n')}${downloads.length > 3 ? '\n...' : ''}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  const navigateToFavorites = () => {
+    // You can create a separate FavoritesScreen or show a modal
+    Alert.alert(
+      'Favorites',
+      `You have ${favorites.length} favorite items.\n\nRecent favorites:\n${favorites.slice(0, 3).map(f => `• ${f.name} (${f.addedAt.toLocaleDateString()})`).join('\n')}${favorites.length > 3 ? '\n...' : ''}`,
+      [{ text: 'OK' }]
+    );
+  };
+
+  // Utility functions that can be called from other components
+  const addDownload = async (downloadItem: Omit<DownloadItem, 'id' | 'downloadedAt'>) => {
+    const newDownload: DownloadItem = {
+      ...downloadItem,
+      id: Date.now().toString(),
+      downloadedAt: new Date(),
+    };
+
+    const updatedDownloads = [newDownload, ...downloads];
+    setDownloads(updatedDownloads);
+    await AsyncStorage.setItem('userDownloads', JSON.stringify(updatedDownloads));
+  };
+
+  const addFavorite = async (favoriteItem: Omit<FavoriteItem, 'id' | 'addedAt'>) => {
+    const newFavorite: FavoriteItem = {
+      ...favoriteItem,
+      id: Date.now().toString(),
+      addedAt: new Date(),
+    };
+
+    const updatedFavorites = [newFavorite, ...favorites];
+    setFavorites(updatedFavorites);
+    await AsyncStorage.setItem('userFavorites', JSON.stringify(updatedFavorites));
+  };
+
+  const removeFavorite = async (favoriteId: string) => {
+    const updatedFavorites = favorites.filter(f => f.id !== favoriteId);
+    setFavorites(updatedFavorites);
+    await AsyncStorage.setItem('userFavorites', JSON.stringify(updatedFavorites));
+  };
+
+  // New feature functions
+  const documentScan = () => {
+    Alert.alert('Document Scan', 'Document scanning feature is coming soon! 📱✨', [{ text: 'OK' }]);
+  };
+
+  const messageFriend = () => {
+    Alert.alert('Message a Friend', 'Messaging feature is coming soon! 💬✨', [{ text: 'OK' }]);
+  };
+
+  const inviteFriend = () => {
+    Alert.alert('Invite a Friend', 'Friend invitation feature is coming soon! 👥✨', [{ text: 'OK' }]);
+  };
+
+  const giveFeedback = () => {
+    Alert.alert('Give Feedback', 'Feedback system is coming soon! 💭✨', [{ text: 'OK' }]);
+  };
+
+  const customerSupport = () => {
+    Alert.alert('Customer Support', 'Customer support chat is coming soon! 🎧✨', [{ text: 'OK' }]);
   };
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -223,16 +498,18 @@ const Profile = () => {
 
   return (
     <View style={styles.mainContainer}>
-      {/* Header with Logout Button */}
+      {/* Header with Navigation */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <LogOut size={24} color="#FF3B30" />
+        <TouchableOpacity style={styles.backButton} onPress={() => navigate('DashboardScreen')}>
+          <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <View style={styles.headerPlaceholder} />
+        <Text style={styles.headerTitle}>My Profile</Text>
+        <TouchableOpacity style={styles.settingsButton}>
+          <Settings size={24} color="#000" />
+        </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContainer}
         refreshControl={
           <RefreshControl
@@ -243,86 +520,222 @@ const Profile = () => {
           />
         }
       >
-        <TouchableOpacity style={styles.imageContainer} onPress={updateProfileImage}>
-          {(userData?.profileImage || userData?.photo) ? (
-            <Image
-              source={{ uri: userData.profileImage || userData.photo }}
-              style={styles.profileImage}
-              onError={(e) => console.error('Error loading profile image:', e.nativeEvent.error)}
-            />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Text style={styles.placeholderText}>Add Photo</Text>
+        {/* Profile Section - Inspired by first screenshot */}
+        <View style={styles.profileSection}>
+          <TouchableOpacity style={styles.profileImageContainer} onPress={updateProfileImage}>
+            {(userData?.profileImage || userData?.photo) ? (
+              <Image
+                source={{ uri: userData.profileImage || userData.photo }}
+                style={styles.profileImage}
+                onError={(e) => console.error('Error loading profile image:', e.nativeEvent.error)}
+              />
+            ) : (
+              <View style={styles.placeholderImage}>
+                <Text style={styles.placeholderText}>Add Photo</Text>
+              </View>
+            )}
+            <View style={styles.cameraIcon}>
+              <View style={styles.cameraIconInner} />
             </View>
-          )}
-        </TouchableOpacity>
+          </TouchableOpacity>
 
-        {/* User Basic Info - Modern List Style */}
-        <View style={styles.infoSection}>
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.profileInfo}>
+            <Text style={styles.userName}>{userData.name || 'User Name'}</Text>
+            <Text style={styles.userEmail}>{userData.email || 'user@example.com'}</Text>
+            <TouchableOpacity style={styles.editProfileButton}>
+              <Text style={styles.editProfileButtonText}>Edit Profile</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Favourites and Downloads Section */}
+        <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={navigateToFavorites}>
+            <View style={styles.menuItemLeft}>
+              <Heart size={20} color="#000" />
+              <Text style={styles.menuItemText}>Favourites {favorites.length > 0 && `(${favorites.length})`}</Text>
+            </View>
+            <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={navigateToDownloads}>
+            <View style={styles.menuItemLeft}>
+              <Download size={20} color="#000" />
+              <Text style={styles.menuItemText}>Downloads {downloads.length > 0 && `(${downloads.length})`}</Text>
+            </View>
+            <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Settings and Features Section */}
+        <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={documentScan}>
+            <View style={styles.menuItemLeft}>
+              <Scan size={20} color="#000" />
+              <Text style={styles.menuItemText}>Document Scan</Text>
+            </View>
+            <View style={styles.menuItemRight}>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Coming Soon</Text>
+              </View>
+              <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={messageFriend}>
+            <View style={styles.menuItemLeft}>
+              <MessageCircle size={20} color="#000" />
+              <Text style={styles.menuItemText}>Message a Friend</Text>
+            </View>
+            <View style={styles.menuItemRight}>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Coming Soon</Text>
+              </View>
+              <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={inviteFriend}>
+            <View style={styles.menuItemLeft}>
+              <UserPlus size={20} color="#000" />
+              <Text style={styles.menuItemText}>Invite a Friend</Text>
+            </View>
+            <View style={styles.menuItemRight}>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Coming Soon</Text>
+              </View>
+              <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={getCurrentLocation}>
+            <View style={styles.menuItemLeft}>
+              <MapPin size={20} color="#000" />
+              <Text style={styles.menuItemText}>Location {location ? `(${location.city || 'Current'})` : '(Not Set)'}</Text>
+            </View>
+            <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={giveFeedback}>
+            <View style={styles.menuItemLeft}>
+              <MessageSquare size={20} color="#000" />
+              <Text style={styles.menuItemText}>Give Feedback</Text>
+            </View>
+            <View style={styles.menuItemRight}>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Coming Soon</Text>
+              </View>
+              <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+            </View>
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={customerSupport}>
+            <View style={styles.menuItemLeft}>
+              <HeadphonesIcon size={20} color="#000" />
+              <Text style={styles.menuItemText}>Customer Support</Text>
+            </View>
+            <View style={styles.menuItemRight}>
+              <View style={styles.comingSoonBadge}>
+                <Text style={styles.comingSoonText}>Coming Soon</Text>
+              </View>
+              <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* Account Management Section */}
+        <View style={styles.menuSection}>
+          <TouchableOpacity style={styles.menuItem} onPress={clearAllCache}>
+            <View style={styles.menuItemLeft}>
+              <Trash2 size={20} color="#000" />
+              <Text style={styles.menuItemText}>Clear Cache</Text>
+            </View>
+            <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+          </TouchableOpacity>
+          <View style={styles.menuDivider} />
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
+            <View style={styles.menuItemLeft}>
+              <LogOut size={20} color="#000" />
+              <Text style={styles.menuItemText}>Log Out</Text>
+            </View>
+            <ArrowLeft size={16} color="#C7C7CC" style={styles.menuArrow} />
+          </TouchableOpacity>
+        </View>
+
+        {/* User Details Section - Hidden by default, can be toggled */}
+        <View style={styles.userDetailsSection}>
+          <Text style={styles.userDetailsTitle}>Account Details</Text>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <User size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>Name</Text>
+              <Text style={styles.detailLabel}>Name</Text>
             </View>
-            <Text style={styles.infoValue}>{userData.name || 'N/A'}</Text>
+            <Text style={styles.detailValue}>{userData.name || 'N/A'}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <Mail size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>Email</Text>
+              <Text style={styles.detailLabel}>Email</Text>
             </View>
-            <Text style={styles.infoValue}>{userData.email || 'N/A'}</Text>
+            <Text style={styles.detailValue}>{userData.email || 'N/A'}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <Phone size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>Phone</Text>
+              <Text style={styles.detailLabel}>Phone</Text>
             </View>
-            <Text style={styles.infoValue}>{userData.phone || 'N/A'}</Text>
+            <Text style={styles.detailValue}>{userData.phone || 'N/A'}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <Calendar size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>Age</Text>
+              <Text style={styles.detailLabel}>Age</Text>
             </View>
-            <Text style={styles.infoValue}>{String(userData.age || 'N/A')}</Text>
+            <Text style={styles.detailValue}>{String(userData.age || 'N/A')}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <Shield size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>Role</Text>
+              <Text style={styles.detailLabel}>Role</Text>
             </View>
-            <Text style={styles.infoValue}>{userData.role || 'N/A'}</Text>
+            <Text style={styles.detailValue}>{userData.role || 'N/A'}</Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               <Hash size={20} color="#8E8E93" />
-              <Text style={styles.infoLabel}>User ID</Text>
+              <Text style={styles.detailLabel}>User ID</Text>
             </View>
-            <Text style={styles.infoValue} numberOfLines={1}>
+            <Text style={styles.detailValue} numberOfLines={1}>
               {userData.uuid || userData._id || 'N/A'}
             </Text>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
-          <View style={styles.infoItem}>
-            <View style={styles.infoLeft}>
+          <View style={styles.detailItem}>
+            <View style={styles.detailLeft}>
               {userData.isActivated ? (
                 <CheckCircle size={20} color="#34C759" />
               ) : (
                 <XCircle size={20} color="#FF3B30" />
               )}
-              <Text style={styles.infoLabel}>Account Status</Text>
+              <Text style={styles.detailLabel}>Account Status</Text>
             </View>
             <View style={styles.statusBadge}>
               <Text style={[styles.statusText, userData.isActivated ? styles.activeStatus : styles.inactiveStatus]}>
@@ -330,288 +743,39 @@ const Profile = () => {
               </Text>
             </View>
           </View>
-          <View style={styles.divider} />
+          <View style={styles.detailDivider} />
 
           {userData.createdAt && (
             <>
-              <View style={styles.infoItem}>
-                <View style={styles.infoLeft}>
+              <View style={styles.detailItem}>
+                <View style={styles.detailLeft}>
                   <Calendar size={20} color="#8E8E93" />
-                  <Text style={styles.infoLabel}>Member Since</Text>
+                  <Text style={styles.detailLabel}>Member Since</Text>
                 </View>
-                <Text style={styles.infoValue}>{new Date(userData.createdAt).toLocaleDateString()}</Text>
+                <Text style={styles.detailValue}>{new Date(userData.createdAt).toLocaleDateString()}</Text>
               </View>
-              <View style={styles.divider} />
+              <View style={styles.detailDivider} />
             </>
           )}
 
           {userData.lastLogin && (
-            <View style={styles.infoItem}>
-              <View style={styles.infoLeft}>
+            <View style={styles.detailItem}>
+              <View style={styles.detailLeft}>
                 <Clock size={20} color="#8E8E93" />
-                <Text style={styles.infoLabel}>Last Login</Text>
+                <Text style={styles.detailLabel}>Last Login</Text>
               </View>
-              <Text style={styles.infoValue}>{new Date(userData.lastLogin).toLocaleString()}</Text>
+              <Text style={styles.detailValue}>{new Date(userData.lastLogin).toLocaleString()}</Text>
             </View>
           )}
         </View>
 
-        {/* User Progress Section Title */}
-        {userData.role === 'Student' && (
-          <Text style={styles.sectionHeaderTitle}>📊 User Progress</Text>
-        )}
-
-        {/* Learning Statistics for Students */}
-        {userData.role === 'Student' && (
-          <View style={styles.statisticsCard}>
-            <Text style={styles.statisticsTitle}>Learning Statistics</Text>
-
-            {/* Donut Chart */}
-            <View style={styles.chartContainer}>
-              <Svg width="150" height="150" viewBox="0 0 150 150">
-                <G rotation="0" origin="75, 75">
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color1}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="0"
-                  />
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color2}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="-62.8"
-                  />
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color3}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="-125.6"
-                  />
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color4}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="-188.4"
-                  />
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color5}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="-251.2"
-                  />
-                  <Circle
-                    cx="75"
-                    cy="75"
-                    r="60"
-                    stroke={statColors.color6}
-                    strokeWidth="20"
-                    fill="none"
-                    strokeDasharray="62.8 314.8"
-                    strokeDashoffset="-314"
-                  />
-                </G>
-              </Svg>
-            </View>
-
-            {/* Statistics Grid */}
-            <View style={styles.statsGrid}>
-              {/* Row 1 */}
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color1 }]} />
-                    <Text style={styles.statLabel}>Enrolled{'\n'}Courses</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.enrollmentCount || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color2 }]} />
-                    <Text style={styles.statLabel}>Quizzes{'\n'}Taken</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.totalQuizzesTaken || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-              </View>
-
-              {/* Row 2 */}
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color3 }]} />
-                    <Text style={styles.statLabel}>Chapters{'\n'}Completed</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.totalChaptersCompleted || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color4 }]} />
-                    <Text style={styles.statLabel}>Average{'\n'}Score</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.averageScore || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-              </View>
-
-              {/* Row 3 */}
-              <View style={styles.statsRow}>
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color5 }]} />
-                    <Text style={styles.statLabel}>Learning{'\n'}Streak</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.learningStreak || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-
-                <View style={styles.statItem}>
-                  <View style={styles.statHeader}>
-                    <View style={[styles.colorIndicator, { backgroundColor: statColors.color6 }]} />
-                    <Text style={styles.statLabel}>Learning{'\n'}Days</Text>
-                  </View>
-                  <View style={styles.statValueContainer}>
-                    <Text style={styles.statValue}>{String(userData.totalLearningDays || 0)}</Text>
-                    <View style={styles.statUnderline} />
-                  </View>
-                </View>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {/* Enrollment Statistics from API */}
-        {enrollmentStats && (
-          <View style={styles.enrollmentCard}>
-            <Text style={styles.cardTitle}>Enrollment Details</Text>
-
-            {/* Total Enrollments */}
-            <View style={styles.enrollmentStatRow}>
-              <View style={styles.enrollmentStatLeft}>
-                <Text style={styles.enrollmentLabel}>Total Enrollments</Text>
-                <Text style={styles.enrollmentValue}>{String(enrollmentStats.totalEnrollments || 0)}</Text>
-              </View>
-              <View style={styles.enrollmentProgressContainer}>
-                <View style={styles.enrollmentProgressBar}>
-                  <View
-                    style={[
-                      styles.enrollmentProgressFill,
-                      {
-                        width: `${Math.min((enrollmentStats.totalEnrollments || 0) * 10, 100)}%`,
-                        backgroundColor: '#4CAF50',
-                      },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.enrollmentProgressText}>
-                  {Math.min((enrollmentStats.totalEnrollments || 0) * 10, 100)}%
-                </Text>
-              </View>
-            </View>
-
-            {/* Last Enrollment */}
-            {enrollmentStats.lastEnrollment && (
-              <View style={styles.lastEnrollmentBox}>
-                <Text style={styles.lastEnrollmentLabel}>Latest Enrolled Course</Text>
-                <Text style={styles.lastEnrollmentTitle}>
-                  📚 {enrollmentStats.lastEnrollment.title || 'N/A'}
-                </Text>
-                {enrollmentStats.lastEnrollment.description && (
-                  <Text style={styles.lastEnrollmentDescription}>
-                    {enrollmentStats.lastEnrollment.description}
-                  </Text>
-                )}
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* Enrolled Courses */}
-        <View style={styles.enrolledCoursesCard}>
-          <Text style={styles.cardTitle}>Enrolled Courses</Text>
-          {userData.enrolledCourses && userData.enrolledCourses.length > 0 ? (
-            userData.enrolledCourses.map((item, index) => {
-              const progressColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
-              const progressPercentage = item.progress || Math.floor(Math.random() * 100);
-
-              return (
-                <View key={String(item._id || item.courseId || index)} style={styles.courseProgressItem}>
-                  <View style={styles.courseProgressHeader}>
-                    <Text style={styles.courseProgressTitle}>
-                      {item.title || `Course ${index + 1}`}
-                    </Text>
-                    <Text style={styles.courseProgressPercentage}>{progressPercentage}%</Text>
-                  </View>
-
-                  <View style={styles.courseProgressBarContainer}>
-                    <View style={styles.courseProgressBar}>
-                      <View
-                        style={[
-                          styles.courseProgressFill,
-                          {
-                            width: `${progressPercentage}%`,
-                            backgroundColor: progressColors[index % progressColors.length],
-                          },
-                        ]}
-                      />
-                    </View>
-                  </View>
-
-                  {item.description && (
-                    <Text style={styles.courseProgressDescription} numberOfLines={2}>
-                      {item.description}
-                    </Text>
-                  )}
-
-                  {item.enrolledAt && (
-                    <Text style={styles.courseProgressDate}>
-                      Enrolled: {new Date(item.enrolledAt).toLocaleDateString()}
-                    </Text>
-                  )}
-                </View>
-              );
-            })
-          ) : (
-            <View style={styles.noCoursesContainer}>
-              <Text style={styles.noCoursesText}>📚 No courses enrolled yet.</Text>
-              <Text style={styles.noCoursesSubtext}>Start your learning journey today!</Text>
-            </View>
-          )}
+        {/* App Version Footer */}
+        <View style={styles.appVersionFooter}>
+          <Text style={styles.appVersionText}>App Version 2.3</Text>
         </View>
+
+        {/* User Progress Section */}
+        <UserProgressSection userData={userData} enrollmentStats={enrollmentStats} />
 
         {/* Quiz Performance */}
         {userData.quizPerformance && userData.quizPerformance.length > 0 && (
@@ -626,7 +790,7 @@ const Profile = () => {
               </View>
               <View style={styles.quizStatBox}>
                 <Text style={styles.quizStatLabel}>Average Score</Text>
-                <Text style={[styles.quizStatValue, { color: '#4CAF50' }]}>
+                <Text style={styles.quizStatValueGreen}>
                   {userData.averageScore || 0}%
                 </Text>
               </View>
@@ -698,12 +862,12 @@ const Profile = () => {
                       {percentage >= 90
                         ? '🌟 Excellent'
                         : percentage >= 80
-                        ? '🎯 Very Good'
-                        : percentage >= 70
-                        ? '👍 Good'
-                        : percentage >= 60
-                        ? '📈 Fair'
-                        : '💪 Needs Improvement'}
+                          ? '🎯 Very Good'
+                          : percentage >= 70
+                            ? '👍 Good'
+                            : percentage >= 60
+                              ? '📈 Fair'
+                              : '💪 Needs Improvement'}
                     </Text>
                   </View>
                 </View>
@@ -745,12 +909,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 0.5,
     borderBottomColor: '#C6C6C8',
   },
-  logoutButton: {
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  settingsButton: {
     width: 40,
     height: 40,
     justifyContent: 'center',
@@ -762,13 +932,203 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter-SemiBold',
     color: '#000',
   },
-  headerPlaceholder: {
-    width: 40,
-  },
   scrollContainer: {
     flexGrow: 1,
     paddingHorizontal: 20,
     paddingTop: 20,
+  },
+  // Profile Section Styles
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 30,
+    paddingVertical: 20,
+  },
+  profileImageContainer: {
+    position: 'relative',
+    marginRight: 20,
+  },
+  profileImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  placeholderImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#E5E5EA',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#8E8E93',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  cameraIcon: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#007AFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  cameraIconInner: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+  },
+  profileInfo: {
+    flex: 1,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+    color: '#000',
+    marginBottom: 4,
+  },
+  userEmail: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#8E8E93',
+    marginBottom: 12,
+  },
+  editProfileButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+  },
+  editProfileButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  // Menu Section Styles
+  menuSection: {
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  menuItemRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#000',
+    fontWeight: '400',
+  },
+  menuArrow: {
+    transform: [{ rotate: '180deg' }],
+  },
+  comingSoonBadge: {
+    backgroundColor: '#FF9500',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  comingSoonText: {
+    fontSize: 10,
+    fontFamily: 'Inter-SemiBold',
+    color: '#fff',
+    fontWeight: '600',
+  },
+  menuDivider: {
+    height: 0.5,
+    backgroundColor: '#C6C6C8',
+    marginLeft: 48,
+  },
+  // User Details Section
+  userDetailsSection: {
+    backgroundColor: '#fff',
+    marginBottom: 20,
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  userDetailsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    color: '#000',
+    marginBottom: 16,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  detailLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  detailLabel: {
+    fontSize: 16,
+    fontFamily: 'Inter-Medium',
+    color: '#000',
+    fontWeight: '400',
+  },
+  detailValue: {
+    fontSize: 16,
+    fontFamily: 'Inter-Regular',
+    color: '#8E8E93',
+    fontWeight: '400',
+    textAlign: 'right',
+    flex: 1,
+    marginLeft: 16,
+  },
+  detailDivider: {
+    height: 0.5,
+    backgroundColor: '#C6C6C8',
+    marginLeft: 4,
+  },
+  // App Version Footer
+  appVersionFooter: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    marginBottom: 20,
+  },
+  appVersionText: {
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+    color: '#8E8E93',
   },
   title: {
     fontSize: 28,
@@ -805,27 +1165,6 @@ const styles = StyleSheet.create({
   loadingAnimation: {
     width: 250,
     height: 250,
-  },
-  imageContainer: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  profileImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-  },
-  placeholderImage: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    color: '#757575',
-    fontSize: 16,
   },
   sectionTitle: {
     fontSize: 20,
@@ -881,43 +1220,6 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 20,
   },
-  // Modern Info Section Styles
-  infoSection: {
-    backgroundColor: '#fff',
-    marginBottom: 30,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 4,
-  },
-  infoLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  infoLabel: {
-    fontSize: 16,
-    fontFamily: 'Inter-Medium',
-    color: '#000',
-    fontWeight: '400',
-  },
-  infoValue: {
-    fontSize: 16,
-    fontFamily: 'Inter-Regular',
-    color: '#8E8E93',
-    fontWeight: '400',
-    textAlign: 'right',
-    flex: 1,
-    marginLeft: 16,
-  },
-  divider: {
-    height: 0.5,
-    backgroundColor: '#C6C6C8',
-    marginLeft: 4,
-  },
   statusBadge: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -934,15 +1236,6 @@ const styles = StyleSheet.create({
   },
   inactiveStatus: {
     color: '#FF3B30',
-  },
-  sectionHeaderTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    fontFamily: 'Inter-Bold',
-    color: '#000',
-    marginTop: 10,
-    marginBottom: 20,
-    paddingHorizontal: 4,
   },
   courseTitle: {
     fontSize: 16,
@@ -991,225 +1284,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  statisticsTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  chartContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 30,
-  },
-  statsGrid: {
-    marginTop: 10,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 20,
-  },
-  statItem: {
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  colorIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 2,
-    marginRight: 6,
-    marginTop: 2,
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#666',
-    lineHeight: 14,
-    flex: 1,
-  },
-  statValueContainer: {
-    alignItems: 'flex-start',
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  statUnderline: {
-    width: '100%',
-    height: 1,
-    backgroundColor: '#E0E0E0',
-    marginTop: 2,
-  },
-  // Enrollment Details Card Styles
-  enrollmentCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#9C27B0',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
   cardTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#333',
     marginBottom: 20,
-    textAlign: 'center',
-  },
-  enrollmentStatRow: {
-    marginBottom: 20,
-  },
-  enrollmentStatLeft: {
-    marginBottom: 10,
-  },
-  enrollmentLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  enrollmentValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#333',
-  },
-  enrollmentProgressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  enrollmentProgressBar: {
-    flex: 1,
-    height: 12,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  enrollmentProgressFill: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  enrollmentProgressText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4CAF50',
-    minWidth: 45,
-  },
-  lastEnrollmentBox: {
-    backgroundColor: '#F3E5F5',
-    padding: 15,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#9C27B0',
-  },
-  lastEnrollmentLabel: {
-    fontSize: 12,
-    color: '#7B1FA2',
-    fontWeight: '600',
-    marginBottom: 6,
-    textTransform: 'uppercase',
-  },
-  lastEnrollmentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#4A148C',
-    marginBottom: 6,
-  },
-  lastEnrollmentDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  // Enrolled Courses Card Styles
-  enrolledCoursesCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    borderWidth: 2,
-    borderColor: '#FF9800',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  courseProgressItem: {
-    marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: '#FF9800',
-  },
-  courseProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  courseProgressTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    flex: 1,
-    marginRight: 10,
-  },
-  courseProgressPercentage: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#FF9800',
-  },
-  courseProgressBarContainer: {
-    marginBottom: 10,
-  },
-  courseProgressBar: {
-    width: '100%',
-    height: 10,
-    backgroundColor: '#E0E0E0',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  courseProgressFill: {
-    height: '100%',
-    borderRadius: 5,
-  },
-  courseProgressDescription: {
-    fontSize: 13,
-    color: '#666',
-    marginBottom: 6,
-    lineHeight: 18,
-  },
-  courseProgressDate: {
-    fontSize: 12,
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  noCoursesContainer: {
-    alignItems: 'center',
-    padding: 30,
-  },
-  noCoursesText: {
-    fontSize: 16,
-    color: '#999',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  noCoursesSubtext: {
-    fontSize: 14,
-    color: '#BBB',
     textAlign: 'center',
   },
   // Quiz Performance Card Styles
@@ -1252,6 +1331,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1565C0',
+  },
+  quizStatValueGreen: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#4CAF50',
   },
   quizResultItem: {
     marginBottom: 20,

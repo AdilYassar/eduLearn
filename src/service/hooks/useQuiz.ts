@@ -18,12 +18,13 @@ interface Quiz {
 interface Question {
   _id: string;
   quiz: string;
-  text: string;
+  question: string;
   type: 'multiple-choice' | 'true-false' | 'text';
-  options?: string[];
+  options: string[];
   correctAnswer: string;
   explanation?: string;
   points?: number;
+  difficulty?: string;
 }
 
 interface QuizSubmission {

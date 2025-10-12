@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { createJSONStorage } from 'zustand/middleware';
 
 import { mmkvStorage } from './storage';
 
@@ -7,12 +7,14 @@ export const useLiveMeetStore = create()(
   (set, get) => ({
     sessionId: null,
     participants: [],
+    messages: [],
     micOn: false,
     videoOn: false,
 
     clear:()=> set({
         sessionId: null,
         participants: [],
+        messages: [],
     }),
     addSessionId: id => {
       set({ sessionId: id });
@@ -60,11 +62,15 @@ export const useLiveMeetStore = create()(
     //   }
       set({ participants: updatedParticipants });
     },
-    toggle:type =>{
-        if(type==='mic'){
-            set(state => ({ micOn: !state.micOn}))
-        }else if (type==='video'){
-            set(state =>({videoOn:!state.videoOn}))
+    addMessage: message => {
+      set(state => ({ messages: [...state.messages, message] }));
+    },
+    clearMessages: () => set({ messages: [] }),
+    toggle: type => {
+        if (type === 'mic') {
+            set(state => ({ micOn: !state.micOn }));
+        } else if (type === 'video') {
+            set(state => ({ videoOn: !state.videoOn }));
         }
     },
 

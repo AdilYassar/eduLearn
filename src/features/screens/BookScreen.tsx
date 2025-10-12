@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,8 @@ import {
 import RNFS from 'react-native-fs'; // For file handling
 import FileViewer from 'react-native-file-viewer'; // For opening files
 import { useLearningMaterials } from '@service/hooks/useLearningMaterials';
+import { push, goBack } from '../../utils/Navigation';
+import { ArrowLeft, ArrowRight } from 'lucide-react-native';
 
 interface BookName {
   _id: string;
@@ -74,18 +76,18 @@ const BookScreen = () => {
       setDownloadingBookId(bookId);
       console.log('🔍 Fetching PDF for book ID:', bookId);
       const result = await getBookPdf(bookId);
-      
+
       if (!result) {
         console.error('❌ No result returned from API');
         Alert.alert('Error', 'Failed to fetch book PDF');
         return;
       }
-      
+
       console.log('📦 PDF fetched successfully:', {
         title: result.title,
         pdfLength: result.pdf?.length || 0,
       });
-      
+
       if (result.pdf) {
         console.log('✅ PDF found, starting download...');
         await displayPdf(result.pdf, result.title);
@@ -116,7 +118,7 @@ const BookScreen = () => {
 
       // Remove data URL prefix if present
       const cleanBase64 = base64Pdf.replace(/^data:application\/pdf;base64,/, '');
-      
+
       console.log('💾 Saving PDF to:', path);
       console.log('📏 PDF base64 length:', cleanBase64.length);
 
@@ -149,6 +151,15 @@ const BookScreen = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header with Back Button */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => goBack()} style={styles.backButton}>
+          <ArrowLeft size={24} color="#2C3E50" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Book Library</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={styles.searchWrapper}>
@@ -204,7 +215,7 @@ const BookScreen = () => {
                   <Text style={styles.bookTitle} numberOfLines={2}>
                     {book.title}
                   </Text>
-                  
+
                   {/* Book Details */}
                   <View style={styles.detailsContainer}>
                     {book.author && (
@@ -230,7 +241,7 @@ const BookScreen = () => {
                       )}
                     </View>
                   </View>
-                  
+
                   <Text style={styles.tapPrompt}>
                     {downloadingBookId === book._id ? '⏳ Loading PDF...' : '👆 Tap to open PDF'}
                   </Text>
@@ -247,6 +258,15 @@ const BookScreen = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Explore Video Library Link */}
+      <TouchableOpacity
+        style={styles.exploreVideoLink}
+        onPress={() => push('VideoLibraryScreen')}
+      >
+        <Text style={styles.exploreLinkText}>Explore Video Library</Text>
+        <ArrowRight size={20} color="#1a5f5f" />
+      </TouchableOpacity>
     </View>
   );
 };
@@ -257,10 +277,40 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f7fa',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingTop: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 12,
+  },
+  headerTitle: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2C3E50',
+    fontFamily: 'Inter-Bold',
+  },
+  headerSpacer: {
+    width: 40,
+  },
   searchContainer: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
+    paddingTop: 12,
+    paddingBottom: 8,
     backgroundColor: 'transparent',
   },
   searchWrapper: {
@@ -434,6 +484,22 @@ const styles = StyleSheet.create({
     color: '#1a5f5f',
     marginTop: 12,
     fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  // Explore Video Library Link
+  exploreVideoLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 8,
+  },
+  exploreLinkText: {
+    fontSize: 16,
+    color: '#1a5f5f',
+    fontWeight: '600',
+    marginRight: 8,
     fontFamily: 'Inter-SemiBold',
   },
 });

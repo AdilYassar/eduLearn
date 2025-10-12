@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import { askAI } from '../dashboard/askAi'; // Adjust the import path
-import { Colors } from '@utils/Constants';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
+import { askAI } from '../dashboard/askAi';
 
-interface SuggestionComponentProps {
+interface SuggestionBoxProps {
   bgColor?: string;
 }
 
-const SuggestionComponent: React.FC<SuggestionComponentProps> = ({ bgColor = Colors.primary_light }) => {
+const SuggestionBox: React.FC<SuggestionBoxProps> = ({ bgColor = '#FFFFFF' }) => {
   const [suggestion, setSuggestion] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const prompt = 'What do I learn today? Give me a one-line suggestion.';
 
@@ -30,66 +29,94 @@ const SuggestionComponent: React.FC<SuggestionComponentProps> = ({ bgColor = Col
     }
   };
 
-  useEffect(() => {
-    fetchSuggestion();
-  }, []);
+  const handleTap = () => {
+    if (!isExpanded) {
+      setIsExpanded(true);
+      fetchSuggestion();
+    } else {
+      setIsExpanded(false);
+    }
+  };
 
   return (
-    <View style={[styles.container]}>
-      <Text style={styles.title}>Today's Suggestion</Text>
-
-      {loading ? (
-        <ActivityIndicator size="small" color="#007BFF" />
-      ) : error ? (
-        <Text style={styles.errorText}>{error}</Text>
-      ) : (
-        <Text style={styles.suggestionText}>{suggestion}</Text>
+    <TouchableOpacity 
+      style={[styles.container, { backgroundColor: bgColor }]} 
+      onPress={handleTap} 
+      activeOpacity={0.8}
+    >
+      <View style={styles.content}>
+        <Image
+          source={require('../../assets/getStarted/gift.png')}
+          style={styles.giftIcon}
+          resizeMode="contain"
+        />
+        <Text style={styles.tapText}>Tap for a Surprise Fact!</Text>
+      </View>
+      
+      {isExpanded && (
+        <View style={styles.suggestionContainer}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#666" />
+          ) : error ? (
+            <Text style={styles.errorText}>{error}</Text>
+          ) : (
+            <Text style={styles.suggestionText}>{suggestion}</Text>
+          )}
+        </View>
       )}
-
-      <TouchableOpacity style={styles.refreshButton} onPress={fetchSuggestion}>
-        <Icon name="check" size={24} color="#007BFF" />
-      </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
     marginHorizontal: 16,
-    alignItems: 'center',
     marginBottom: 20,
     marginTop: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 10,
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  giftIcon: {
+    width: 40,
+    height: 40,
+    marginRight: 16,
+  },
+  tapText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: 'Inter-SemiBold',
+  },
+  suggestionContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   suggestionText: {
-    fontSize: 16,
-    color: '#2C3E50',
+    fontSize: 14,
+    color: '#666',
     textAlign: 'center',
-    marginBottom: 10,
+    lineHeight: 20,
+    fontFamily: 'Inter-Regular',
   },
   errorText: {
     fontSize: 14,
     color: '#FF6347',
     textAlign: 'center',
-    marginBottom: 10,
-  },
-  refreshButton: {
-    padding: 10,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    fontFamily: 'Inter-Regular',
   },
 });
 
-export default SuggestionComponent;
+export default SuggestionBox;

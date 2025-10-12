@@ -49,14 +49,17 @@ const NewsComponent: React.FC<NewsComponentProps> = ({ bgColor = '#fff' }) => {
   const API_KEY = '65616e2ee13a4347a94031872e9aba7b';
   const NEWS_API_URL = 'https://newsapi.org/v2/everything';
 
-  // Tech-focused keywords for filtering modern tech trends
+  // Enhanced tech-focused keywords for better filtering
   const techKeywords = useMemo(() => [
-    'AI', 'artificial intelligence', 'machine learning', 'blockchain', 'cryptocurrency',
+    'AI', 'artificial intelligence', 'machine learning', 'ML', 'deep learning', 'neural network',
+    'blockchain', 'cryptocurrency', 'crypto', 'bitcoin', 'ethereum', 'NFT', 'web3',
     'tech', 'technology', 'startup', 'innovation', 'digital', 'software', 'app',
     'smartphone', 'cloud computing', 'cybersecurity', 'data science', 'automation',
-    'IoT', 'virtual reality', 'augmented reality', 'robotics', 'quantum computing',
+    'IoT', 'virtual reality', 'VR', 'augmented reality', 'AR', 'robotics', 'quantum computing',
     'coding', 'programming', 'developer', 'silicon valley', 'tech giant', 'Tesla',
     'Apple', 'Google', 'Microsoft', 'Meta', 'Amazon', 'Netflix', 'Uber', 'SpaceX',
+    'OpenAI', 'ChatGPT', 'GPT', 'LLM', 'large language model', 'generative AI',
+    'fintech', 'edtech', 'healthtech', 'biotech', 'cleantech', 'agtech'
   ], []);
 
   const filterCategories = [
@@ -76,10 +79,10 @@ const NewsComponent: React.FC<NewsComponentProps> = ({ bgColor = '#fff' }) => {
         setLoading(true);
       }
 
-      // Use tech-focused query to get relevant articles
-      const techQuery = 'technology OR AI OR "artificial intelligence" OR blockchain OR startup OR innovation OR "machine learning" OR cybersecurity OR "cloud computing"';
+      // Use comprehensive tech-focused query to get relevant articles
+      const techQuery = 'technology OR AI OR "artificial intelligence" OR "machine learning" OR "deep learning" OR blockchain OR cryptocurrency OR startup OR innovation OR "cybersecurity" OR "cloud computing" OR "mobile app" OR "software development" OR "data science" OR "IoT" OR "virtual reality" OR "augmented reality" OR "quantum computing" OR "robotics" OR "fintech" OR "edtech" OR "healthtech" OR "OpenAI" OR "ChatGPT" OR "GPT" OR "LLM"';
       const response = await fetch(
-        `${NEWS_API_URL}?q=${encodeURIComponent(techQuery)}&language=en&sortBy=publishedAt&pageSize=50&apiKey=${API_KEY}`,
+        `${NEWS_API_URL}?q=${encodeURIComponent(techQuery)}&language=en&sortBy=publishedAt&pageSize=100&apiKey=${API_KEY}`,
         {
           method: 'GET',
           headers: {
@@ -95,13 +98,13 @@ const NewsComponent: React.FC<NewsComponentProps> = ({ bgColor = '#fff' }) => {
       const data: NewsResponse = await response.json();
       
       if (data.status === 'ok') {
-        // Filter articles to ensure they're tech-related
+        // Filter articles to ensure they're tech-related AND have images
         const techFilteredArticles = data.articles.filter(article =>
           techKeywords.some(keyword =>
             article.title.toLowerCase().includes(keyword.toLowerCase()) ||
             (article.description && article.description.toLowerCase().includes(keyword.toLowerCase())) ||
             (article.content && article.content.toLowerCase().includes(keyword.toLowerCase()))
-          )
+          ) && article.urlToImage && article.urlToImage.trim() !== ''
         );
         setArticles(techFilteredArticles);
         setFilteredArticles(techFilteredArticles);
@@ -130,24 +133,62 @@ const NewsComponent: React.FC<NewsComponentProps> = ({ bgColor = '#fff' }) => {
     }
 
     const filtered = articles.filter(article => {
+      // Ensure article has an image
+      if (!article.urlToImage || article.urlToImage.trim() === '') {
+        return false;
+      }
+      
       const text = `${article.title} ${article.description || ''} ${article.content || ''}`.toLowerCase();
       
       switch (category) {
         case 'ai':
-          return text.includes('ai') || text.includes('artificial intelligence') ||
-                 text.includes('machine learning') || text.includes('neural network');
+          return (
+            text.includes('artificial intelligence') || text.includes('machine learning') ||
+            text.includes('deep learning') || text.includes('neural network') ||
+            text.includes('ai ') || text.includes(' ml ') || text.includes(' gpt') ||
+            text.includes('chatgpt') || text.includes('openai') || text.includes('llm') ||
+            text.includes('large language model') || text.includes('generative ai') ||
+            text.includes('computer vision') || text.includes('natural language processing') ||
+            text.includes('nlp') || text.includes('algorithm') || text.includes('model training')
+          );
         case 'blockchain':
-          return text.includes('blockchain') || text.includes('cryptocurrency') ||
-                 text.includes('bitcoin') || text.includes('crypto');
+          return (
+            text.includes('blockchain') || text.includes('cryptocurrency') ||
+            text.includes('crypto') || text.includes('bitcoin') || text.includes('ethereum') ||
+            text.includes('defi') || text.includes('nft') || text.includes('web3') ||
+            text.includes('smart contract') || text.includes('distributed ledger') ||
+            text.includes('mining') || text.includes('wallet') || text.includes('exchange') ||
+            text.includes('token') || text.includes('coin') || text.includes('dapp')
+          );
         case 'startups':
-          return text.includes('startup') || text.includes('venture capital') ||
-                 text.includes('funding') || text.includes('investment');
+          return (
+            text.includes('startup') || text.includes('venture capital') ||
+            text.includes('vc') || text.includes('funding') || text.includes('investment') ||
+            text.includes('unicorn') || text.includes('ipo') || text.includes('series a') ||
+            text.includes('series b') || text.includes('series c') || text.includes('seed funding') ||
+            text.includes('accelerator') || text.includes('incubator') || text.includes('fintech') ||
+            text.includes('edtech') || text.includes('healthtech') || text.includes('biotech') ||
+            text.includes('cleantech') || text.includes('agtech') || text.includes('proptech')
+          );
         case 'mobile':
-          return text.includes('mobile') || text.includes('smartphone') ||
-                 text.includes('app') || text.includes('ios') || text.includes('android');
+          return (
+            text.includes('mobile') || text.includes('smartphone') || text.includes('iphone') ||
+            text.includes('android') || text.includes('ios') || text.includes('app') ||
+            text.includes('mobile app') || text.includes('app store') || text.includes('play store') ||
+            text.includes('react native') || text.includes('flutter') || text.includes('swift') ||
+            text.includes('kotlin') || text.includes('mobile development') || text.includes('5g') ||
+            text.includes('mobile gaming') || text.includes('mobile payment') || text.includes('mobile security')
+          );
         case 'security':
-          return text.includes('cybersecurity') || text.includes('security breach') ||
-                 text.includes('hacking') || text.includes('data protection');
+          return (
+            text.includes('cybersecurity') || text.includes('security') || text.includes('hacking') ||
+            text.includes('hacker') || text.includes('breach') || text.includes('data breach') ||
+            text.includes('malware') || text.includes('ransomware') || text.includes('phishing') ||
+            text.includes('firewall') || text.includes('encryption') || text.includes('vulnerability') ||
+            text.includes('penetration testing') || text.includes('bug bounty') || text.includes('zero-day') ||
+            text.includes('identity theft') || text.includes('privacy') || text.includes('gdpr') ||
+            text.includes('compliance') || text.includes('authentication') || text.includes('authorization')
+          );
         default:
           return true;
       }

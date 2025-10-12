@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native'
-import React from 'react'
+import React, { useState } from 'react'
 import { useContainerDimensions } from '../hooks/useContainerDimensions'
 import { useWebRTC } from '../hooks/useWebRTC'
 import MeetHeader from '../components/meet/MeetHeader'
@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import People from '../components/meet/People'
 import NoUserInvite from '../components/meet/NoUserInvite'
 import MeetFooter from '../components/meet/MeetFooter'
+import ChatModal from '../../../components/ui/ChatModal'
 
 
 
@@ -15,6 +16,7 @@ const LiveMeetScreen = () => {
 
   const {containerDimensions, onContainerLayout} = useContainerDimensions();
   const {participants, localStream,toggleMic, toggleVideo,switchCamera} = useWebRTC();
+  const [isChatVisible, setIsChatVisible] = useState(false);
 
   return (
     <View style = {styles.container}>
@@ -47,7 +49,10 @@ const LiveMeetScreen = () => {
       toggleMic={toggleMic} 
       toggleVideo={toggleVideo} 
       participants={participants}
+      onChatPress={() => setIsChatVisible(true)}
     />
+
+    <ChatModal visible={isChatVisible} onClose={() => setIsChatVisible(false)} />
     </View>
   )
 }

@@ -34,6 +34,12 @@ interface EnrolledCourse {
   completedChapters?: string[];
 }
 
+interface EnrollmentStats {
+  totalEnrollments: number;
+  enrolledCourses: Course[];
+  lastEnrollment?: Course;
+}
+
 export const useCourse = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -279,6 +285,35 @@ export const useCourse = () => {
     }
   }, []);
 
+  // Get Enrollment Statistics
+  const getEnrollmentStats = useCallback(async (token: string): Promise<EnrollmentStats | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/user/enrollment-stats`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'ngrok-skip-browser-warning': 'true',
+        },
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to fetch enrollment stats');
+      }
+
+      return result.stats;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -288,5 +323,6 @@ export const useCourse = () => {
     enrollInCourse,
     getMyEnrolledCourses,
     getAllEnrolledCourses,
+    getEnrollmentStats,
   };
 };

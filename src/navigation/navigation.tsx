@@ -22,6 +22,8 @@ import DashboardScreen from '../features/screens/DashboardScreen';
 import Profile from '../features/screens/Profile';
 import TheoryScreen from '../features/screens/TheoryScreen';
 import BookScreen from '../features/screens/BookScreen';
+import VideoLibraryScreen from '../features/screens/VideoLibraryScreen';
+import VideoPlayerScreen from '../features/screens/VideoPlayerScreen';
 import QuizStart from '../features/screens/QuizStart';
 import QuizQuestions from '../features/screens/QuizQuestions';
 import MetaAi from '../features/screens/MetaAi';
@@ -67,6 +69,8 @@ const Navigation: FC = () => {
                 <Stack.Screen name="PodcastSplashScreen" component={PodcastSplashScreen} />
                 <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                 <Stack.Screen name="BookScreen" component={BookScreen} />
+                <Stack.Screen name="VideoLibraryScreen" component={VideoLibraryScreen} />
+                <Stack.Screen name="VideoPlayerScreen" component={VideoPlayerScreen} />
                 <Stack.Screen name="QuizScreen" component={QuizScreen} />
                 <Stack.Screen name="QuizStart" component={QuizStart} />
                 <Stack.Screen name="PodcastRegisterScreen" component={PodcastRegisterScreen} />

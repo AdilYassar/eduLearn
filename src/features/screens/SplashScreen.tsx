@@ -1,236 +1,117 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import {
   View,
-  Text,
   StyleSheet,
-  Dimensions,
   Animated,
   Easing,
   StatusBar,
+  Image,
 } from 'react-native';
-import Lottie from 'lottie-react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import MaskedView from '@react-native-masked-view/masked-view';
 import CustomText from '../../components/ui/CustomText';
-import { Colors } from '../../utils/Constants';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { navigate } from '../../utils/Navigation';
 import { checkAuthStatus } from '@service/authUtils';
 import { BASE_URL } from '@service/config';
 
-const { width, height } = Dimensions.get('window');
-
 const SplashScreen = () => {
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.3)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const translateYAnim = useRef(new Animated.Value(50)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const backgroundAnim = useRef(new Animated.Value(0)).current;
-  const textFadeAnim = useRef(new Animated.Value(0)).current;
-  const textScaleAnim = useRef(new Animated.Value(0.8)).current;
-  const bounceAnim = useRef(new Animated.Value(0)).current;
-  
-  // Particle animations (multiple particles)
-  const particle1 = useRef(new Animated.Value(0)).current;
-  const particle2 = useRef(new Animated.Value(0)).current;
-  const particle3 = useRef(new Animated.Value(0)).current;
-  const particle4 = useRef(new Animated.Value(0)).current;
-  const particle5 = useRef(new Animated.Value(0)).current;
-  
-  // Floating elements
-  const float1 = useRef(new Animated.Value(0)).current;
-  const float2 = useRef(new Animated.Value(0)).current;
-  const float3 = useRef(new Animated.Value(0)).current;
-  
-  const [showContent, setShowContent] = useState(false);
-  
-  const startParticleAnimations = useCallback(() => {
-    const particles = [particle1, particle2, particle3, particle4, particle5];
-    
-    particles.forEach((particle, index) => {
-      const animateParticle = () => {
-        Animated.sequence([
-          Animated.timing(particle, {
-            toValue: 1,
-            duration: 2000 + (index * 200),
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(particle, {
-            toValue: 0,
-            duration: 2000 + (index * 200),
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]).start(() => animateParticle());
-      };
-      
-      // Start with delay
-      setTimeout(() => animateParticle(), index * 400);
-    });
-  }, [particle1, particle2, particle3, particle4, particle5]);
-  
-  const startFloatingAnimations = useCallback(() => {
-    const floaters = [
-      { anim: float1, duration: 3000 },
-      { anim: float2, duration: 4000 },
-      { anim: float3, duration: 3500 },
-    ];
-    
-    floaters.forEach(({ anim, duration }) => {
-      const animateFloat = () => {
-        Animated.sequence([
-          Animated.timing(anim, {
-            toValue: 1,
-            duration: duration,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(anim, {
-            toValue: 0,
-            duration: duration,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]).start(() => animateFloat());
-      };
-      animateFloat();
-    });
-  }, [float1, float2, float3]);
-  
-  const startTextAnimations = useCallback(() => {
+  // Logo animation
+  const logoRotation = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0.5)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+
+  // Letter animations - individual control for each letter
+  const letterE = useRef(new Animated.Value(0)).current;
+  const letterD = useRef(new Animated.Value(0)).current;
+  const letterU = useRef(new Animated.Value(0)).current;
+  const letterL = useRef(new Animated.Value(0)).current;
+  const letterE2 = useRef(new Animated.Value(0)).current;
+  const letterA = useRef(new Animated.Value(0)).current;
+  const letterR = useRef(new Animated.Value(0)).current;
+  const letterN = useRef(new Animated.Value(0)).current;
+
+  const startAnimation = useCallback(() => {
+    // Phase 1: Logo fade in and scale (0-800ms)
     Animated.parallel([
-      Animated.timing(textFadeAnim, {
+      Animated.timing(logoOpacity, {
         toValue: 1,
-        duration: 600,
-        easing: Easing.out(Easing.quad),
+        duration: 800,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
-      Animated.spring(textScaleAnim, {
+      Animated.spring(logoScale, {
         toValue: 1,
-        tension: 150,
-        friction: 6,
+        tension: 80,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
-  }, [textFadeAnim, textScaleAnim]);
-  
-  const startPulseAnimation = useCallback(() => {
-    const pulse = () => {
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.1,
-          duration: 800,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ]).start(() => pulse());
-    };
-    pulse();
-  }, [pulseAnim]);
-  
-  const startBounceAnimation = useCallback(() => {
-    const bounce = () => {
-      Animated.sequence([
-        Animated.timing(bounceAnim, {
-          toValue: 1,
-          duration: 1200,
-          easing: Easing.bounce,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bounceAnim, {
-          toValue: 0,
-          duration: 1200,
-          easing: Easing.bounce,
-          useNativeDriver: true,
-        }),
-      ]).start(() => bounce());
-    };
-    setTimeout(() => bounce(), 1000);
-  }, [bounceAnim]);
 
-  const startAnimationSequence = useCallback(() => {
-    // Background animation
-    Animated.timing(backgroundAnim, {
-      toValue: 1,
-      duration: 1000,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-    
-    // Start particle animations
-    startParticleAnimations();
-    
-    // Start floating animations
-    startFloatingAnimations();
-    
-    // Main content animations sequence
+    // Phase 2: Logo continuous rotation (starts at 800ms, runs for 3200ms until last letter)
     Animated.sequence([
-      // Initial fade and scale
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
+      Animated.delay(800),
+      Animated.loop(
+        Animated.timing(logoRotation, {
           toValue: 1,
-          duration: 800,
-          easing: Easing.out(Easing.quad),
+          duration: 1600,
+          easing: Easing.linear,
           useNativeDriver: true,
         }),
-        Animated.spring(scaleAnim, {
+        { iterations: 2 } // 2 full rotations = 3200ms
+      ),
+    ]).start();
+
+    // Phase 3: Sequential letter animations (800ms - 4000ms = 3200ms for all letters)
+    const letterDelay = 400; // Time between each letter
+    const letterDuration = 400; // Duration for each letter animation
+
+    // Letter timing breakdown:
+    // E: 800ms, D: 1200ms, U: 1600ms, L: 2000ms, E: 2400ms, A: 2800ms, R: 3200ms, N: 3600ms
+    const letters = [
+      { anim: letterE, delay: 800 },
+      { anim: letterD, delay: 1200 },
+      { anim: letterU, delay: 1600 },
+      { anim: letterL, delay: 2000 },
+      { anim: letterE2, delay: 2400 },
+      { anim: letterA, delay: 2800 },
+      { anim: letterR, delay: 3200 },
+      { anim: letterN, delay: 3600 }, // Last letter completes at 4000ms
+    ];
+
+    letters.forEach(({ anim, delay }) => {
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.spring(anim, {
           toValue: 1,
           tension: 100,
-          friction: 8,
+          friction: 7,
           useNativeDriver: true,
         }),
-        Animated.timing(translateYAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.out(Easing.back(1.2)),
-          useNativeDriver: true,
-        }),
-      ]),
-      
-      // Rotation animation
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.inOut(Easing.quad),
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setShowContent(true);
-      startTextAnimations();
-      startPulseAnimation();
-      startBounceAnimation();
+      ]).start();
     });
   }, [
-    backgroundAnim,
-    fadeAnim,
-    scaleAnim,
-    translateYAnim,
-    rotateAnim,
-    startBounceAnimation,
-    startFloatingAnimations,
-    startParticleAnimations,
-    startPulseAnimation,
-    startTextAnimations,
+    logoRotation,
+    logoScale,
+    logoOpacity,
+    letterE,
+    letterD,
+    letterU,
+    letterL,
+    letterE2,
+    letterA,
+    letterR,
+    letterN,
   ]);
-  
+
   useEffect(() => {
-    // Start all animations in sequence
-    startAnimationSequence();
-    
-    // Check authentication and navigate accordingly
+    startAnimation();
+
     const checkAuthAndNavigate = async () => {
       try {
         console.log('SplashScreen: Checking authentication status...');
         const isAuthenticated = await checkAuthStatus(BASE_URL);
         
-        // Wait for animations to complete (4 seconds)
         setTimeout(() => {
           if (isAuthenticated) {
             console.log('SplashScreen: User is authenticated, navigating to dashboard');
@@ -242,237 +123,167 @@ const SplashScreen = () => {
         }, 4000);
       } catch (error) {
         console.error('SplashScreen: Error checking authentication:', error);
-        // On error, navigate to introduction screen
         setTimeout(() => {
           navigate('IntroductionScreen');
         }, 4000);
       }
     };
-    
     checkAuthAndNavigate();
-  }, [startAnimationSequence]);
-  
-  // Animation interpolations
-  const rotation = rotateAnim.interpolate({
+  }, [startAnimation]);
+
+  // Convert rotation value to degrees
+  const spin = logoRotation.interpolate({
     inputRange: [0, 1],
     outputRange: ['0deg', '360deg'],
   });
-  
-  const backgroundOpacity = backgroundAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.7, 1],
+
+  // Letter animation interpolation (scale + opacity for smooth appearance)
+  const getLetterStyle = (animValue) => ({
+    opacity: animValue,
+    transform: [
+      {
+        scale: animValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.3, 1],
+        }),
+      },
+      {
+        translateY: animValue.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 0],
+        }),
+      },
+    ],
   });
-  
-  // Particle positions and animations
-  const getParticleStyle = (particleAnim: Animated.Value, index: number) => {
-    const translateY = particleAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [height, -100],
-    });
-    
-    const opacity = particleAnim.interpolate({
-      inputRange: [0, 0.1, 0.9, 1],
-      outputRange: [0, 1, 1, 0],
-    });
-    
-    const scale = particleAnim.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.5, 1, 0.5],
-    });
-    
-    return {
-      position: 'absolute' as const,
-      left: (width / 6) * (index + 1),
-      transform: [{ translateY }, { scale }],
-      opacity,
-    };
-  };
-  
-  // Floating elements styles
-  const getFloatingStyle = (floatAnim: Animated.Value, position: any) => {
-    const translateY = floatAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, -30],
-    });
-    
-    const opacity = floatAnim.interpolate({
-      inputRange: [0, 0.5, 1],
-      outputRange: [0.3, 1, 0.3],
-    });
-    
-    return {
-      position: 'absolute' as const,
-      ...position,
-      transform: [{ translateY }],
-      opacity,
-    };
-  };
-  
+
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={Colors.primary} />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
       
-      {/* Animated Background */}
-      <Animated.View style={[
-        styles.backgroundGradient,
-        { opacity: backgroundOpacity },
-      ]}>
-        <View style={styles.gradientLayer1} />
-        <View style={styles.gradientLayer2} />
-        <View style={styles.gradientLayer3} />
-      </Animated.View>
-      
-      {/* Floating Background Elements */}
-      <Animated.View style={[
-        styles.floatingElement,
-        getFloatingStyle(float1, { top: 100, left: 50 }),
-      ]}>
-        <View style={[styles.circle, styles.whiteCircle]} />
-      </Animated.View>
-      
-      <Animated.View style={[
-        styles.floatingElement,
-        getFloatingStyle(float2, { top: 200, right: 40 }),
-      ]}>
-        <View style={[styles.square, styles.whiteSquare]} />
-      </Animated.View>
-      
-      <Animated.View style={[
-        styles.floatingElement,
-        getFloatingStyle(float3, { bottom: 150, left: 80 }),
-      ]}>
-        <View style={styles.triangle} />
-      </Animated.View>
-      
-      {/* Particle System */}
-      {[particle1, particle2, particle3, particle4, particle5].map((particle, index) => (
-        <Animated.View key={index} style={getParticleStyle(particle, index)}>
-          <View style={[styles.particle, { 
-            backgroundColor: index % 2 === 0 ? '#FFD700' : '#FF6B6B',
-            width: 8 + (index * 2),
-            height: 8 + (index * 2),
-            borderRadius: 8 + (index * 2),
-          }]} />
-        </Animated.View>
-      ))}
-      
-      {/* Main Content Container */}
-      <Animated.View style={[
-        styles.contentContainer,
-        {
-          opacity: fadeAnim,
-          transform: [
-            { scale: scaleAnim },
-            { translateY: translateYAnim },
-            { rotate: rotation }
-          ],
-        }
-      ]}>
-        {/* Pulsing Animation Container */}
-        <Animated.View style={[
-          styles.animationContainer,
-          { transform: [{ scale: pulseAnim }] }
-        ]}>
-          <View style={styles.glowContainer}>
-            <Lottie
-              source={require('../../assets/animations/twoppl.json')}
-              autoPlay
-              loop
-              style={styles.animation}
-              speed={1.2}
-            />
-          </View>
-          
-          {/* Bouncing Overlay Elements */}
-          <Animated.View style={[
-            styles.bounceOverlay,
-            { 
-              transform: [{ 
-                translateY: bounceAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, -10]
-                }) 
-              }] 
-            }
-          ]}>
-            <View style={styles.sparkle} />
-          </Animated.View>
-        </Animated.View>
-      </Animated.View>
-      
-      {/* Animated Text */}
-      {showContent && (
-        <Animated.View style={[
-          styles.textContainer,
+      {/* Spinning Logo */}
+      <Animated.View
+        style={[
+          styles.logoContainer,
           {
-            opacity: textFadeAnim,
-            transform: [{ scale: textScaleAnim }],
-          }
-        ]}>
-          <CustomText 
-            variant="h1" 
-            size={RFValue(24)}
-            fontFamily="Inter-Bold"
-            style={styles.welcomeText}
-          >
-            Welcome to EduLearn
-          </CustomText>
-          
-          {/* Animated Subtitle */}
-          <Animated.View style={[
-            styles.subtitleContainer,
-            { transform: [{ scale: pulseAnim }] },
-          ]}>
-            <CustomText 
-              variant="h3" 
-              size={RFValue(16)}
-              fontFamily="Inter-Regular"
-              style={styles.subtitleText}
+            opacity: logoOpacity,
+            transform: [{ scale: logoScale }, { rotate: spin }],
+          },
+        ]}
+      >
+        <Image
+          source={require('../../assets/getStarted/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </Animated.View>
+
+      {/* Sequential Letter Animations */}
+      <View style={styles.textContainer}>
+        <View style={styles.textRow}>
+          {/* EDU */}
+          <Animated.View style={getLetterStyle(letterE)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
             >
-              Learning Made Beautiful
+              E
             </CustomText>
           </Animated.View>
           
-          {/* Loading Dots Animation */}
-          <View style={styles.dotsContainer}>
-            {[0, 1, 2].map((index) => (
-              <Animated.View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    transform: [{
-                      scale: bounceAnim.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [1, 1.5],
-                      })
-                    }],
-                    opacity: bounceAnim.interpolate({
-                      inputRange: [0, 0.5, 1],
-                      outputRange: [0.5, 1, 0.5],
-                    })
-                  }
-                ]}
+          <Animated.View style={getLetterStyle(letterD)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              D
+            </CustomText>
+          </Animated.View>
+          
+          <Animated.View style={getLetterStyle(letterU)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              U
+            </CustomText>
+          </Animated.View>
+
+          {/* L with Gradient */}
+          <Animated.View style={[styles.maskedView, getLetterStyle(letterL)]}>
+            <MaskedView
+              style={{ flex: 1 }}
+              maskElement={
+                <CustomText
+                  variant="h1"
+                  size={RFValue(65)}
+                  fontFamily="Inter-Bold"
+                  style={styles.maskText}
+                >
+                  L
+                </CustomText>
+              }
+            >
+              <LinearGradient
+                colors={['#007AFF', '#0051D5', '#003D99']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.gradient}
               />
-            ))}
-          </View>
-        </Animated.View>
-      )}
-      
-      {/* Bottom Animated Wave */}
-      <Animated.View style={[
-        styles.bottomWave,
-        {
-          transform: [{
-            translateY: backgroundAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [100, 0],
-            })
-          }]
-        }
-      ]}>
-        <View style={styles.wave} />
-      </Animated.View>
+            </MaskedView>
+          </Animated.View>
+
+          {/* EARN */}
+          <Animated.View style={getLetterStyle(letterE2)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              E
+            </CustomText>
+          </Animated.View>
+          
+          <Animated.View style={getLetterStyle(letterA)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              A
+            </CustomText>
+          </Animated.View>
+          
+          <Animated.View style={getLetterStyle(letterR)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              R
+            </CustomText>
+          </Animated.View>
+          
+          <Animated.View style={getLetterStyle(letterN)}>
+            <CustomText
+              variant="h1"
+              size={RFValue(32)}
+              fontFamily="Inter-Bold"
+              style={styles.letterText}
+            >
+              N
+            </CustomText>
+          </Animated.View>
+        </View>
+      </View>
     </View>
   );
 };
@@ -484,153 +295,46 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: Colors.primary,
-    position: 'relative',
+    backgroundColor: '#FFFFFF',
   },
-  backgroundGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  gradientLayer1: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: Colors.primary,
-  },
-  gradientLayer2: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(106, 90, 205, 0.3)',
-  },
-  gradientLayer3: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(65, 105, 225, 0.2)',
-  },
-  contentContainer: {
+  logoContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 40,
   },
-  glowContainer: {
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 20,
-    shadowOpacity: 0.8,
-    elevation: 20,
-  },
-  animationContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  animation: {
-    width: 320,
-    height: 320,
-  },
-  bounceOverlay: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-  },
-  sparkle: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#FFD700',
-    borderRadius: 6,
-    opacity: 0.8,
+  logo: {
+    width: 180,
+    height: 180,
   },
   textContainer: {
     alignItems: 'center',
-    marginTop: 30,
   },
-  welcomeText: {
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    letterSpacing: 1,
-  },
-  subtitleContainer: {
-    marginTop: 10,
-  },
-  subtitleText: {
-    color: '#E0E0E0',
-    textAlign: 'center',
-    fontWeight: '300',
-    letterSpacing: 0.5,
-  },
-  dotsContainer: {
+  textRow: {
     flexDirection: 'row',
-    marginTop: 20,
-    justifyContent: 'center',
+    alignItems: 'center',
   },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FFD700',
-    marginHorizontal: 4,
+  letterText: {
+    color: '#2C2C2C',
+    fontWeight: 'bold',
+    letterSpacing: 2,
   },
-  // Floating Elements
-  floatingElement: {
-    zIndex: 1,
+  maskedView: {
+    marginHorizontal: -5,
+    width: 70,
+    height: 70,
   },
-  circle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+  maskText: {
+    backgroundColor: 'transparent',
+    color: 'black',
+    fontWeight: 'bold',
+    letterSpacing: 1,
+    fontSize: RFValue(95),
+    lineHeight: RFValue(60),
+    textAlignVertical: 'center',
   },
-  whiteCircle: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  square: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-  },
-  whiteSquare: {
-    backgroundColor: 'rgba(255,255,255,0.08)',
-  },
-  triangle: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 20,
-    borderRightWidth: 20,
-    borderBottomWidth: 30,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-  },
-  // Particles
-  particle: {
-    shadowColor: '#FFD700',
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 5,
-    shadowOpacity: 0.8,
-    elevation: 5,
-  },
-  // Bottom Wave
-  bottomWave: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 100,
-  },
-  wave: {
+  gradient: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 50,
+    height: 70,
+    width: 70,
   },
 });

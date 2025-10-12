@@ -1,17 +1,25 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, TouchableOpacity, Alert } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator, TouchableOpacity, Alert, FlatList, Dimensions } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { Colors } from '../../utils/Constants';
 import { useQuiz } from '@service/hooks/useQuiz';
 import { navigate } from '../../utils/Navigation';
+import QuestionCard from '../../components/ui/QuestionCard';
+import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 interface QuestionItem {
   _id: string;
-  text: string;
-  options?: string[];
+  question: string;
+  type: string;
+  options: string[];
   correctAnswer: string;
+  difficulty?: string;
+  points?: number;
+  quiz?: string;
 }
 
 interface QuizSubmissionResponse {
@@ -42,7 +50,9 @@ const QuizQuestions = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<{ [key: string]: string }>({});
   const [submissionResult, setSubmissionResult] = useState<QuizSubmissionResponse | null>(null);
   const [startTime] = useState<number>(Date.now());
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
 
+  const flatListRef = useRef<FlatList>(null);
   const { getQuizQuestions, submitQuiz } = useQuiz();
   const route = useRoute();
   const { quizId, courseId } = route.params as { quizId: string; courseId?: string };
@@ -51,8 +61,15 @@ const QuizQuestions = () => {
     const fetchQuestions = async () => {
       try {
         const result = await getQuizQuestions(quizId);
+        console.log('Quiz questions result:', JSON.stringify(result, null, 2));
         if (result) {
-          setQuestions(result);
+          // Log first question to see structure
+          if (result.length > 0) {
+            console.log('First question structure:', result[0]);
+            console.log('Question field:', result[0].question);
+            console.log('Options:', result[0].options);
+          }
+          setQuestions(result as any);
         } else {
           setError('No questions available for this quiz');
         }
@@ -72,6 +89,32 @@ const QuizQuestions = () => {
       setSelectedAnswers((prev) => ({ ...prev, [questionId]: selectedOption }));
     }
   };
+
+  const goToNextQuestion = () => {
+    if (currentIndex < questions.length - 1) {
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+    }
+  };
+
+  const goToPreviousQuestion = () => {
+    if (currentIndex > 0) {
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
+      flatListRef.current?.scrollToIndex({ index: prevIndex, animated: true });
+    }
+  };
+
+  const onViewableItemsChanged = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      setCurrentIndex(viewableItems[0].index || 0);
+    }
+  }).current;
+
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 50,
+  }).current;
 
   const handleSubmitQuiz = async () => {
     // Check if all questions are answered
@@ -197,17 +240,61 @@ const QuizQuestions = () => {
     }
   };
 
-  const renderQuestion = ({ item, index }: { item: QuestionItem; index: number }) => {
+  const renderQuestionCard = ({ item, index }: { item: QuestionItem; index: number }) => {
+    const isTrueFalse = item.type === 'true-false' ||
+                        (item.options && item.options.length === 2 &&
+                         item.options.some(opt => opt.toLowerCase() === 'true') &&
+                         item.options.some(opt => opt.toLowerCase() === 'false'));
+
+    return (
+      <QuestionCard
+        question={item.question}
+        questionNumber={index + 1}
+        totalQuestions={questions.length}
+        questionType={item.type}
+        options={item.options}
+        selectedAnswer={selectedAnswers[item._id]}
+        correctAnswer={submissionResult ? item.correctAnswer : undefined}
+        isSubmitted={!!submissionResult}
+        isTrueFalse={isTrueFalse}
+        onSelectAnswer={(answer) => handleAnswerSelection(item._id, answer)}
+      />
+    );
+  };
+
+  const renderOldQuestion = ({ item, index }: { item: QuestionItem; index: number }) => {
     const userAnswer = selectedAnswers[item._id];
     const isSubmitted = !!submissionResult;
+    
+    // Determine if it's a true/false question
+    const isTrueFalse = item.type === 'true-false' || 
+                        (item.options && item.options.length === 2 && 
+                         item.options.some(opt => opt.toLowerCase() === 'true') && 
+                         item.options.some(opt => opt.toLowerCase() === 'false'));
 
     return (
       <View style={styles.questionCard}>
         <Text style={styles.questionNumber}>Question {index + 1} of {questions.length}</Text>
-        <Text style={styles.questionText}>{item.text}</Text>
-        {item.options?.map((option, optionIndex) => {
-          const isSelected = userAnswer === option;
-          const isCorrect = option === item.correctAnswer;
+        <Text style={styles.questionText}>{item.question}</Text>
+        
+        {isTrueFalse && (
+          <Text style={styles.questionType}>True / False</Text>
+        )}
+        
+        {item.options?.map((originalOption, optionIndex) => {
+          // For display purposes, normalize true/false
+          const displayOption = isTrueFalse ? 
+            (originalOption.toLowerCase() === 'true' ? 'True' : 
+             originalOption.toLowerCase() === 'false' ? 'False' : originalOption) : 
+            originalOption;
+          
+          // Use original option for comparison to handle case sensitivity
+          const normalizedAnswer = userAnswer?.toLowerCase();
+          const normalizedOption = originalOption.toLowerCase();
+          const normalizedCorrect = item.correctAnswer.toLowerCase();
+          
+          const isSelected = normalizedAnswer === normalizedOption;
+          const isCorrect = normalizedOption === normalizedCorrect;
           
           // Determine styles based on selection and submission state
           const getOptionStyle = () => {
@@ -230,16 +317,16 @@ const QuizQuestions = () => {
             <TouchableOpacity
               key={optionIndex}
               style={getOptionStyle()}
-              onPress={() => handleAnswerSelection(item._id, option)}
+              onPress={() => handleAnswerSelection(item._id, originalOption)}
               disabled={isSubmitted}
             >
               <Text style={[
                 styles.optionText,
                 isSelected && !isSubmitted && styles.selectedOptionText,
-                isSubmitted && option === item.correctAnswer && styles.correctAnswerText,
-                isSubmitted && isSelected && option !== item.correctAnswer && styles.incorrectAnswerText,
+                isSubmitted && isCorrect && styles.correctAnswerText,
+                isSubmitted && isSelected && !isCorrect && styles.incorrectAnswerText,
               ]}>
-                {String.fromCharCode(65 + optionIndex)}. {option}
+                {isTrueFalse ? displayOption : `${String.fromCharCode(65 + optionIndex)}. ${displayOption}`}
               </Text>
             </TouchableOpacity>
           );
@@ -278,58 +365,85 @@ const QuizQuestions = () => {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerText}>Quiz Questions</Text>
-        <Text style={styles.progressText}>
-          {Object.keys(selectedAnswers).length}/{questions.length} answered
-        </Text>
+        <TouchableOpacity onPress={() => navigate('QuizScreen')} style={styles.backButton}>
+          <ChevronLeft size={24} color="#fff" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerText}>Quiz Challenge</Text>
+          <Text style={styles.headerSubtext}>
+            {Object.keys(selectedAnswers).length}/{questions.length} answered
+          </Text>
+        </View>
+        <View style={styles.headerRight} />
       </View>
-      
-      <FlatList
-        data={questions}
-        renderItem={renderQuestion}
-        keyExtractor={(item) => item._id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-      />
-      
-      <View style={styles.submitButtonContainer}>
-        {!submissionResult ? (
-          <TouchableOpacity
-            onPress={handleSubmitQuiz}
-            style={[
-              styles.submitButton,
-              Object.keys(selectedAnswers).length === questions.length
-                ? styles.submitButtonActive
-                : styles.submitButtonInactive,
-            ]}
-            disabled={submitting || Object.keys(selectedAnswers).length !== questions.length}
-          >
-            {submitting ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <Text style={styles.submitButtonText}>
-                Submit Quiz ({Object.keys(selectedAnswers).length}/{questions.length})
-              </Text>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.resultContainer}>
+
+      {/* Carousel - Only show when not submitted */}
+      {!submissionResult && (
+        <>
+          <FlatList
+            ref={flatListRef}
+            data={questions}
+            renderItem={renderQuestionCard}
+            keyExtractor={(item) => item._id}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={viewabilityConfig}
+            getItemLayout={(data, index) => ({
+              length: SCREEN_WIDTH,
+              offset: SCREEN_WIDTH * index,
+              index,
+            })}
+            scrollEnabled={!submissionResult}
+          />
+
+          {/* Floating Submit Button */}
+          {currentIndex === questions.length - 1 && (
+            <View style={styles.floatingButtonContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  Object.keys(selectedAnswers).length === questions.length
+                    ? styles.submitButtonActive
+                    : styles.submitButtonInactive,
+                ]}
+                onPress={handleSubmitQuiz}
+                disabled={submitting || Object.keys(selectedAnswers).length !== questions.length}
+              >
+                {submitting ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.submitButtonText}>Submit Quiz</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
+      )}
+
+      {/* Results Screen - Only show after submission */}
+      {submissionResult && (
+        <View style={styles.resultContainer}>
+          <View style={styles.resultCard}>
+            <Text style={styles.resultTitle}>🎉 Quiz Completed!</Text>
             <Text style={styles.scoreText}>
-              Final Score: {submissionResult.submission.correctAnswers}/{submissionResult.submission.totalQuestions}
+              {submissionResult.submission.correctAnswers}/{submissionResult.submission.totalQuestions}
             </Text>
             <Text style={styles.percentageText}>
               {submissionResult.submission.percentage}% - Grade: {submissionResult.submission.grade}
             </Text>
             <TouchableOpacity
-              style={styles.backButton}
+              style={styles.backToQuizzesButton}
               onPress={() => navigate('QuizScreen')}
             >
-              <Text style={styles.backButtonText}>Back to Quizzes</Text>
+              <Text style={styles.backToQuizzesButtonText}>Back to Quizzes</Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -339,153 +453,175 @@ export default QuizQuestions;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F5F7FA',
   },
   header: {
-    backgroundColor: Colors.primary_dark,
+    backgroundColor: '#8B5CF6',
     paddingHorizontal: RFValue(20),
-    paddingVertical: RFValue(15),
+    paddingVertical: RFValue(16),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  headerText: {
-    fontSize: RFValue(20),
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  progressText: {
-    fontSize: RFValue(14),
-    color: '#fff',
-  },
-  listContent: {
-    paddingHorizontal: RFValue(15),
-    paddingVertical: RFValue(20),
-  },
-  questionCard: {
-    backgroundColor: '#fff',
-    borderRadius: RFValue(12),
-    padding: RFValue(20),
-    marginBottom: RFValue(20),
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    elevation: 6,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
   },
-  questionNumber: {
-    fontSize: RFValue(12),
-    color: Colors.secondary_dark,
-    marginBottom: RFValue(8),
-    fontWeight: '500',
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  questionText: {
-    fontSize: RFValue(18),
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: RFValue(15),
-    lineHeight: RFValue(24),
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
   },
-  optionButton: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: RFValue(8),
-    padding: RFValue(15),
-    marginBottom: RFValue(10),
-    backgroundColor: '#fff',
-  },
-  selectedOption: {
-    borderColor: Colors.primary_dark,
-    backgroundColor: Colors.teal_100,
-  },
-  selectedCorrect: {
-    borderColor: '#28a745',
-    backgroundColor: '#d4edda',
-  },
-  selectedIncorrect: {
-    borderColor: '#dc3545',
-    backgroundColor: '#f8d7da',
-  },
-  correctAnswerHighlight: {
-    borderColor: '#28a745',
-    backgroundColor: '#d4edda',
-  },
-  optionText: {
+  headerText: {
     fontSize: RFValue(16),
-    color: '#333',
-    fontWeight: '500',
+    fontWeight: 'bold',
+    color: '#fff',
   },
-  selectedOptionText: {
+  headerSubtext: {
+    fontSize: RFValue(11),
+    color: '#E0E0E0',
+    marginTop: 2,
+  },
+  headerRight: {
+    width: 40,
+  },
+  floatingButtonContainer: {
+    position: 'absolute',
+    bottom: RFValue(20),
+    left: RFValue(20),
+    right: RFValue(20),
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: RFValue(20),
+    paddingVertical: RFValue(12),
+    borderRadius: RFValue(12),
+    borderWidth: 2,
+    borderColor: Colors.primary_dark,
+    backgroundColor: '#fff',
+    gap: 6,
+  },
+  navButtonDisabled: {
+    borderColor: '#E0E0E0',
+    backgroundColor: '#F5F5F5',
+  },
+  navButtonText: {
+    fontSize: RFValue(14),
+    fontWeight: '600',
     color: Colors.primary_dark,
   },
-  correctAnswerText: {
-    color: '#28a745',
+  navButtonTextDisabled: {
+    color: '#ccc',
+  },
+  nextButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: RFValue(24),
+    paddingVertical: RFValue(14),
+    borderRadius: RFValue(12),
+    backgroundColor: Colors.primary_dark,
+    gap: 6,
+    elevation: 2,
+    shadowColor: Colors.primary_dark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  nextButtonText: {
+    fontSize: RFValue(15),
     fontWeight: 'bold',
-  },
-  incorrectAnswerText: {
-    color: '#dc3545',
-    fontWeight: 'bold',
-  },
-  correctAnswerContainer: {
-    marginTop: RFValue(15),
-    paddingTop: RFValue(15),
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-  },
-  correctAnswerLabel: {
-    fontSize: RFValue(14),
-    color: '#28a745',
-    fontWeight: 'bold',
-  },
-  submitButtonContainer: {
-    paddingHorizontal: RFValue(20),
-    paddingVertical: RFValue(15),
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
+    color: '#fff',
   },
   submitButton: {
-    borderRadius: RFValue(8),
-    paddingVertical: RFValue(15),
+    width: '100%',
+    paddingVertical: RFValue(18),
+    borderRadius: RFValue(16),
     alignItems: 'center',
     justifyContent: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
   submitButtonActive: {
-    backgroundColor: Colors.primary_dark,
+    backgroundColor: '#8B5CF6',
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
   },
   submitButtonInactive: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#BDBDBD',
   },
   submitButtonText: {
-    fontSize: RFValue(18),
+    fontSize: RFValue(16),
     fontWeight: 'bold',
     color: '#fff',
   },
   resultContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: RFValue(10),
+    padding: RFValue(20),
+    paddingBottom: RFValue(100), // Extra space to prevent truncation
+  },
+  resultCard: {
+    backgroundColor: '#fff',
+    borderRadius: RFValue(20),
+    padding: RFValue(32),
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    width: '100%',
+    maxWidth: 400,
+  },
+  resultTitle: {
+    fontSize: RFValue(24),
+    fontWeight: 'bold',
+    color: '#8B5CF6',
+    marginBottom: RFValue(20),
+    textAlign: 'center',
   },
   scoreText: {
-    fontSize: RFValue(20),
+    fontSize: RFValue(48),
     fontWeight: 'bold',
-    color: Colors.primary_dark,
-    marginBottom: RFValue(5),
+    color: '#4CAF50',
+    marginBottom: RFValue(8),
   },
   percentageText: {
-    fontSize: RFValue(16),
+    fontSize: RFValue(18),
     color: '#666',
-    marginBottom: RFValue(15),
+    marginBottom: RFValue(24),
+    fontWeight: '600',
   },
-  backButton: {
-    backgroundColor: Colors.teal_300,
-    paddingHorizontal: RFValue(30),
-    paddingVertical: RFValue(12),
-    borderRadius: RFValue(8),
+  backToQuizzesButton: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: RFValue(40),
+    paddingVertical: RFValue(14),
+    borderRadius: RFValue(12),
+    elevation: 2,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  backButtonText: {
+  backToQuizzesButtonText: {
     fontSize: RFValue(16),
     fontWeight: 'bold',
-    color: Colors.primary_dark,
+    color: '#fff',
   },
   loadingContainer: {
     flex: 1,
@@ -512,7 +648,7 @@ const styles = StyleSheet.create({
     marginBottom: RFValue(20),
   },
   retryButton: {
-    backgroundColor: Colors.primary_dark,
+    backgroundColor: '#8B5CF6',
     paddingHorizontal: RFValue(30),
     paddingVertical: RFValue(12),
     borderRadius: RFValue(8),

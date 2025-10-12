@@ -6,8 +6,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  FlatList,
-  Alert,
+  ScrollView,
+  Dimensions,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { navigate } from '@utils/Navigation';
@@ -15,6 +15,7 @@ import { useCourse } from '@service/hooks/useCourse';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@utils/Constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 interface CourseItem {
   _id: string;
@@ -28,100 +29,90 @@ interface CoursesProps {
   bgColor?: string[];
 }
 
+const { width: screenWidth } = Dimensions.get('window');
+const cardWidth = screenWidth * 0.75; // 75% of screen width
+const cardSpacing = 16;
+
 const Courses: React.FC<CoursesProps> = ({ bgColor = ['#FFFFFF', '#F5F5F5'] }) => {
   const [courses, setCourses] = useState<CourseItem[]>([]);
-  const { getAllCourses, enrollInCourse, loading, error } = useCourse();
+  const { getEnrollmentStats, loading } = useCourse();
 
-  // Fetch courses on component mount
+  // Course images array
+  const courseImages = [
+    require('../../assets/getStarted/100.png'),
+    require('../../assets/getStarted/101.png'),
+    require('../../assets/getStarted/102.png'),
+    require('../../assets/getStarted/103.png'),
+  ];
+
+  // Background colors for course cards
+  const cardBackgrounds = ['#E3F2FD', '#F3E5F5', '#E8F5E9', '#FFF3E0'];
+
+  // Fetch enrolled courses on component mount
   const fetchCourses = useCallback(async () => {
     try {
-      const result = await getAllCourses();
-      if (result) {
-        // Limit to 4 courses for dashboard display
-        setCourses(result.slice(0, 4));
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        console.log('No access token, cannot fetch enrolled courses');
+        return;
+      }
+
+      // Get enrollment stats to get enrolled courses
+      const stats = await getEnrollmentStats(accessToken);
+      if (stats && stats.enrolledCourses) {
+        // Show only enrolled courses, limit to 6 for dashboard carousel
+        setCourses(stats.enrolledCourses.slice(0, 6));
       }
     } catch (fetchError) {
-      console.error('Error fetching courses:', fetchError);
+      console.error('Error fetching enrolled courses:', fetchError);
     }
-  }, [getAllCourses]);
+  }, [getEnrollmentStats]);
+
 
   useEffect(() => {
     fetchCourses();
   }, [fetchCourses]);
 
-  const handleEnrollCourse = async (courseId: string, courseTitle: string) => {
-    try {
-      console.log('Starting enrollment for course:', courseId, courseTitle);
-      
-      // Get access token and user info
-      const accessToken = await AsyncStorage.getItem('accessToken');
-      const userInfo = await AsyncStorage.getItem('userInfo');
-      
-      console.log('Access token found:', !!accessToken);
-      console.log('User info found:', !!userInfo);
-      
-      if (userInfo) {
-        try {
-          const parsedUserInfo = JSON.parse(userInfo);
-          console.log('Current user email from AsyncStorage:', parsedUserInfo.email);
-          console.log('Current user UUID from AsyncStorage:', parsedUserInfo.uuid);
-          console.log('Current user name from AsyncStorage:', parsedUserInfo.name);
-        } catch (parseError) {
-          console.error('Error parsing user info:', parseError);
-        }
-      }
-      
-      if (!accessToken) {
-        Alert.alert('Error', 'You must be logged in to enroll in a course.');
-        return;
-      }
-
-      console.log('Calling enrollInCourse with courseId:', courseId);
-      const result = await enrollInCourse(courseId, accessToken);
-      console.log('Enrollment result:', result);
-      
-      if (result) {
-        Alert.alert('Success', `Successfully enrolled in ${courseTitle}!`);
-        // Optionally refresh the courses to show updated enrollment status
-        await fetchCourses();
-      } else {
-        console.log('Enrollment failed, error:', error);
-        Alert.alert('Error', error || 'Failed to enroll in the course. Please try again.');
-      }
-    } catch (enrollError) {
-      console.error('Error enrolling in the course:', enrollError);
-      Alert.alert('Error', 'Failed to enroll in the course. Please try again.');
-    }
+  const handleCourseClick = (course: CourseItem) => {
+    // Navigate to course content when clicked
+    navigate('TheoryScreen', { courseId: course._id });
   };
 
-  const renderCourseCard = ({ item }: { item: CourseItem }) => {
-    const chaptersCount = item.chapters?.length || 10;
-    const instructorName = item.instructor || 'Adil Yassar';
+  const renderCourseCard = ({ item, index }: { item: CourseItem; index: number }) => {
+    const backgroundColor = cardBackgrounds[index % cardBackgrounds.length];
+    
+    // Use course ID to get consistent random image for each course
+    let imageIndex = 0;
+    if (item._id) {
+      const idHash = item._id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+      imageIndex = idHash % courseImages.length;
+    }
+    const courseImage = courseImages[imageIndex];
 
     return (
-      <View style={styles.courseCard}>
-        <View style={styles.cardTop}>
-          <Text style={styles.courseTitle}>{item.title}</Text>
-          <Text style={styles.instructorText}>Instructor : {instructorName}</Text>
-          <Text style={styles.chaptersText}>Chapters : {chaptersCount}</Text>
-        </View>
-        
-        <View style={styles.cardBottom}>
-          <Image
-            source={require('../../assets/images.png')}
-            style={styles.courseImage}
-            resizeMode="contain"
-          />
-          
-          <TouchableOpacity
-            style={styles.enrollButton}
-            onPress={() => handleEnrollCourse(item._id, item.title)}
-          >
-            <Icon name="add" size={24} color={Colors.primary_dark} />
-            <Text style={styles.enrollButtonText}>Enroll</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      <Animated.View
+        entering={FadeIn.duration(500)}
+      >
+        {/* Main Course Card - Clickable */}
+        <TouchableOpacity
+          style={styles.courseCard}
+          onPress={() => handleCourseClick(item)}
+          activeOpacity={0.8}
+        >
+          {/* TOP SECTION - Colored background with illustration */}
+          <View style={[styles.courseInfoSection, { backgroundColor }]}>
+            <Image
+              source={courseImage}
+              style={styles.courseImage}
+            />
+          </View>
+
+          {/* BOTTOM SECTION - White title section */}
+          <View style={styles.titleSection}>
+            <Text style={styles.courseTitle}>{item.title}</Text>
+          </View>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
@@ -137,8 +128,36 @@ const Courses: React.FC<CoursesProps> = ({ bgColor = ['#FFFFFF', '#F5F5F5'] }) =
         end={{ x: 0, y: 0 }}
         style={styles.container}
       >
-        <Text style={styles.title}>Courses</Text>
+        <Text style={styles.title}>My Courses</Text>
         <ActivityIndicator size="large" color={Colors.primary_dark} style={styles.loader} />
+      </LinearGradient>
+    );
+  }
+
+  // Show empty state if no courses
+  if (courses.length === 0) {
+    return (
+      <LinearGradient
+        colors={bgColor}
+        start={{ x: 0, y: 1 }}
+        end={{ x: 0, y: 0 }}
+        style={styles.container}
+      >
+        <Text style={styles.title}>My Courses</Text>
+        
+        <View style={styles.emptyStateContainer}>
+          <View style={styles.emptyStateCard}>
+            <Icon name="school" size={48} color="#ccc" style={styles.emptyIcon} />
+            <Text style={styles.emptyTitle}>No Enrolled Courses</Text>
+            <Text style={styles.emptyDescription}>
+              You haven't enrolled in any courses yet. Browse available courses and start your learning journey!
+            </Text>
+            <TouchableOpacity style={styles.browseButton} onPress={handleViewAllCourses}>
+              <Text style={styles.browseButtonText}>Browse Courses</Text>
+              <Icon name="arrow-forward" size={16} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </LinearGradient>
     );
   }
@@ -150,17 +169,22 @@ const Courses: React.FC<CoursesProps> = ({ bgColor = ['#FFFFFF', '#F5F5F5'] }) =
       end={{ x: 0, y: 0 }}
       style={styles.container}
     >
-      <Text style={styles.title}>Courses</Text>
+      <Text style={styles.title}>My Courses</Text>
       
-      <FlatList
-        data={courses}
-        renderItem={renderCourseCard}
-        keyExtractor={(item) => item._id}
-        numColumns={2}
-        columnWrapperStyle={styles.columnWrapper}
-        scrollEnabled={false}
-        contentContainerStyle={styles.coursesGrid}
-      />
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.carouselContainer}
+        decelerationRate="fast"
+        snapToInterval={cardWidth + cardSpacing}
+        snapToAlignment="start"
+      >
+        {courses.map((course, index) => (
+          <View key={course._id} style={styles.cardWrapper}>
+            {renderCourseCard({ item: course, index })}
+          </View>
+        ))}
+      </ScrollView>
 
       <TouchableOpacity style={styles.viewAllButton} onPress={handleViewAllCourses}>
         <Text style={styles.viewAllText}>View All Courses</Text>
@@ -186,75 +210,68 @@ const styles = StyleSheet.create({
   loader: {
     marginVertical: 40,
   },
-  coursesGrid: {
+  carouselContainer: {
+    paddingHorizontal: 16,
     paddingBottom: 8,
   },
-  columnWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingHorizontal: 16,
+  cardWrapper: {
+    width: cardWidth,
+    marginRight: cardSpacing,
   },
   courseCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-    borderRadius: 16,
-    padding: 16,
-    width: '48%',
-    height: 180,
-    justifyContent: 'space-between',
-    position: 'relative',
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.4)',
+    borderColor: '#E5E5E5',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: '#fff',
+    height: 180,
   },
-  cardTop: {
+  courseInfoSection: {
     flex: 1,
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  cardContent: {
-    flex: 1,
-  },
-  courseTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-    fontFamily: 'Inter-SemiBold',
-  },
-  instructorText: {
-    fontSize: 12,
-    color: '#2C3E50',
-    marginBottom: 4,
-    fontFamily: 'Inter-Regular',
-  },
-  chaptersText: {
-    fontSize: 12,
-    color: '#2C3E50',
-    marginBottom: 8,
-    fontFamily: 'Inter-Regular',
-  },
-  courseImage: {
-    width: 60,
-    height: 60,
-  },
-  enrollButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 50,
-    width: 50,
-    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'flex-end',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    padding: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
-  enrollButtonText: {
-    fontSize: 9,
-    color: Colors.primary_dark,
-    fontWeight: '600',
-    marginTop: -2,
+  courseImage: {
+    width: 120,
+    height: 120,
+    resizeMode: 'contain',
+    marginBottom: 16,
+  },
+  courseTextContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  courseTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#000',
+    textAlign: 'center',
+    fontFamily: 'Inter-Bold',
+  },
+  courseDescription: {
+    fontSize: 10,
+    color: '#666',
+    lineHeight: 14,
+    fontFamily: 'Inter-Regular',
+    textAlign: 'center',
+  },
+  titleSection: {
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
   },
   viewAllButton: {
     flexDirection: 'row',
@@ -267,6 +284,59 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 16,
     color: Colors.primary_dark,
+    fontWeight: '600',
+    marginRight: 8,
+    fontFamily: 'Inter-SemiBold',
+  },
+  emptyStateContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+  },
+  emptyStateCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  emptyIcon: {
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    fontFamily: 'Inter-Bold',
+  },
+  emptyDescription: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+    fontFamily: 'Inter-Regular',
+  },
+  browseButton: {
+    backgroundColor: Colors.primary_dark,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: Colors.primary_dark,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  browseButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
     marginRight: 8,
     fontFamily: 'Inter-SemiBold',

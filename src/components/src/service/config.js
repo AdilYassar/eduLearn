@@ -1,2 +1,2 @@
-export const BASE_URL = "https://503e26a02932.ngrok-free.app";
-export const SOCKET_URL = "wss://503e26a02932.ngrok-free.app";  
+export const BASE_URL = "https://residential-dorette-adildevelopment-7f64b357.koyeb.app";
+export const SOCKET_URL = "wss://residential-dorette-adildevelopment-7f64b357.koyeb.app";  

@@ -19,9 +19,8 @@ import { useNavigation } from '@react-navigation/native';
 import ParticipantsModal from './ParticipantsModal';
 import ShareUtils from '../../../../utils/ShareUtils';
 
-const MeetFooter = ({ toggleMic, toggleVideo, participants = [] }) => {
+const MeetFooter = ({ toggleMic, toggleVideo, participants = [], onChatPress }) => {
   const navigation = useNavigation();
-  const [showChat, setShowChat] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
   
   const { user } = useUserStore();
@@ -37,8 +36,9 @@ const MeetFooter = ({ toggleMic, toggleVideo, participants = [] }) => {
   const getIconColor = (isActive) => (isActive ? 'white' : 'red');
 
   const handleChat = () => {
-    setShowChat(!showChat);
-    // Add chat logic here
+    if (onChatPress) {
+      onChatPress();
+    }
   };
 
   const handleCopyMeetingId = async () => {
@@ -82,7 +82,7 @@ const MeetFooter = ({ toggleMic, toggleVideo, participants = [] }) => {
           onPress={handleChat}
           onLongPress={handleCopyMeetingId}
         >
-          <MessageCircle size={20} color={showChat ? '#4A90E2' : 'white'} />
+          <MessageCircle size={20} color="white" />
         </TouchableOpacity>
 
         {/* Toggle Microphone */}

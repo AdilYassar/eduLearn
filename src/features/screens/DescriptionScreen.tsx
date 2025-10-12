@@ -1,7 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { Text, StyleSheet, ScrollView, TouchableOpacity, View, Alert } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  View,
+  Alert,
+  Animated,
+  StatusBar,
+} from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
 import Tts from 'react-native-tts';
+import CustomText from '../../components/ui/CustomText';
+import { RFValue } from 'react-native-responsive-fontsize';
+import LinearGradient from 'react-native-linear-gradient';
+
 
 type DescriptionScreenRouteProp = RouteProp<{ params: { generatedContent: string } }, 'params'>;
 
@@ -10,15 +22,38 @@ const DescriptionScreen: React.FC = () => {
   const { generatedContent } = route.params;
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const buttonScale = useRef(new Animated.Value(0.9)).current;
+
   useEffect(() => {
+    // Start entry animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(buttonScale, {
+        toValue: 1,
+        tension: 80,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     const initializeTTS = async () => {
       try {
-        // Initialize TTS with error handling
         await Tts.setDefaultLanguage('en-US');
         await Tts.setDefaultRate(0.6);
         await Tts.setDefaultPitch(1.2);
 
-        // Add TTS event listeners
         Tts.addEventListener('tts-start', (event) => {
           console.log('TTS Started:', event);
           setIsSpeaking(true);
@@ -40,15 +75,12 @@ const DescriptionScreen: React.FC = () => {
           Alert.alert('TTS Error', 'There was an error with text-to-speech. Please try again.');
         });
 
-        // Check if TTS engines are available
         const engines = await Tts.engines();
         console.log('Available TTS engines:', engines);
 
-        // Get available voices
         const voices = await Tts.voices();
         console.log('Available voices:', voices);
 
-        // Set a specific voice if available
         const englishVoices = voices.filter(
           (voice) => voice.language.startsWith('en') && (voice.quality ?? 0) > 200
         );
@@ -65,23 +97,21 @@ const DescriptionScreen: React.FC = () => {
     initializeTTS();
 
     return () => {
-      // Cleanup
       Tts.stop();
       Tts.removeAllListeners('tts-start');
       Tts.removeAllListeners('tts-finish');
       Tts.removeAllListeners('tts-cancel');
       Tts.removeAllListeners('tts-error');
     };
-  }, []);
+  }, [fadeAnim, slideAnim, buttonScale]);
 
   const cleanTextForSpeech = (text: string): string => {
-    // Remove markdown formatting and clean text for better TTS
     return text
-      .replace(/#{1,6}\s*/g, '') // Remove headers
-      .replace(/\*\*/g, '') // Remove bold
-      .replace(/\*/g, '') // Remove asterisks
-      .replace(/\n{3,}/g, '\n\n') // Limit multiple newlines
-      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .replace(/\s+/g, ' ')
       .trim();
   };
 
@@ -95,14 +125,11 @@ const DescriptionScreen: React.FC = () => {
         return;
       }
 
-      // Stop any current speech
       await Tts.stop();
 
-      // Clean the text for better speech
       const cleanText = cleanTextForSpeech(generatedContent);
       console.log('Cleaned text length:', cleanText.length);
 
-      // Check if TTS is available
       const isAvailable = await Tts.getInitStatus();
       console.log('TTS available:', isAvailable);
 
@@ -111,7 +138,6 @@ const DescriptionScreen: React.FC = () => {
         return;
       }
 
-      // Split long text into smaller chunks (TTS has character limits)
       const maxChunkSize = 4000;
       if (cleanText.length > maxChunkSize) {
         const chunks: string[] = [];
@@ -124,7 +150,6 @@ const DescriptionScreen: React.FC = () => {
               chunks.push(currentChunk.trim());
               currentChunk = sentence + '. ';
             } else {
-              // Single sentence is too long, split it
               chunks.push(sentence.substring(0, maxChunkSize));
             }
           } else {
@@ -135,7 +160,6 @@ const DescriptionScreen: React.FC = () => {
           chunks.push(currentChunk.trim());
         }
 
-        // Speak chunks sequentially
         for (let i = 0; i < chunks.length; i++) {
           await new Promise<void>((resolve) => {
             const onFinish = () => {
@@ -166,157 +190,356 @@ const DescriptionScreen: React.FC = () => {
     }
   };
 
-  const testTTS = async (): Promise<void> => {
-    try {
-      await Tts.speak('This is a test of the text to speech system.');
-    } catch (error: any) {
-      console.error('Test TTS error:', error);
-      Alert.alert('Test Failed', 'TTS test failed: ' + (error.message ?? error));
-    }
-  };
-
   const renderFormattedContent = (text: string) => {
-    const lines = text.split('\n').filter((line) => line.trim() !== '');
+    // First, clean up any remaining markdown syntax
+    const cleanedText = text
+      .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1') // Remove bold/italic markers
+      .replace(/#{1,6}\s*/g, '') // Remove headers
+      .replace(/\n{3,}/g, '\n\n'); // Normalize multiple newlines
+
+    const lines = cleanedText.split('\n').filter((line) => line.trim() !== '');
 
     return lines.map((line, index) => {
-      if (line.startsWith('##')) {
+
+      // Handle bullet points (lines starting with - or *)
+      if (line.match(/^[-*]\s+/)) {
         return (
-          <Text key={index} style={styles.heading}>
-            {line.replace(/^##\s*/, '')}
-          </Text>
+          <Animated.View
+            key={index}
+            style={[
+              styles.bulletContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateX: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.bulletDot} />
+            <CustomText
+              variant="body"
+              size={RFValue(14)}
+              fontFamily="Inter-Regular"
+              style={styles.bulletText}
+            >
+              {line.replace(/^[-*]\s*/, '')}
+            </CustomText>
+          </Animated.View>
         );
-      } else if (line.startsWith('**') && line.endsWith('**')) {
+      }
+
+      // Handle numbered lists
+      else if (line.match(/^\d+\.\s+/)) {
+        const match = line.match(/^(\d+)\.\s+(.*)/);
+        const number = match ? match[1] : '';
+        const content = match ? match[2] : line;
         return (
-          <Text key={index} style={styles.subheading}>
-            {line.replace(/\*\*/g, '')}
-          </Text>
+          <Animated.View
+            key={index}
+            style={[
+              styles.numberedContainer,
+              {
+                opacity: fadeAnim,
+                transform: [{ translateX: slideAnim }],
+              },
+            ]}
+          >
+            <View style={styles.numberedDot}>
+              <CustomText
+                variant="body"
+                size={RFValue(12)}
+                fontFamily="Inter-Bold"
+                style={styles.numberedText}
+              >
+                {number}
+              </CustomText>
+            </View>
+            <CustomText
+              variant="body"
+              size={RFValue(14)}
+              fontFamily="Inter-Regular"
+              style={styles.bulletText}
+            >
+              {content}
+            </CustomText>
+          </Animated.View>
         );
-      } else if (line.startsWith('*')) {
+      }
+
+      // Regular paragraphs
+      else {
         return (
-          <Text key={index} style={styles.bullet}>
-            • {line.replace(/^\*\s*/, '')}
-          </Text>
-        );
-      } else if (line.includes('**')) {
-        const parts = line.split('**');
-        return (
-          <Text key={index} style={styles.paragraph}>
-            {parts.map((part, i) =>
-              i % 2 === 1 ? (
-                <Text key={i} style={styles.bold}>
-                  {part}
-                </Text>
-              ) : (
-                part
-              )
-            )}
-          </Text>
-        );
-      } else {
-        return (
-          <Text key={index} style={styles.paragraph}>
-            {line}
-          </Text>
+          <Animated.View
+            key={index}
+            style={{
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            <CustomText
+              variant="body"
+              size={RFValue(14)}
+              fontFamily="Inter-Regular"
+              style={styles.paragraph}
+            >
+              {line}
+            </CustomText>
+          </Animated.View>
         );
       }
     });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Chapter Details</Text>
-      {renderFormattedContent(generatedContent)}
-      <View style={styles.buttonContainer}>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Header Section */}
+      <LinearGradient
+        colors={['#CAC4FF', '#B5AEFF', '#A599FF']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.header}
+      >
+        <Animated.View
+          style={{
+            opacity: fadeAnim,
+            transform: [{ scale: buttonScale }],
+          }}
+        >
+          <CustomText
+            variant="h1"
+            size={RFValue(24)}
+            fontFamily="Inter-Bold"
+            style={styles.headerTitle}
+          >
+            Chapter Details
+          </CustomText>
+          <CustomText
+            variant="h3"
+            size={RFValue(12)}
+            fontFamily="Inter-Regular"
+            style={styles.headerSubtitle}
+          >
+            AI Generated Content
+          </CustomText>
+        </Animated.View>
+      </LinearGradient>
+
+      {/* Content Section */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {renderFormattedContent(generatedContent)}
+      </ScrollView>
+
+      {/* Floating Action Buttons */}
+      <Animated.View
+        style={[
+          styles.fabContainer,
+          {
+            transform: [{ scale: buttonScale }],
+          },
+        ]}
+      >
         <TouchableOpacity
-          style={[styles.button, isSpeaking && styles.speakingButton]}
+          style={[
+            styles.fab,
+            styles.playFab,
+            isSpeaking && styles.speakingFab,
+          ]}
           onPress={speakContent}
           disabled={isSpeaking}
         >
-          <Text style={styles.buttonText}>{isSpeaking ? 'Speaking...' : 'Play'}</Text>
+          <CustomText
+            variant="h3"
+            size={RFValue(14)}
+            fontFamily="Inter-Bold"
+            style={styles.fabText}
+          >
+            {isSpeaking ? '🔊' : '▶️'}
+          </CustomText>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.stopButton]} onPress={stopSpeaking}>
-          <Text style={styles.buttonText}>Stop</Text>
+
+        <TouchableOpacity
+          style={[styles.fab, styles.stopFab]}
+          onPress={stopSpeaking}
+        >
+          <CustomText
+            variant="h3"
+            size={RFValue(14)}
+            fontFamily="Inter-Bold"
+            style={styles.fabText}
+          >
+            ⏹️
+          </CustomText>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.testButton]} onPress={testTTS}>
-          <Text style={styles.buttonText}>Test TTS</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </Animated.View>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    padding: 16,
-    backgroundColor: '#F4F7FB',
+    flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 16,
-    textAlign: 'center',
+  header: {
+    paddingTop: 50,
+    paddingBottom: 30,
+    paddingHorizontal: 30,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontWeight: '900',
+    marginBottom: 5,
+    textShadowColor: 'rgba(0, 0, 0, 0.1)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  headerSubtitle: {
+    color: '#FFFFFF',
+    opacity: 0.9,
+    fontWeight: '500',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 100,
+  },
+  contentCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  headingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 25,
+    marginBottom: 15,
+  },
+  headingAccent: {
+    width: 4,
+    height: 24,
+    backgroundColor: '#A599FF',
+    borderRadius: 2,
+    marginRight: 12,
   },
   heading: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#2C3E50',
-    marginBottom: 10,
-    marginTop: 20,
+    color: '#2C2C2C',
+    fontWeight: '800',
+    flex: 1,
   },
   subheading: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#34495E',
-    marginBottom: 6,
-    marginTop: 14,
+    color: '#4A4A4A',
+    fontWeight: '700',
+    marginTop: 18,
+    marginBottom: 10,
   },
   paragraph: {
-    fontSize: 16,
-    color: '#34495E',
+    color: '#666666',
     lineHeight: 24,
-    marginBottom: 10,
+    marginBottom: 12,
     textAlign: 'justify',
   },
-  bullet: {
-    fontSize: 16,
-    color: '#34495E',
-    marginLeft: 12,
-    marginBottom: 6,
+  regularText: {
+    color: '#666666',
   },
-  bold: {
-    fontWeight: '600',
-    color: '#2C3E50',
-  },
-  buttonContainer: {
+  bulletContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    marginLeft: 10,
   },
-  button: {
-    backgroundColor: '#2C3E50',
-    padding: 10,
-    borderRadius: 8,
-    marginHorizontal: 5,
-    marginVertical: 5,
-    minWidth: 80,
+  bulletDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#A599FF',
+    marginTop: 8,
+    marginRight: 12,
+  },
+  bulletText: {
+    color: '#666666',
+    flex: 1,
+    lineHeight: 22,
+  },
+  numberedContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    marginLeft: 10,
+  },
+  numberedDot: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#A599FF',
+    marginTop: 6,
+    marginRight: 12,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  stopButton: {
-    backgroundColor: '#E74C3C',
+  numberedText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
   },
-  testButton: {
-    backgroundColor: '#3498DB',
+  bold: {
+    color: '#2C2C2C',
+    fontWeight: '700',
   },
-  speakingButton: {
+  fabContainer: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    flexDirection: 'column',
+    gap: 15,
+  },
+  fab: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  playFab: {
+    backgroundColor: '#A599FF',
+  },
+  speakingFab: {
     backgroundColor: '#27AE60',
   },
-  buttonText: {
-    color: '#FFF',
-    fontWeight: '600',
-    textAlign: 'center',
+  stopFab: {
+    backgroundColor: '#E74C3C',
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: RFValue(20),
   },
 });
 

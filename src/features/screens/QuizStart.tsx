@@ -64,7 +64,12 @@ const QuizStart = () => {
   };
 
   if (loading) {
-    return <ActivityIndicator size="large" color={Colors.primary_dark} />;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#8B5CF6" />
+        <Text style={styles.loadingText}>Loading quiz...</Text>
+      </View>
+    );
   }
 
   if (error) {
@@ -102,52 +107,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: RFValue(20),
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#F9FAFB',
     justifyContent: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+  },
+  loadingText: {
+    fontSize: RFValue(16),
+    color: '#8B5CF6',
+    marginTop: RFValue(12),
+    fontWeight: '600',
   },
   quizTitle: {
     fontSize: RFValue(26),
     fontWeight: 'bold',
-    color: Colors.primary_dark,
+    color: '#8B5CF6',
     marginBottom: RFValue(15),
     textAlign: 'center',
   },
   quizDescription: {
     fontSize: RFValue(16),
-    color: Colors.secondary_dark,
+    color: '#6B7280',
     marginBottom: RFValue(20),
     textAlign: 'center',
     lineHeight: RFValue(22),
   },
   quizDetailsContainer: {
-    backgroundColor: '#fff',
-    borderRadius: RFValue(10),
-    padding: RFValue(15),
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: '#FFFFFF',
+    borderRadius: RFValue(16),
+    padding: RFValue(20),
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 12,
+    elevation: 6,
     marginBottom: RFValue(30),
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
   },
   quizDetails: {
     fontSize: RFValue(14),
-    color: Colors.secondary_dark,
+    color: '#4B5563',
     marginBottom: RFValue(8),
     fontWeight: '500',
   },
   startButton: {
-    backgroundColor: Colors.primary_dark,
-    paddingVertical: RFValue(12),
-    borderRadius: RFValue(25),
+    backgroundColor: '#8B5CF6',
+    paddingVertical: RFValue(16),
+    borderRadius: RFValue(16),
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: RFValue(40),
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    elevation: 8,
+    shadowColor: '#8B5CF6',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
   startButtonText: {
     fontSize: RFValue(18),
@@ -156,7 +175,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: RFValue(18),
-    color: 'red',
+    color: '#EF4444',
     textAlign: 'center',
     marginTop: RFValue(20),
   },

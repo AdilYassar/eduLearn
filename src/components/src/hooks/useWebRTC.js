@@ -28,7 +28,8 @@ export const useWebRTC = () => {
         toggle,
         removeParticipant,
         updateParticipant,
-        clear
+        clear,
+        addMessage
     } = useLiveMeetStore();
 
     const {user} = useUserStore();
@@ -49,6 +50,14 @@ export const useWebRTC = () => {
             Alert.alert('Error','Could not access camera and microphone. Please check permissions.');
         }
     }
+
+    useEffect(() => {
+        const handleReceiveChat = ({ userId, name, message }) => {
+            addMessage({ userId, name, message, timestamp: new Date() });
+        };
+        on('receive-chat', handleReceiveChat);
+        return () => off('receive-chat', handleReceiveChat);
+    }, [on, off, addMessage]);
 
 
     const establishPeerConnections = async()=>{
