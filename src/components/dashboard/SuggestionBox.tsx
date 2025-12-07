@@ -21,9 +21,17 @@ const SuggestionBox: React.FC<SuggestionBoxProps> = ({ bgColor = '#FFFFFF' }) =>
     try {
       const suggestionText = await askAI(prompt);
       setSuggestion(suggestionText);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error fetching suggestion:', err);
-      setError('Failed to fetch suggestion. Please try again.');
+      
+      // More specific error messages
+      if (err.message?.includes('API configuration')) {
+        setError('Configuration issue detected. Using offline suggestions.');
+      } else if (err.message?.includes('network')) {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('Unable to fetch AI suggestion. Try again later.');
+      }
     } finally {
       setLoading(false);
     }
@@ -39,9 +47,9 @@ const SuggestionBox: React.FC<SuggestionBoxProps> = ({ bgColor = '#FFFFFF' }) =>
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, { backgroundColor: bgColor }]} 
-      onPress={handleTap} 
+    <TouchableOpacity
+      style={[styles.container, { backgroundColor: bgColor }]}
+      onPress={handleTap}
       activeOpacity={0.8}
     >
       <View style={styles.content}>

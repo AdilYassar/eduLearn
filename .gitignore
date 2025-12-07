@@ -22,6 +22,14 @@ DerivedData
 *.xcuserstate
 **/.xcode.env.local
 .env
+.env.local
+.env.production
+.env.development
+
+# Config files with sensitive data
+src/redux/API.tsx
+src/service/config.tsx
+src/components/src/service/config.js
 # Android/IntelliJ
 #
 build/
