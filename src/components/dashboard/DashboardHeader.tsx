@@ -31,28 +31,22 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   const { currentMood, changeMood } = useMood();
   const [isMoodExpanded, setIsMoodExpanded] = useState(false);
 
-  const auraHeight = useSharedValue(0);
   const auraOpacity = useSharedValue(0);
-  const auraScale = useSharedValue(0.95);
+  const auraTranslateY = useSharedValue(-10);
 
   useEffect(() => {
     if (isMoodExpanded) {
-      auraHeight.value = withSpring(85, { damping: 15 });
       auraOpacity.value = withTiming(1, { duration: 250 });
-      auraScale.value = withSpring(1, { damping: 15 });
+      auraTranslateY.value = withSpring(0, { damping: 15 });
     } else {
-      auraHeight.value = withSpring(0, { damping: 15 });
-      auraOpacity.value = withTiming(0, { duration: 250 });
-      auraScale.value = withSpring(0.95, { damping: 15 });
+      auraOpacity.value = withTiming(0, { duration: 200 });
+      auraTranslateY.value = withSpring(-10, { damping: 15 });
     }
   }, [isMoodExpanded]);
 
   const animatedMoodStyle = useAnimatedStyle(() => ({
-    height: auraHeight.value,
     opacity: auraOpacity.value,
-    transform: [{ scale: auraScale.value }],
-    overflow: 'hidden',
-    marginTop: isMoodExpanded ? 16 : 0,
+    transform: [{ translateY: auraTranslateY.value }],
   }));
 
   return (
@@ -75,63 +69,65 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Embedded Mood Selector Dropdown */}
-      <Animated.View style={animatedMoodStyle}>
-        <View style={[
-          styles.moodRing, 
-          { 
-            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
-            borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
-          }
-        ]}>
-          {MOODS.map((mood) => {
-            const isActive = currentMood === mood.type;
-            return (
-              <TouchableOpacity
-                key={mood.type}
-                onPress={() => changeMood(mood.type)}
-                style={styles.moodItem}
-                activeOpacity={0.7}
-              >
-                <View style={[
-                  styles.emojiWrapper,
-                  isActive && {
-                      backgroundColor: 'rgba(255,255,255,0.08)',
-                      transform: [{ scale: 1.15 }],
-                      shadowColor: mood.color,
-                      shadowOpacity: 0.4,
-                      shadowRadius: 12,
-                      elevation: 8,
-                  }
-                ]}>
-                  <Text style={[styles.emojiText, isActive && { fontSize: 26 }]}>
-                    {mood.emoji}
-                  </Text>
-                  {isActive && (
-                      <View style={[styles.activeDot, { backgroundColor: mood.color }]} />
-                  )}
-                </View>
-                <Text 
-                  style={[
-                    styles.moodLabel, 
-                    { 
-                      color: isActive ? mood.color : theme.text.secondary,
-                      fontWeight: isActive ? 'bold' : '500',
-                      opacity: isActive ? 1 : 0.7
-                    }
-                  ]}
+      {/* Embedded Mood Selector Dropdown - Conditionally Rendered */}
+      {isMoodExpanded && (
+        <Animated.View style={[{ marginTop: 16 }, animatedMoodStyle]}>
+          <View style={[
+            styles.moodRing, 
+            { 
+              backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.02)',
+              borderColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+            }
+          ]}>
+            {MOODS.map((mood) => {
+              const isActive = currentMood === mood.type;
+              return (
+                <TouchableOpacity
+                  key={mood.type}
+                  onPress={() => changeMood(mood.type)}
+                  style={styles.moodItem}
+                  activeOpacity={0.7}
                 >
-                  {mood.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </Animated.View>
+                  <View style={[
+                    styles.emojiWrapper,
+                    isActive && {
+                        backgroundColor: 'rgba(255,255,255,0.08)',
+                        transform: [{ scale: 1.15 }],
+                        shadowColor: mood.color,
+                        shadowOpacity: 0.4,
+                        shadowRadius: 12,
+                        elevation: 8,
+                    }
+                  ]}>
+                    <Text style={[styles.emojiText, isActive && { fontSize: 26 }]}>
+                      {mood.emoji}
+                    </Text>
+                    {isActive && (
+                        <View style={[styles.activeDot, { backgroundColor: mood.color }]} />
+                    )}
+                  </View>
+                  <Text 
+                    style={[
+                      styles.moodLabel, 
+                      { 
+                        color: isActive ? mood.color : theme.text.secondary,
+                        fontWeight: isActive ? 'bold' : '500',
+                        opacity: isActive ? 1 : 0.7
+                      }
+                    ]}
+                  >
+                    {mood.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </Animated.View>
+      )}
 
       {/* Metrics Grid */}
       <View style={[styles.metricsRow, { marginTop: 24 }]}>
-        <View style={[styles.metricCard, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.metricCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
           <Text style={[styles.metricLabel, { color: theme.text.secondary }]}>STREAK</Text>
           <View style={styles.valRow}>
             <Text style={[styles.metricValue, { color: theme.text.primary }]}>{streak}</Text>
@@ -139,7 +135,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </View>
         </View>
         
-        <View style={[styles.metricCard, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.metricCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
           <Text style={[styles.metricLabel, { color: theme.text.secondary }]}>XP TODAY</Text>
           <View style={styles.valRow}>
             <Text style={[styles.metricValue, { color: theme.text.primary }]}>{xp}</Text>
@@ -147,7 +143,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           </View>
         </View>
         
-        <View style={[styles.metricCard, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.metricCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
           <Text style={[styles.metricLabel, { color: theme.text.secondary }]}>DONE</Text>
           <View style={styles.valRow}>
             <Text style={[styles.metricValue, { color: theme.text.primary }]}>{tasksDone}</Text>
@@ -162,7 +158,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
-    marginTop: 40,
+    marginTop: 12,
     marginBottom: 24,
   },
   topRow: {

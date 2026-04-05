@@ -20,6 +20,7 @@ import { addHyphens, requestPermissions } from '../utils/Helpers';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   ChevronLeft,
+  ArrowLeft,
   Ellipsis,
   EllipsisVertical,
   Info,
@@ -203,16 +204,18 @@ const PrepareMeetScreen = () => {
   };
   return (
     <ThemedContainer style={prepareStyles.container}>
-      <SafeAreaView />
+      <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
       <View style={[prepareStyles.headerContainer, { backgroundColor: theme.background[0] || theme.card }]}>
-        <ChevronLeft
-          size={RFValue(18)}
-          color={theme.text.primary}
-          onPress={() => {
-            replace('HomeScreen');
-            addSessionId(null);
-          }}
-        />
+        <TouchableOpacity onPress={() => {
+          replace('HomeScreen');
+          addSessionId(null);
+        }}>
+          <ArrowLeft
+            size={RFValue(18)}
+            color={theme.text.primary}
+            strokeWidth={2}
+          />
+        </TouchableOpacity>
 
         <EllipsisVertical size={RFValue(18)} color={theme.text.primary} />
       </View>
@@ -386,6 +389,7 @@ const PrepareMeetScreen = () => {
           startTime: new Date().toLocaleTimeString()
         }}
       />
+      </SafeAreaView>
     </ThemedContainer>
   );
 };

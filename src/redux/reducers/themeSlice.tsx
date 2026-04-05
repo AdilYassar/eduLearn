@@ -26,28 +26,30 @@ export interface ThemeColors {
 }
 
 export const MOOD_THEMES: Record<MoodType, ThemeColors> = {
-  // NEUTRAL - Obsidian Gray + Neon Silver
+  // NEUTRAL - Periwinkle + Light Periwinkle cards (light theme)
+  // background: white/off-white
+  // card/componentBackground: light periwinkle tint for visibility
   neutral: {
-    primary: '#64748B', // Slate Blue-Gray with better contrast
-    secondary: '#94A3B8', // Soft Muted Blue-Gray
-    background: ['#141310', '#0A0A08'],
-    componentBackground: ['#1C1B18', '#141310'],
-    surface: '#141310',
+    primary: '#5D4BA3', // Darker periwinkle — more visible on light background for buttons
+    secondary: '#A8A4E8', // Soft periwinkle — secondary accents
+    background: ['#FFFFFF', '#FAFAFA'],
+    componentBackground: ['#EDE5F8', '#E8DFF5'], // Light periwinkle — subtle contrast for light theme
+    surface: '#FFFFFF',
     text: {
-      primary: '#FFFFFF', // Pure White for absolute contrast
-      secondary: '#E8ECF0', // Light Silver
-      accent: '#64748B',
+      primary: '#2D2560', // Dark purple — readable on white + periwinkle cards
+      secondary: '#5B4EA4', // Deep purple — secondary text
+      accent: '#7B6EC4',  // Mid purple — labels, small text
     },
-    accent: '#2E2D2A',
-    border: 'rgba(255, 255, 255, 0.1)',
-    card: '#1C1B18',
-    shadow: 'rgba(0, 0, 0, 0.5)',
-    success: '#10b981',
-    warning: '#8496B0',
-    error: '#7A8FAA',
-    statusBar: 'light-content',
+    accent: '#E8E3F5', // Light periwinkle accent
+    border: '#6B5BA8', // Darker periwinkle for strong visible borders
+    card: '#EDE5F8', // Light periwinkle for containers
+    shadow: 'rgba(123, 110, 196, 0.15)', // Stronger, more visible shadow
+    success: '#10B981',
+    warning: '#FBBF24',
+    error: '#EF4444',
+    statusBar: 'dark-content',
     lightest: '#FFFFFF',
-    isDark: true,
+    isDark: false,
   },
 
   // HAPPY - Emerald Night + Neon Mint
@@ -98,25 +100,25 @@ export const MOOD_THEMES: Record<MoodType, ThemeColors> = {
     isDark: true,
   },
 
-  // ANGRY - Smoked Plum + Neon Crimson
+  // ANGRY - Obsidian Gray + Neon Silver (dark theme)
   angry: {
-    primary: '#F43F5E', // Vivid Neon Rose/Crimson
-    secondary: '#FB7185', // Soft Bright Coral
-    background: ['#110A12', '#080508'],
-    componentBackground: ['#1C1020', '#110A12'],
-    surface: '#110A12',
+    primary: '#64748B', // Slate Blue-Gray with better contrast
+    secondary: '#94A3B8', // Soft Muted Blue-Gray
+    background: ['#141310', '#0A0A08'],
+    componentBackground: ['#1C1B18', '#141310'],
+    surface: '#141310',
     text: {
-      primary: '#FFFFFF', // Pure White
-      secondary: '#FECDD3', // Pale rose
-      accent: '#FDA4AF',
+      primary: '#FFFFFF', // Pure White for absolute contrast
+      secondary: '#E8ECF0', // Light Silver
+      accent: '#64748B',
     },
-    accent: '#2A1530',
-    border: 'rgba(255, 255, 255, 0.08)',
-    card: '#1C1020',
+    accent: '#2E2D2A',
+    border: 'rgba(255, 255, 255, 0.1)',
+    card: '#1C1B18',
     shadow: 'rgba(0, 0, 0, 0.5)',
-    success: '#10B981',
-    warning: '#FBBF24',
-    error: '#E11D48',
+    success: '#10b981',
+    warning: '#8496B0',
+    error: '#7A8FAA',
     statusBar: 'light-content',
     lightest: '#FFFFFF',
     isDark: true,

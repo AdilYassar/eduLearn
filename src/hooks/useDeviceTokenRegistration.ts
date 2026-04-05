@@ -13,6 +13,7 @@
 
 import { useEffect, useRef } from 'react';
 import messaging from '@react-native-firebase/messaging';
+import notifee from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   registerDeviceTokenWithAuth,
@@ -84,7 +85,7 @@ export const useDeviceTokenRegistration = () => {
 
         messageListenerRef.current = messaging().onMessage(async (remoteMessage) => {
           console.log('[FIREBASE_MESSAGE] 📬 Foreground message received');
-          handleForegroundMessage(remoteMessage);
+          await handleForegroundMessage(remoteMessage);
         });
         console.log('[FIREBASE_INIT] ✅ Foreground message listener REGISTERED\n');
 
@@ -149,7 +150,7 @@ export const useDeviceTokenRegistration = () => {
 /**
  * Handle foreground message (when app is open and receives notification)
  */
-const handleForegroundMessage = (remoteMessage: any) => {
+const handleForegroundMessage = async (remoteMessage: any) => {
   console.log('[FOREGROUND_MSG] 📨 Processing foreground message');
   const { notification, data } = remoteMessage;
 
@@ -158,6 +159,30 @@ const handleForegroundMessage = (remoteMessage: any) => {
       title: notification.title,
       body: notification.body,
     });
+
+    try {
+      // Create and display notification using notifee
+      const channelId = await notifee.createChannel({
+        id: 'edulearn-notifications',
+        name: 'EduLearn Notifications',
+      });
+
+      await notifee.displayNotification({
+        title: notification.title,
+        body: notification.body,
+        android: {
+          channelId,
+          pressAction: {
+            id: 'default',
+          },
+          largeIcon: 'ic_launcher', // Use app icon
+        },
+        data: data || {},
+      });
+      console.log('[FOREGROUND_MSG] ✅ Notification displayed successfully');
+    } catch (error) {
+      console.error('[FOREGROUND_MSG] ❌ Error displaying notification:', error);
+    }
   }
 
   if (data) {

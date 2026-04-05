@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     paddingTop: 0,
-    paddingBottom: 12, // Tighter bottom margin
+    paddingBottom: 120, // Sufficient padding to prevent tab bar overlap
     borderTopLeftRadius: 12, // Sharper top edge
     borderTopRightRadius: 12, // Sharper top edge
   },

@@ -1,6 +1,7 @@
 import {useState, useCallback} from 'react';
 import {BASE_URL} from '../config';
 import { makeAuthenticatedRequest } from '../authUtils';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface UserProfile {
   _id: string;
@@ -214,6 +215,54 @@ export const useUser = () => {
     }
   }, []);
 
+  // Upload Profile Photo
+  const uploadProfilePhoto = useCallback(async (file: any): Promise<any | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+
+      if (!accessToken) {
+        throw new Error('No access token found. Please login again.');
+      }
+
+      const formData = new FormData();
+      formData.append('photo', {
+        uri: file.uri,
+        type: file.type || 'image/jpeg',
+        name: file.name || `photo_${Date.now()}.jpg`,
+      });
+
+      // For FormData, we need to handle the request directly without makeAuthenticatedRequest
+      // because we shouldn't set Content-Type to application/json for multipart/form-data
+      const response = await fetch(`${BASE_URL}/api/auth/user/upload-photo`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'ngrok-skip-browser-warning': 'true',
+          // DO NOT set Content-Type for FormData - fetch will set it automatically with boundary
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Upload failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      return result;
+    } catch (err: any) {
+      console.error('Photo upload error:', err);
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -222,5 +271,6 @@ export const useUser = () => {
     updateUserProfile,
     getEnrollmentStats,
     getAllUsers,
+    uploadProfilePhoto,
   };
 };

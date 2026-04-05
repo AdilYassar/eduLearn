@@ -1,50 +1,84 @@
 import React from 'react';
 import {
   View,
-  Text,
   StyleSheet,
   Modal,
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import { CheckCircle } from 'lucide-react-native';
+import { AlertCircle, CheckCircle, InfoIcon } from 'lucide-react-native';
 import CustomText from './CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '../../context/ThemeContext';
 
-interface SuccessPopupProps {
+type AlertType = 'error' | 'success' | 'warning' | 'info';
+
+interface CustomAlertPopupProps {
   visible: boolean;
   onClose: () => void;
   title?: string;
   message?: string;
   buttonText?: string;
+  type?: AlertType;
 }
 
 const { width } = Dimensions.get('window');
 
-const SuccessPopup: React.FC<SuccessPopupProps> = ({
+const CustomAlertPopup: React.FC<CustomAlertPopupProps> = ({
   visible,
   onClose,
-  title = 'Success!',
-  message = 'Operation completed successfully.',
+  title = 'Alert',
+  message = 'An alert message',
   buttonText = 'OK',
+  type = 'info',
 }) => {
   const { theme } = useTheme();
+
+  const getIconAndColor = () => {
+    switch (type) {
+      case 'error':
+        return {
+          Icon: AlertCircle,
+          color: '#EF4444',
+        };
+      case 'success':
+        return {
+          Icon: CheckCircle,
+          color: '#10B981',
+        };
+      case 'warning':
+        return {
+          Icon: AlertCircle,
+          color: '#F59E0B',
+        };
+      case 'info':
+      default:
+        return {
+          Icon: InfoIcon,
+          color: '#3B82F6',
+        };
+    }
+  };
+
+  const { Icon, color } = getIconAndColor();
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="fade"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+    >
       <View style={styles.overlay}>
-        <View style={[
-          styles.popupContainer,
-          { backgroundColor: theme.surface }
-        ]}>
-          {/* Success Icon */}
+        <View
+          style={[
+            styles.popupContainer,
+            { backgroundColor: theme.surface },
+          ]}
+        >
+          {/* Icon */}
           <View style={styles.iconContainer}>
-            <CheckCircle size={40} color={theme.success} strokeWidth={2} />
+            <Icon size={40} color={color} strokeWidth={2} />
           </View>
 
           {/* Title */}
@@ -68,14 +102,14 @@ const SuccessPopup: React.FC<SuccessPopupProps> = ({
           </CustomText>
 
           {/* Button */}
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
               styles.button,
-              { 
-                backgroundColor: theme.primary,
-                shadowColor: theme.primary,
-              }
-            ]} 
+              {
+                backgroundColor: color,
+                shadowColor: color,
+              },
+            ]}
             onPress={onClose}
           >
             <CustomText
@@ -147,5 +181,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SuccessPopup;
-
+export default CustomAlertPopup;

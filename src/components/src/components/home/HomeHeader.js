@@ -77,8 +77,7 @@ const HomeHeader = () => {
   };
 
   return (
-    <>
-      <SafeAreaView />
+    <SafeAreaView style={{ flex: 0 }} edges={['bottom', 'left', 'right']}>
       <View style={[headerStyles.container, { backgroundColor: theme.background[0] || theme.card }]}>
         <Menu size={RFValue(20)} color={theme.text.primary} />
         <TextInput
@@ -111,7 +110,7 @@ const HomeHeader = () => {
         </TouchableOpacity>
       </View>
       <InquiryModal onClose={() => setVisible(false)} visible={visible} />
-    </>
+    </SafeAreaView>
   );
 };
 

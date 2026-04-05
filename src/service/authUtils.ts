@@ -20,6 +20,10 @@ export const performCompleteLogout = async (): Promise<void> => {
       console.log('PerformCompleteLogout: Cleared all AsyncStorage data');
     }
     
+    // Reset mood to neutral for next login/new user
+    await AsyncStorage.setItem('@edulearn_mood', 'neutral');
+    console.log('PerformCompleteLogout: Reset mood to neutral');
+    
     // Navigate to login screen
     console.log('PerformCompleteLogout: Navigating to LoginScreen');
     resetAndNavigate('LoginScreen');

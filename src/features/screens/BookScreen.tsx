@@ -302,7 +302,7 @@ const BookScreen = () => {
                    <Search size={18} color={theme.text.secondary} />
                    <TextInput 
                       placeholder="Search books..." 
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
                       style={[styles.input, { color: theme.text.primary }]}
                       value={searchQuery}
                       onChangeText={handleSearch}

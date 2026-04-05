@@ -13,7 +13,7 @@ import Animated, {
   withTiming, 
   interpolateColor 
 } from 'react-native-reanimated';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { User } from 'lucide-react-native';
 import { navigate } from '../../utils/Navigation';
 import { useMood, useTheme } from '../../context/ThemeContext';
 import { MoodType } from '../../redux/reducers/themeSlice';
@@ -86,7 +86,7 @@ const MoodSelector: React.FC<MoodSelectorProps> = ({ userName }) => {
             }
           ]}
         >
-          <Icon name="person" size={20} color={theme.text.primary} />
+          <User size={20} color={theme.text.primary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 

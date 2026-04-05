@@ -4,7 +4,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   StatusBar,
   Animated,
@@ -13,21 +12,47 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
 import CustomText from '../../components/ui/CustomText';
 import SuccessPopup from '../../components/ui/SuccessPopup';
+import CustomAlertPopup from '../../components/ui/CustomAlertPopup';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { navigate } from '../../utils/Navigation';
+import { navigate, replace } from '../../utils/Navigation';
 import { useAuth } from '@service/hooks/useAuth';
+import { registerDeviceToken, getFirebaseToken } from '@service/deviceTokenService';
+import { verifyOtp } from '@service/otpAuthService';
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPasswordField, setShowPasswordField] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [age, setAge] = useState('');
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  
+  // New States for Flow
+  const [isOtpStep, setIsOtpStep] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [userUuid, setUserUuid] = useState('');
+  const [sessionId, setSessionId] = useState('');
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+
+  // Alert/Popup States
+  const [alertPopupVisible, setAlertPopupVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: 'Alert',
+    message: 'Message',
+    type: 'info' as 'error' | 'success' | 'warning' | 'info',
+  });
 
   const { registerStudent, loading, error } = useAuth();
+
+  // Helper function to show alert popup
+  const showAlert = (title: string, message: string, type: 'error' | 'success' | 'warning' | 'info' = 'info') => {
+    setAlertConfig({ title, message, type });
+    setAlertPopupVisible(true);
+  };
 
   // Animation values
   const headerAnim = useRef(new Animated.Value(0)).current;
@@ -126,7 +151,7 @@ const RegisterScreen = () => {
 
   const validateRegisterFields = () => {
     if (!email || !password || !name || !phone) {
-      Alert.alert('Error', 'Please fill all required fields for registration.');
+      showAlert('Error', 'Please fill all required fields for registration.', 'error');
       return false;
     }
     return true;
@@ -138,25 +163,81 @@ const RegisterScreen = () => {
     }
 
     try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+1${phone}`;
+      const formattedPhone = phone.startsWith('+') ? phone : (phone.startsWith('0') ? `+92${phone.slice(1)}` : `+92${phone}`);
       
       const result = await registerStudent({
         email,
         password,
         name,
         phone: formattedPhone,
-        age: parseInt(age, 10) || 0,
       });
       
-      if (result?.accessToken || result?.message) {
-        // Show success popup
-        setShowSuccessPopup(true);
+      console.log('RegisterScreen: Registration result:', JSON.stringify(result, null, 2));
+
+      // According to logs, UUID is directly inside result.data.uuid
+      const uuid = result?.data?.uuid || result?.user?.uuid || result?.uuid;
+      
+      if (uuid) {
+        console.log('RegisterScreen: Found UUID:', uuid);
+        setUserUuid(uuid);
+        
+        // Step 3: Register Device Token
+        try {
+          console.log('RegisterScreen: Fetching FCM token...');
+          const fcmToken = await getFirebaseToken();
+          console.log('RegisterScreen: FCM Token retrieved:', fcmToken ? 'Exists' : 'NULL');
+          if (fcmToken) {
+            console.log('RegisterScreen: Registering device with token...');
+            const deviceResult = await registerDeviceToken(fcmToken, uuid);
+            console.log('RegisterScreen: Device registration result:', deviceResult);
+            
+            // Extract sessionId from device response
+            const extractedSessionId = deviceResult?.data?.otp?.sessionId;
+            if (extractedSessionId) {
+              console.log('RegisterScreen: SessionId extracted:', extractedSessionId);
+              setSessionId(extractedSessionId);
+            }
+          } else {
+            console.warn('RegisterScreen: No FCM token found, skipping device registration');
+          }
+        } catch (deviceError) {
+          console.error('RegisterScreen: Device registration failed:', deviceError);
+        }
+
+        // Switch to OTP entry UI (No new screen added as requested)
+        console.log('RegisterScreen: Switching to OTP step');
+        setIsOtpStep(true);
       } else {
-        Alert.alert('Registration Failed', error || 'Please check your details and try again.');
+        console.error('RegisterScreen: No UUID found in response');
+        showAlert('Registration Failed', 'User ID not received from server.', 'error');
       }
     } catch (registerError) {
       console.error('Registration error:', registerError);
-      Alert.alert('Registration Error', error || 'An error occurred during registration.');
+      showAlert('Registration Error', error || 'An error occurred during registration.', 'error');
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpCode || otpCode.length !== 6) {
+      showAlert('Error', 'Please enter a valid 6-digit OTP code.', 'error');
+      return;
+    }
+
+    if (!sessionId) {
+      showAlert('Error', 'Session ID not found. Please try registering again.', 'error');
+      return;
+    }
+
+    setVerifyingOtp(true);
+    try {
+      // Step 6: Verify OTP with correct sessionId
+      console.log('RegisterScreen: Verifying OTP with sessionId:', sessionId);
+      await verifyOtp(userUuid, sessionId, otpCode);
+      setShowSuccessPopup(true);
+    } catch (err: any) {
+      showAlert('Verification Failed', err.message || 'OTP verification failed.', 'error');
+    } finally {
+      setVerifyingOtp(false);
     }
   };
 
@@ -222,7 +303,7 @@ const RegisterScreen = () => {
           fontFamily="Inter-Bold"
           style={styles.title}
         >
-          JOIN US
+          {isOtpStep ? 'VERIFY' : 'JOIN US'}
         </CustomText>
         <CustomText
           variant="h1"
@@ -230,7 +311,7 @@ const RegisterScreen = () => {
           fontFamily="Inter-Bold"
           style={styles.titleBold}
         >
-          TODAY!
+          {isOtpStep ? 'ACCOUNT' : 'TODAY!'}
         </CustomText>
         <CustomText
           variant="h3"
@@ -238,7 +319,7 @@ const RegisterScreen = () => {
           fontFamily="Inter-Regular"
           style={styles.subtitle}
         >
-          Create account to get started
+          {isOtpStep ? 'Enter the OTP sent to your device' : 'Create account to get started'}
         </CustomText>
       </Animated.View>
 
@@ -251,153 +332,241 @@ const RegisterScreen = () => {
           bounces={false}
           nestedScrollEnabled={true}
         >
-            {/* Email Input */}
-            <Animated.View style={getFieldAnimStyle(emailAnim)}>
-              <View style={styles.inputWrapper}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Bold"
-                  style={styles.label}
-                >
-                  EMAIL
-                </CustomText>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </Animated.View>
-
-            {/* Password Input */}
-            <Animated.View style={getFieldAnimStyle(passwordAnim)}>
-              <View style={styles.inputWrapper}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Bold"
-                  style={styles.label}
-                >
-                  PASSWORD
-                </CustomText>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </Animated.View>
-
-            {/* Name Input */}
-            <Animated.View style={getFieldAnimStyle(nameAnim)}>
-              <View style={styles.inputWrapper}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Bold"
-                  style={styles.label}
-                >
-                  FULL NAME
-                </CustomText>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your full name"
-                  value={name}
-                  onChangeText={setName}
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </Animated.View>
-
-            {/* Phone Input */}
-            <Animated.View style={getFieldAnimStyle(phoneAnim)}>
-              <View style={styles.inputWrapper}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Bold"
-                  style={styles.label}
-                >
-                  PHONE NUMBER
-                </CustomText>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your phone number"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </Animated.View>
-
-            {/* Age Input */}
-            <Animated.View style={getFieldAnimStyle(ageAnim)}>
-              <View style={styles.inputWrapper}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Bold"
-                  style={styles.label}
-                >
-                  AGE
-                </CustomText>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your age"
-                  value={age}
-                  onChangeText={setAge}
-                  keyboardType="numeric"
-                  placeholderTextColor="#999"
-                />
-              </View>
-            </Animated.View>
-
-            {/* Error Message */}
-            {error && (
-              <View style={styles.errorContainer}>
-                <CustomText
-                  variant="h3"
-                  size={RFValue(12)}
-                  fontFamily="Inter-Regular"
-                  style={styles.errorText}
-                >
-                  {error}
-                </CustomText>
-              </View>
-            )}
-
-            {/* Primary Button */}
-            <Animated.View style={getFieldAnimStyle(buttonAnim)}>
-              <TouchableOpacity
-                style={[styles.primaryButton, loading && styles.disabledButton]}
-                onPress={handleRegister}
-                disabled={loading}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#2C2C2C" />
-                ) : (
+          {!isOtpStep ? (
+            <>
+              {/* Email Input */}
+              <Animated.View style={getFieldAnimStyle(emailAnim)}>
+                <View style={styles.inputWrapper}>
                   <CustomText
                     variant="h3"
-                    size={RFValue(16)}
+                    size={RFValue(12)}
                     fontFamily="Inter-Bold"
-                    style={styles.primaryButtonText}
+                    style={styles.label}
                   >
-                    Register
+                    EMAIL
                   </CustomText>
-                )}
-              </TouchableOpacity>
-            </Animated.View>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your email"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </Animated.View>
 
-            {/* Toggle Button */}
+              {/* Password Input */}
+              <Animated.View style={getFieldAnimStyle(passwordAnim)}>
+                <View style={styles.inputWrapper}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Bold"
+                    style={styles.label}
+                  >
+                    PASSWORD
+                  </CustomText>
+                  <View style={styles.passwordInputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your password"
+                      value={password}
+                      onChangeText={setPassword}
+                      secureTextEntry={!showPasswordField}
+                      placeholderTextColor="#999"
+                    />
+                    <TouchableOpacity
+                      style={styles.passwordToggle}
+                      onPress={() => setShowPasswordField(!showPasswordField)}
+                    >
+                      {showPasswordField ? (
+                        <Eye size={20} color="#667EEA" strokeWidth={2} />
+                      ) : (
+                        <EyeOff size={20} color="#999" strokeWidth={2} />
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Name Input */}
+              <Animated.View style={getFieldAnimStyle(nameAnim)}>
+                <View style={styles.inputWrapper}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Bold"
+                    style={styles.label}
+                  >
+                    FULL NAME
+                  </CustomText>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your full name"
+                      value={name}
+                      onChangeText={setName}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Phone Input */}
+              <Animated.View style={getFieldAnimStyle(phoneAnim)}>
+                <View style={styles.inputWrapper}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Bold"
+                    style={styles.label}
+                  >
+                    PHONE NUMBER
+                  </CustomText>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your phone number"
+                      value={phone}
+                      onChangeText={setPhone}
+                      keyboardType="phone-pad"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Age Input (Optional) */}
+              <Animated.View style={getFieldAnimStyle(ageAnim)}>
+                <View style={styles.inputWrapper}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Bold"
+                    style={styles.label}
+                  >
+                    AGE
+                  </CustomText>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter your age"
+                      value={age}
+                      onChangeText={setAge}
+                      keyboardType="numeric"
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Error Message */}
+              {error && (
+                <View style={styles.errorContainer}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Regular"
+                    style={styles.errorText}
+                  >
+                    {error}
+                  </CustomText>
+                </View>
+              )}
+
+              {/* Primary Button */}
+              <Animated.View style={getFieldAnimStyle(buttonAnim)}>
+                <TouchableOpacity
+                  style={[styles.primaryButton, loading && styles.disabledButton]}
+                  onPress={handleRegister}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="#2C2C2C" />
+                  ) : (
+                    <CustomText
+                      variant="h3"
+                      size={RFValue(16)}
+                      fontFamily="Inter-Bold"
+                      style={styles.primaryButtonText}
+                    >
+                      Register
+                    </CustomText>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          ) : (
+            <>
+              {/* OTP Input */}
+              <Animated.View style={getFieldAnimStyle(emailAnim)}>
+                <View style={styles.inputWrapper}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(12)}
+                    fontFamily="Inter-Bold"
+                    style={styles.label}
+                  >
+                    OTP CODE
+                  </CustomText>
+                  <View style={styles.inputContainer}>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Enter 6-digit OTP"
+                      value={otpCode}
+                      onChangeText={setOtpCode}
+                      keyboardType="number-pad"
+                      maxLength={6}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Primary Button for OTP */}
+              <Animated.View style={getFieldAnimStyle(buttonAnim)}>
+                <TouchableOpacity
+                  style={[styles.primaryButton, verifyingOtp && styles.disabledButton]}
+                  onPress={handleVerifyOtp}
+                  disabled={verifyingOtp}
+                >
+                  {verifyingOtp ? (
+                    <ActivityIndicator color="#2C2C2C" />
+                  ) : (
+                    <CustomText
+                      variant="h3"
+                      size={RFValue(16)}
+                      fontFamily="Inter-Bold"
+                      style={styles.primaryButtonText}
+                    >
+                      Verify OTP
+                    </CustomText>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* Back to registration */}
+              <Animated.View style={getFieldAnimStyle(toggleAnim)}>
+                <TouchableOpacity style={styles.toggleButton} onPress={() => setIsOtpStep(false)}>
+                  <CustomText
+                    variant="h3"
+                    size={RFValue(14)}
+                    fontFamily="Inter-Bold"
+                    style={styles.toggleTextBold}
+                  >
+                    Back to Register
+                  </CustomText>
+                </TouchableOpacity>
+              </Animated.View>
+            </>
+          )}
+
+          {/* Toggle Button for Login (Common) */}
+          {!isOtpStep && (
             <Animated.View style={getFieldAnimStyle(toggleAnim)}>
               <TouchableOpacity style={styles.toggleButton} onPress={navigateToLogin}>
                 <CustomText
@@ -418,6 +587,7 @@ const RegisterScreen = () => {
                 </CustomText>
               </TouchableOpacity>
             </Animated.View>
+          )}
         </ScrollView>
       </View>
 
@@ -428,6 +598,15 @@ const RegisterScreen = () => {
         title="Registration Successful!"
         message="You can now login with your credentials."
         buttonText="Go to Login"
+      />
+
+      {/* Custom Alert Popup */}
+      <CustomAlertPopup
+        visible={alertPopupVisible}
+        onClose={() => setAlertPopupVisible(false)}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
       />
     </KeyboardAvoidingView>
   );
@@ -487,14 +666,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: 1,
   },
-  input: {
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
-    paddingHorizontal: 18,
-    paddingVertical: 14,
-    fontSize: RFValue(14),
-    color: '#2C2C2C',
-    fontFamily: 'Inter-Regular',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
@@ -503,6 +679,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+  },
+  passwordInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  passwordToggle: {
+    padding: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  input: {
+    flex: 1,
+    borderRadius: 15,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    fontSize: RFValue(14),
+    color: '#2C2C2C',
+    fontFamily: 'Inter-Regular',
   },
   errorContainer: {
     backgroundColor: '#FFE5E5',

@@ -9,7 +9,8 @@ const safeHeight = screenHeight && !isNaN(screenHeight) ? screenHeight : 800;
 export const homeStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 10,
+      paddingHorizontal: 10,
+      paddingBottom: 10,
     },
     title: {
       fontFamily: 'OpenSans-Medium',

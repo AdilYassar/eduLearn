@@ -12,7 +12,7 @@ import {
 import { useRoute, RouteProp } from '@react-navigation/native';
 import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
 import { useLearningMaterials } from '@service/hooks/useLearningMaterials';
@@ -140,7 +140,7 @@ const TheoryScreen = () => {
     <ThemedContainer>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => goBack()}>
-            <Icon name="arrow-back-ios" size={20} color={theme.text.primary} />
+            <ArrowLeft size={20} color={theme.text.primary} strokeWidth={2} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Theory Content</Text>
         <View style={{ width: 24 }} />

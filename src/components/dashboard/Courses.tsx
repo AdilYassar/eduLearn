@@ -56,7 +56,7 @@ const Courses = ({ bgColor, refreshTrigger }: { bgColor?: any; refreshTrigger?: 
         <View style={styles.headerRow}>
           <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>Continue learning</Text>
         </View>
-        <View style={[styles.emptyCard, { backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.emptyCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.02)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
           <BookOpen size={32} color={theme.text.secondary} style={{ marginBottom: 12, opacity: 0.5 }} />
           <Text style={[styles.emptyTitle, { color: theme.text.primary }]}>No Courses Yet</Text>
           <Text style={[styles.emptyDesc, { color: theme.text.secondary }]}>
@@ -94,7 +94,7 @@ const Courses = ({ bgColor, refreshTrigger }: { bgColor?: any; refreshTrigger?: 
             onPress={() => push('TheoryScreen', { courseId: course._id })}
             style={{ width: cardWidth, marginRight: cardSpacing }}
           >
-            <View style={[styles.card, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+            <View style={[styles.card, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
               
               <View style={styles.cardHeader}>
                 <View style={[styles.iconBox, { backgroundColor: `rgba(${parseInt(theme.primary.substring(1, 3), 16)}, ${parseInt(theme.primary.substring(3, 5), 16)}, ${parseInt(theme.primary.substring(5, 7), 16)}, 0.1)` }]}>

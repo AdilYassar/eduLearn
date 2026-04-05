@@ -8,6 +8,8 @@ export const headerStyles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      paddingHorizontal: RFValue(10),
+      paddingVertical: RFValue(8),
       // shadowOffset: {width: 1, height: 1},
       // shadowOpacity: 0.1,
       // shadowRadius: 2,
@@ -28,7 +30,7 @@ export const headerStyles = StyleSheet.create({
       height: RFValue(40),
       paddingHorizontal: RFValue(12),
       paddingVertical: RFValue(8),
-      fontSize: RFValue(14),
+      fontSize: RFValue(12),
       fontFamily: 'OpenSans-Regular',
     },
     avatarIcon: {

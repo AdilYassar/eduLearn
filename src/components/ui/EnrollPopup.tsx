@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { X, GraduationCap } from 'lucide-react-native';
 
 interface EnrollPopupProps {
   visible: boolean;
@@ -34,12 +34,12 @@ const EnrollPopup: React.FC<EnrollPopupProps> = ({
         <View style={styles.popupContainer}>
           {/* Close button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Icon name="close" size={24} color="#666" />
+            <X size={24} color="#666" strokeWidth={2} />
           </TouchableOpacity>
 
           {/* Icon */}
           <View style={styles.iconContainer}>
-            <Icon name="school" size={48} color="#5B4FC6" />
+            <GraduationCap size={48} color="#5B4FC6" strokeWidth={2} />
           </View>
 
           {/* Title */}

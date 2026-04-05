@@ -6,13 +6,17 @@ import {RFValue} from 'react-native-responsive-fontsize';
 export const joinStyles = StyleSheet.create({
     container: {
       flex: 1,
-      padding: 15,
+    },
+    contentWrapper: {
+      flex: 1,
+      paddingHorizontal: 15,
     },
     headerContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       paddingVertical: 5,
       justifyContent: 'space-between',
+      paddingHorizontal: 15,
     },
     headerText: {
       fontSize: RFValue(15),
@@ -41,7 +45,6 @@ export const joinStyles = StyleSheet.create({
     },
     orText: {
       fontSize: RFValue(12),
-      color: '#888',
       textAlign: 'center',
       marginVertical: 5,
     },
@@ -53,20 +56,31 @@ export const joinStyles = StyleSheet.create({
       marginBottom: 5,
       fontFamily: 'OpenSans-Regular',
     },
+    inputWrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
     inputBox: {
+      flex: 1,
       borderWidth: 1,
-      borderColor: '#ccc',
       borderRadius: 8,
       marginTop: 10,
       padding: 12,
       fontSize: RFValue(12),
       fontFamily: 'OpenSans-Regular',
-      color: '#333',
       backgroundColor: 'transparent',
+    },
+    joinArrowButton: {
+      marginTop: 10,
+      width: 40,
+      height: 40,
+      borderRadius: 6,
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     noteText: {
       fontSize: RFValue(10),
-      color: '#666',
       marginTop: 10,
       lineHeight: 15,
       fontFamily: 'OpenSans-Regular',
@@ -84,7 +98,6 @@ export const joinStyles = StyleSheet.create({
     complianceHeader: {
       fontSize: RFValue(14),
       fontWeight: '700',
-      color: '#1F2937',
       marginBottom: RFValue(12),
       marginTop: RFValue(20),
       fontFamily: 'Roboto-Bold',
@@ -93,7 +106,6 @@ export const joinStyles = StyleSheet.create({
     },
     complianceText: {
       fontSize: RFValue(11),
-      color: '#374151',
       lineHeight: RFValue(18),
       marginBottom: RFValue(6),
       fontFamily: 'OpenSans-Regular',
@@ -108,7 +120,6 @@ export const joinStyles = StyleSheet.create({
     },
     disclaimerText: {
       fontSize: RFValue(10),
-      color: '#6B7280',
       lineHeight: RFValue(16),
       textAlign: 'justify',
       fontFamily: 'OpenSans-Regular',

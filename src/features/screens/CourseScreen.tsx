@@ -22,7 +22,7 @@ import Animated, {
 import { navigate, goBack } from '../../utils/Navigation';
 import { useCourse } from '@service/hooks/useCourse';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { BarChart3, Search, X } from 'lucide-react-native';
 import EnrollPopup from '../../components/ui/EnrollPopup';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard, ThemedContainer } from '../../components/ui/ThemedComponents';
@@ -108,7 +108,7 @@ const AnimatedCourseCard = ({
             
             <View style={styles.footerRow}>
               <View style={styles.meta}>
-                <Icon name="bar-chart" size={16} color={theme.text.secondary} />
+                <BarChart3 size={16} color={theme.text.secondary} strokeWidth={2} />
                 <Text style={[styles.metaText, { color: theme.text.secondary }]}>Pro Level</Text>
               </View>
               
@@ -234,24 +234,24 @@ const CourseScreen = () => {
            <View style={{ width: 24 }} />
            <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Neural Academy</Text>
            <TouchableOpacity onPress={() => setShowSearchBar(!showSearchBar)}>
-              <Icon name="search" size={24} color={theme.text.primary} />
+              <Search size={24} color={theme.text.primary} strokeWidth={2} />
            </TouchableOpacity>
         </View>
 
         {showSearchBar && (
              <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.searchWrap}>
                 <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                   <Icon name="search" size={20} color={theme.text.secondary} />
+                   <Search size={20} color={theme.text.secondary} strokeWidth={2} />
                    <TextInput 
                       placeholder="Search courses..." 
-                      placeholderTextColor="rgba(255,255,255,0.3)"
+                      placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
                       style={[styles.input, { color: theme.text.primary }]}
                       value={searchQuery}
                       onChangeText={setSearchQuery}
                    />
                    {searchQuery.length > 0 && (
                        <TouchableOpacity onPress={() => setSearchQuery('')}>
-                          <Icon name="close" size={20} color={theme.text.secondary} />
+                          <X size={20} color={theme.text.secondary} strokeWidth={2} />
                        </TouchableOpacity>
                    )}
                 </View>

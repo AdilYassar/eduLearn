@@ -11,7 +11,7 @@ import {
   FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Trash2 } from 'lucide-react-native';
 import { Colors } from '@utils/Constants';
 
 interface Class {
@@ -154,7 +154,7 @@ const TimeTable: React.FC<TimeTableProps> = ({ bgColor = '#F4F7FB' }) => {
           style={styles.clearButton}
           onPress={clearTimetable}
         >
-          <Icon name="delete" size={24} color={Colors.primary_dark} />
+          <Trash2 size={24} color={Colors.primary_dark} strokeWidth={2} />
         </TouchableOpacity>
       )}
 

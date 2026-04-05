@@ -303,6 +303,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     borderRadius: 16,
     borderWidth: 2,
+     alignItems: 'center', // ← add this
   },
   statisticsTitle: {
     fontSize: 20,
@@ -317,6 +318,8 @@ const styles = StyleSheet.create({
   },
   statsGrid: {
     gap: 16,
+      alignItems: 'center', // ← add this
+  width: '100%',        // ← add this so rows still stretch full width
   },
   statsRow: {
     flexDirection: 'row',

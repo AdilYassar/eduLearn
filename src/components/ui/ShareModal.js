@@ -20,10 +20,12 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import Share from 'react-native-share';
 import { RFValue } from 'react-native-responsive-fontsize';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 const ShareModal = ({ visible, onClose, meetingData }) => {
+  const { theme } = useTheme();
   const handleCopyLink = async () => {
     try {
       Clipboard.setString(meetingData.meetingLink);
@@ -92,56 +94,56 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
+      <View style={[styles.overlay, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]}>
+        <View style={[styles.modalContainer, { backgroundColor: theme.background[0] || theme.card }]}>
           {/* Handle */}
-          <View style={styles.handle} />
+          <View style={[styles.handle, { backgroundColor: theme.border }]} />
           
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft} />
             <View style={styles.headerCenter}>
-              <Users size={22} color="#007AFF" />
-              <Text style={styles.title}>Share Meeting</Text>
+              <Users size={22} color={theme.primary} />
+              <Text style={[styles.title, { color: theme.text.primary }]}>Share Meeting</Text>
             </View>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={20} color="#666" />
+            <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.componentBackground[0] }]}>
+              <X size={20} color={theme.text.secondary} />
             </TouchableOpacity>
           </View>
 
             {/* Primary Actions */}
             <View style={styles.primaryActions}>
               <TouchableOpacity
-                style={styles.shareInviteButton}
+                style={[styles.shareInviteButton, { backgroundColor: theme.primary }]}
                 onPress={handleGeneralShare}
                 activeOpacity={0.8}
               >
                 <Share2 size={20} color="#fff" />
-                <Text style={styles.shareInviteText}>Share Invite</Text>
+                <Text style={[styles.shareInviteText, { color: '#fff' }]}>Share Invite</Text>
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={styles.copyLinkButton}
+                style={[styles.copyLinkButton, { borderColor: theme.primary, backgroundColor: theme.componentBackground[0] }]}
                 onPress={handleCopyLink}
                 activeOpacity={0.7}
               >
-                <Link size={20} color="#007AFF" />
+                <Link size={20} color={theme.primary} />
               </TouchableOpacity>
             </View>
 
             {/* Secondary Options */}
             <View style={styles.secondaryOptions}>
-              <Text style={styles.sectionTitle}>More Options</Text>
+              <Text style={[styles.sectionTitle, { color: theme.text.primary }]}>More Options</Text>
               
               <TouchableOpacity
                 style={styles.secondaryOption}
                 onPress={handleCopyMeetingId}
                 activeOpacity={0.7}
               >
-                <View style={[styles.secondaryIconContainer, { backgroundColor: '#f0f0f0' }]}>
-                  <Copy size={18} color="#666" />
+                <View style={[styles.secondaryIconContainer, { backgroundColor: theme.componentBackground[0] }]}>
+                  <Copy size={18} color={theme.text.secondary} />
                 </View>
-                <Text style={styles.secondaryOptionText}>Copy Meeting ID</Text>
+                <Text style={[styles.secondaryOptionText, { color: theme.text.primary }]}>Copy Meeting ID</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -152,7 +154,7 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
                 <View style={[styles.secondaryIconContainer, { backgroundColor: '#E8F5E8' }]}>
                   <MessageCircle size={18} color="#25D366" />
                 </View>
-                <Text style={styles.secondaryOptionText}>Share via WhatsApp</Text>
+                <Text style={[styles.secondaryOptionText, { color: theme.text.primary }]}>Share via WhatsApp</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -163,7 +165,7 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
                 <View style={[styles.secondaryIconContainer, { backgroundColor: '#FFF2E8' }]}>
                   <Mail size={18} color="#FF6B35" />
                 </View>
-                <Text style={styles.secondaryOptionText}>Share via Email</Text>
+                <Text style={[styles.secondaryOptionText, { color: theme.text.primary }]}>Share via Email</Text>
               </TouchableOpacity>
             </View>
         </View>
@@ -175,11 +177,9 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#fff',
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     paddingTop: RFValue(4),
@@ -190,7 +190,6 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#ddd',
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: RFValue(8),
@@ -220,7 +219,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: RFValue(18),
     fontWeight: '700',
-    color: '#1a1a1a',
     marginLeft: RFValue(8),
   },
   closeButton: {
@@ -229,7 +227,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 15,
-    backgroundColor: '#f0f0f0',
   },
   primaryActions: {
     flexDirection: 'row',
@@ -239,7 +236,6 @@ const styles = StyleSheet.create({
   },
   shareInviteButton: {
     flex: 1,
-    backgroundColor: '#007AFF',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -247,7 +243,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: RFValue(8),
     elevation: 1,
-    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -255,19 +250,15 @@ const styles = StyleSheet.create({
   shareInviteText: {
     fontSize: RFValue(15),
     fontWeight: '700',
-    color: '#fff',
   },
   copyLinkButton: {
     width: 50,
     height: 50,
-    backgroundColor: '#E8F4FD',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#007AFF',
     elevation: 1,
-    shadowColor: '#007AFF',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -279,7 +270,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: RFValue(16),
     fontWeight: '700',
-    color: '#1a1a1a',
     marginBottom: RFValue(10),
   },
   secondaryOption: {
@@ -300,7 +290,6 @@ const styles = StyleSheet.create({
   },
   secondaryOptionText: {
     fontSize: RFValue(15),
-    color: '#1a1a1a',
     fontWeight: '600',
   },
   optionsContainer: {
@@ -312,7 +301,6 @@ const styles = StyleSheet.create({
     paddingVertical: RFValue(16),
     paddingHorizontal: RFValue(4),
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
   },
   iconContainer: {
     width: 40,
@@ -328,12 +316,10 @@ const styles = StyleSheet.create({
   optionTitle: {
     fontSize: RFValue(16),
     fontWeight: '500',
-    color: '#333',
     marginBottom: RFValue(2),
   },
   optionSubtitle: {
     fontSize: RFValue(14),
-    color: '#666',
   },
 });
 

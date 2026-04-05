@@ -14,8 +14,11 @@ import CustomText from '../../components/ui/CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
 import LinearGradient from 'react-native-linear-gradient';
 import Markdown from 'react-native-markdown-display';
-import { Play, Pause, Settings } from 'lucide-react-native';
+import { Play, Pause, Settings, ArrowLeft, X, CheckCircle2 } from 'lucide-react-native';
 import Modal from 'react-native-modal';
+import { useTheme } from '../../context/ThemeContext';
+import { useNavigation } from '@react-navigation/native';
+import { ThemedContainer } from '../../components/ui/ThemedComponents';
 
 
 type DescriptionScreenRouteProp = RouteProp<{ params: { generatedContent: string } }, 'params'>;
@@ -23,6 +26,8 @@ type DescriptionScreenRouteProp = RouteProp<{ params: { generatedContent: string
 const DescriptionScreen: React.FC = () => {
   const route = useRoute<DescriptionScreenRouteProp>();
   const { generatedContent } = route.params;
+  const { theme } = useTheme();
+  const navigation = useNavigation();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voices, setVoices] = useState<Array<any>>([]);
   const [selectedVoice, setSelectedVoice] = useState<any>(null);
@@ -218,13 +223,13 @@ const DescriptionScreen: React.FC = () => {
   const markdownStyles = {
     body: {
       fontSize: RFValue(11),
-      color: '#4A4A4A',
+      color: theme.text.primary,
       lineHeight: RFValue(18),
       fontFamily: 'Inter-Regular',
     },
     heading1: {
       fontSize: RFValue(18),
-      color: '#1A1A1A',
+      color: theme.text.primary,
       fontWeight: '800',
       lineHeight: RFValue(24),
       marginTop: RFValue(16),
@@ -233,7 +238,7 @@ const DescriptionScreen: React.FC = () => {
     },
     heading2: {
       fontSize: RFValue(16),
-      color: '#1F1F1F',
+      color: theme.text.primary,
       fontWeight: '700',
       lineHeight: RFValue(22),
       marginTop: RFValue(14),
@@ -242,7 +247,7 @@ const DescriptionScreen: React.FC = () => {
     },
     heading3: {
       fontSize: RFValue(14),
-      color: '#252525',
+      color: theme.text.primary,
       fontWeight: '700',
       lineHeight: RFValue(20),
       marginTop: RFValue(12),
@@ -251,7 +256,7 @@ const DescriptionScreen: React.FC = () => {
     },
     heading4: {
       fontSize: RFValue(13),
-      color: '#2A2A2A',
+      color: theme.text.primary,
       fontWeight: '600',
       lineHeight: RFValue(18),
       marginTop: RFValue(10),
@@ -260,7 +265,7 @@ const DescriptionScreen: React.FC = () => {
     },
     heading5: {
       fontSize: RFValue(12),
-      color: '#2F2F2F',
+      color: theme.text.primary,
       fontWeight: '600',
       lineHeight: RFValue(16),
       marginTop: RFValue(8),
@@ -269,7 +274,7 @@ const DescriptionScreen: React.FC = () => {
     },
     heading6: {
       fontSize: RFValue(11),
-      color: '#333333',
+      color: theme.text.primary,
       fontWeight: '600',
       lineHeight: RFValue(15),
       marginTop: RFValue(6),
@@ -278,7 +283,7 @@ const DescriptionScreen: React.FC = () => {
     },
     paragraph: {
       fontSize: RFValue(11),
-      color: '#4A4A4A',
+      color: theme.text.primary,
       lineHeight: RFValue(18),
       marginTop: RFValue(6),
       marginBottom: RFValue(6),
@@ -286,7 +291,7 @@ const DescriptionScreen: React.FC = () => {
     },
     strong: {
       fontSize: RFValue(11),
-      color: '#2C2C2C',
+      color: theme.text.primary,
       fontWeight: '700',
       fontFamily: 'Inter-Bold',
     },
@@ -297,7 +302,7 @@ const DescriptionScreen: React.FC = () => {
     },
     list_item: {
       fontSize: RFValue(11),
-      color: '#4A4A4A',
+      color: theme.text.primary,
       lineHeight: RFValue(18),
       marginBottom: RFValue(4),
       fontFamily: 'Inter-Regular',
@@ -315,8 +320,8 @@ const DescriptionScreen: React.FC = () => {
     code_inline: {
       fontSize: RFValue(10),
       fontFamily: 'monospace',
-      backgroundColor: '#F0F0F0',
-      color: '#D63384',
+      backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#F0F0F0',
+      color: theme.isDark ? '#B5AEFF' : '#D63384',
       paddingHorizontal: RFValue(4),
       paddingVertical: RFValue(2),
       borderRadius: RFValue(3),
@@ -324,8 +329,8 @@ const DescriptionScreen: React.FC = () => {
     code_block: {
       fontSize: RFValue(10),
       fontFamily: 'monospace',
-      backgroundColor: '#2D2D2D',
-      color: '#E8E8E8',
+      backgroundColor: theme.isDark ? '#0d0d0d' : '#2D2D2D',
+      color: theme.isDark ? '#E8E8E8' : '#E8E8E8',
       padding: RFValue(12),
       borderRadius: RFValue(8),
       marginTop: RFValue(8),
@@ -336,8 +341,8 @@ const DescriptionScreen: React.FC = () => {
     fence: {
       fontSize: RFValue(10),
       fontFamily: 'monospace',
-      backgroundColor: '#2D2D2D',
-      color: '#E8E8E8',
+      backgroundColor: theme.isDark ? '#0d0d0d' : '#2D2D2D',
+      color: theme.isDark ? '#E8E8E8' : '#E8E8E8',
       padding: RFValue(12),
       borderRadius: RFValue(8),
       marginTop: RFValue(8),
@@ -346,7 +351,7 @@ const DescriptionScreen: React.FC = () => {
       borderLeftColor: '#A599FF',
     },
     blockquote: {
-      backgroundColor: '#F5F7FF',
+      backgroundColor: theme.isDark ? 'rgba(165, 153, 255, 0.1)' : '#F5F7FF',
       borderLeftWidth: RFValue(4),
       borderLeftColor: '#A599FF',
       paddingLeft: RFValue(12),
@@ -359,38 +364,41 @@ const DescriptionScreen: React.FC = () => {
     },
     table: {
       borderWidth: 1,
-      borderColor: '#E0E0E0',
+      borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#E0E0E0',
       borderRadius: RFValue(8),
       marginTop: RFValue(8),
       marginBottom: RFValue(8),
       overflow: 'hidden',
     },
     thead: {
-      backgroundColor: '#F8F9FA',
+      backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#F8F9FA',
     },
     tbody: {
-      backgroundColor: '#FFFFFF',
+      backgroundColor: theme.isDark ? '#1a1a1a' : '#FFFFFF',
     },
     th: {
       fontSize: RFValue(10),
       fontWeight: '700',
-      color: '#1A1A1A',
+      color: theme.text.primary,
       padding: RFValue(8),
       borderBottomWidth: 1,
-      borderBottomColor: '#E0E0E0',
+      borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#E0E0E0',
       fontFamily: 'Inter-Bold',
     },
     td: {
       fontSize: RFValue(10),
-      color: '#4A4A4A',
+      color: theme.text.primary,
       padding: RFValue(8),
       borderBottomWidth: 1,
-      borderBottomColor: '#F0F0F0',
+      borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#F0F0F0',
       fontFamily: 'Inter-Regular',
     },
     tr: {
       borderBottomWidth: 1,
-      borderBottomColor: '#F0F0F0',
+      borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#F0F0F0',
+    },
+    link: {
+      color: theme.primary,
     },
   };
 
@@ -823,7 +831,7 @@ const DescriptionScreen: React.FC = () => {
 
     return elements.length > 0 ? elements : (
       <View style={styles.emptyContainer}>
-        <CustomText variant="body" size={RFValue(12)} fontFamily="Inter-Regular" style={styles.emptyText}>
+        <CustomText variant="body" size={RFValue(12)} fontFamily="Inter-Regular" style={[styles.emptyText, { color: theme.text.secondary }]}>
           No content available
         </CustomText>
       </View>
@@ -831,65 +839,46 @@ const DescriptionScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-
+    <ThemedContainer>
       {/* Header Section */}
-      <LinearGradient
-        colors={['#CAC4FF', '#B5AEFF', '#A599FF']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.header}
-      >
-        <Animated.View
-          style={{
-            opacity: fadeAnim,
-            transform: [{ scale: buttonScale }],
-          }}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
         >
-          <View style={styles.headerContent}>
-            <View style={styles.headerTextContainer}>
-              <CustomText
-                variant="h1"
-                size={RFValue(18)}
-                fontFamily="Inter-Bold"
-                style={styles.headerTitle}
-              >
-                Chapter Details
-              </CustomText>
-              {/* <CustomText
-                variant="h3"
-                size={RFValue(10)}
-                fontFamily="Inter-Regular"
-                style={styles.headerSubtitle}
-              >
-                AI Generated Content
-              </CustomText> */}
-            </View>
-            <TouchableOpacity
-              style={styles.voiceButton}
-              onPress={() => setShowVoiceModal(true)}
-            >
-              <Settings size={RFValue(20)} color="#FFFFFF" strokeWidth={2} />
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </LinearGradient>
+          <ArrowLeft size={20} color={theme.text.primary} strokeWidth={2} />
+        </TouchableOpacity>
+        
+        <CustomText
+          variant="h1"
+          size={RFValue(14)}
+          fontFamily="Manrope-Bold"
+          style={{ color: theme.text.primary, textAlign: 'center' }}
+        >
+          Chapter Content
+        </CustomText>
+        
+        <TouchableOpacity
+          style={styles.settingsButton}
+          onPress={() => setShowVoiceModal(true)}
+        >
+          <Settings size={RFValue(20)} color={theme.text.primary} strokeWidth={2} />
+        </TouchableOpacity>
+      </View>
 
-      {/* Content Section */}
+      {/* Content Scroll View */}
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        style={[{ flex: 1 }]}
       >
         <Animated.View
           style={{
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
+            paddingHorizontal: 12,
           }}
         >
-          <View style={styles.markdownContainer}>
-            <Markdown style={markdownStyles}>{generatedContent}</Markdown>
-          </View>
+          <Markdown style={markdownStyles}>{generatedContent}</Markdown>
         </Animated.View>
       </ScrollView>
 
@@ -906,6 +895,7 @@ const DescriptionScreen: React.FC = () => {
           style={[
             styles.fab,
             styles.playFab,
+            { backgroundColor: theme.primary },
             isSpeaking && styles.speakingFab,
           ]}
           onPress={isSpeaking ? stopSpeaking : speakContent}
@@ -927,13 +917,13 @@ const DescriptionScreen: React.FC = () => {
         animationIn="slideInUp"
         animationOut="slideOutDown"
       >
-        <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
+        <View style={[styles.modalContent, { backgroundColor: theme.isDark ? '#1a1a1a' : '#ffffff' }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#F0F0F0' }]}>
             <CustomText
               variant="h1"
-              size={RFValue(18)}
+              size={RFValue(14)}
               fontFamily="Inter-Bold"
-              style={styles.modalTitle}
+              style={[styles.modalTitle, { color: theme.text.primary }]}
             >
               Select Voice
             </CustomText>
@@ -941,14 +931,7 @@ const DescriptionScreen: React.FC = () => {
               onPress={() => setShowVoiceModal(false)}
               style={styles.closeButton}
             >
-              <CustomText
-                variant="h3"
-                size={RFValue(16)}
-                fontFamily="Inter-Bold"
-                style={styles.closeButtonText}
-              >
-                ✕
-              </CustomText>
+              <X size={RFValue(18)} color={theme.text.secondary} strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
           <ScrollView style={styles.voiceList} showsVerticalScrollIndicator={true}>
@@ -958,17 +941,19 @@ const DescriptionScreen: React.FC = () => {
                   key={index}
                   style={[
                     styles.voiceItem,
-                    selectedVoice?.id === voice.id && styles.selectedVoiceItem,
+                    { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : '#F8F9FA', borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : '#E0E0E0' },
+                    selectedVoice?.id === voice.id && [styles.selectedVoiceItem, { backgroundColor: theme.isDark ? 'rgba(165, 153, 255, 0.15)' : 'rgba(165, 153, 255, 0.1)', borderColor: theme.primary }],
                   ]}
                   onPress={() => handleVoiceSelect(voice)}
                 >
                   <View style={styles.voiceInfo}>
                     <CustomText
                       variant="body"
-                      size={RFValue(13)}
+                      size={RFValue(11)}
                       fontFamily="Inter-SemiBold"
                       style={[
                         styles.voiceName,
+                        { color: theme.text.primary },
                         selectedVoice?.id === voice.id && styles.selectedVoiceName,
                       ]}
                     >
@@ -976,25 +961,16 @@ const DescriptionScreen: React.FC = () => {
                     </CustomText>
                     <CustomText
                       variant="body"
-                      size={RFValue(11)}
+                      size={RFValue(9)}
                       fontFamily="Inter-Regular"
-                      style={styles.voiceDetails}
+                      style={[styles.voiceDetails, { color: theme.text.secondary }]}
                     >
                       {voice.language} • Quality: {voice.quality || 'N/A'}
                       {voice.networkConnectionRequired && ' • Requires Network'}
                     </CustomText>
                   </View>
                   {selectedVoice?.id === voice.id && (
-                    <View style={styles.checkmark}>
-                      <CustomText
-                        variant="h3"
-                        size={RFValue(16)}
-                        fontFamily="Inter-Bold"
-                        style={styles.checkmarkText}
-                      >
-                        ✓
-                      </CustomText>
-                    </View>
+                    <CheckCircle2 size={RFValue(18)} color={theme.primary} strokeWidth={2.5} />
                   )}
                 </TouchableOpacity>
               ))
@@ -1004,7 +980,7 @@ const DescriptionScreen: React.FC = () => {
                   variant="body"
                   size={RFValue(12)}
                   fontFamily="Inter-Regular"
-                  style={styles.emptyVoicesText}
+                  style={[styles.emptyVoicesText, { color: theme.text.secondary }]}
                 >
                   No voices available
                 </CustomText>
@@ -1013,94 +989,57 @@ const DescriptionScreen: React.FC = () => {
           </ScrollView>
         </View>
       </Modal>
-    </View>
+    </ThemedContainer>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
   },
   header: {
-    paddingTop: 35,
-    paddingBottom: 30,
-    paddingHorizontal: 30,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    shadowColor: '#000000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontWeight: '900',
-    marginTop: -20,
-    textShadowColor: 'rgba(0, 0, 0, 0.1)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  headerSubtitle: {
-    color: '#FFFFFF',
-    opacity: 0.9,
-    fontWeight: '500',
-  },
-  headerContent: {
+    height: 60,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: -25,
+    paddingHorizontal: 24,
   },
-  headerTextContainer: {
-    flex: 1,
-    marginBottom:10
-  },
-  voiceButton: {
+  settingsButton: {
     width: 40,
     height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 12,
-    marginTop:-20,
-
   },
   modal: {
     justifyContent: 'flex-end',
     margin: 0,
+    
   },
   modalContent: {
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '80%',
-    paddingBottom: 30,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    maxHeight: '75%',
+    paddingBottom: 20,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: 'rgba(255,255,255,0.08)',
   },
   modalTitle: {
     color: '#1A1A1A',
-    fontWeight: '800',
+    fontWeight: '600',
   },
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F0F0F0',
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1108,32 +1047,33 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   voiceList: {
-    maxHeight: 400,
-    paddingHorizontal: 20,
+    maxHeight: 300,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   voiceItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     marginVertical: 4,
-    borderRadius: 12,
+    borderRadius: 8,
     backgroundColor: '#F8F9FA',
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
   selectedVoiceItem: {
-    backgroundColor: '#F5F7FF',
+    backgroundColor: 'rgba(165, 153, 255, 0.1)',
     borderColor: '#A599FF',
-    borderWidth: 2,
+    borderWidth: 1.5,
   },
   voiceInfo: {
     flex: 1,
   },
   voiceName: {
     color: '#1A1A1A',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   selectedVoiceName: {
     color: '#A599FF',
@@ -1142,16 +1082,7 @@ const styles = StyleSheet.create({
     color: '#666666',
   },
   checkmark: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#A599FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-  },
-  checkmarkText: {
-    color: '#FFFFFF',
+    marginLeft: 8,
   },
   emptyVoices: {
     padding: 40,
@@ -1161,16 +1092,17 @@ const styles = StyleSheet.create({
     color: '#999999',
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 120,
   },
   markdownContainer: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 14,
     marginBottom: 16,
-    shadowColor: '#A599FF',
+    marginHorizontal: 0,
+    shadowColor: 'rgba(0,0,0,0.08)',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -1183,17 +1115,17 @@ const styles = StyleSheet.create({
   },
   contentCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 16,
-    shadowColor: '#A599FF',
+    shadowColor: 'rgba(0,0,0,0.05)',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 1,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
     borderColor: '#F0F0F0',
   },
@@ -1393,19 +1325,19 @@ const styles = StyleSheet.create({
     right: 20,
   },
   fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000000',
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
   },
   playFab: {
     backgroundColor: '#A599FF',

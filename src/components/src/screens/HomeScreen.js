@@ -97,7 +97,7 @@ const HomeScreen = () => {
           data={sessions}
           renderItem={renderSessions}
           key={item => item}
-          contentContainerStyle={{ padding: 10 }}
+          contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 10 }}
           ListEmptyComponent={
             <>
               <Image

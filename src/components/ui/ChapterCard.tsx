@@ -9,7 +9,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Circle, Clock, CheckCircle, ChevronUp, ChevronDown } from 'lucide-react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 const { width } = Dimensions.get('window');
@@ -20,9 +20,23 @@ import { GlassCard } from './ThemedComponents';
 
 // Status mapping for chapters
 const STATUS_MAP = {
-  not_started: { display: 'Not Started', icon: 'radio-button-unchecked', color: '#6B7280' },
-  in_progress: { display: 'In Progress', icon: 'play-circle-filled', color: '#3B82F6' },
+  not_started: { display: 'Not Started', icon: 'circle', color: '#6B7280' },
+  in_progress: { display: 'In Progress', icon: 'clock', color: '#3B82F6' },
   completed: { display: 'Completed', icon: 'check-circle', color: '#10B981' },
+};
+
+// Helper component to render status icon
+const StatusIcon = ({ iconName, color, size = 14 }: { iconName: string; color: string; size?: number }) => {
+  switch (iconName) {
+    case 'circle':
+      return <Circle size={size} color={color} strokeWidth={2.5} />;
+    case 'clock':
+      return <Clock size={size} color={color} strokeWidth={2.5} />;
+    case 'check-circle':
+      return <CheckCircle size={size} color={color} strokeWidth={2.5} />;
+    default:
+      return <Circle size={size} color={color} strokeWidth={2.5} />;
+  }
 };
 
 export type ChapterCardProps = {
@@ -65,6 +79,7 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
   isUpdating: _isUpdating = false,
 }) => {
   const { theme } = useTheme();
+  const [showPreviewModal, setShowPreviewModal] = React.useState(false);
 
   // Get status info
   const statusInfo = STATUS_MAP[status] || STATUS_MAP.not_started;
@@ -88,10 +103,19 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
     }
   };
 
+  const handleCardPress = () => {
+    setShowPreviewModal(true);
+  };
+
+  const handleNavigateToDescription = () => {
+    setShowPreviewModal(false);
+    onChapterPress?.();
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
-        onPress={onChapterPress}
+        onPress={handleCardPress}
         activeOpacity={0.9}
       >
         <GlassCard 
@@ -126,11 +150,11 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
               style={styles.expandButton}
               onPress={onExpandToggle}
             >
-              <Icon
-                name={expanded ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
-                size={24}
-                color={theme.text.secondary}
-              />
+              {expanded ? (
+                <ChevronUp size={24} color={theme.text.secondary} strokeWidth={2} />
+              ) : (
+                <ChevronDown size={24} color={theme.text.secondary} strokeWidth={2} />
+              )}
             </TouchableOpacity>
           </View>
 
@@ -150,7 +174,9 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
                 >
                   <Text style={[styles.indicatorLabel, { color: statusInfo.color }]}>STATUS</Text>
                   <View style={styles.statusRow}>
-                    <Icon name={statusInfo.icon} size={14} color={statusInfo.color} style={styles.statusIcon} />
+                    <View style={styles.statusIcon}>
+                      <StatusIcon iconName={statusInfo.icon} color={statusInfo.color} size={14} />
+                    </View>
                     <Text style={[styles.indicatorValue, { color: statusInfo.color }]}>{statusInfo.display}</Text>
                   </View>
                 </TouchableOpacity>
@@ -169,6 +195,86 @@ const ChapterCard: React.FC<ChapterCardProps> = ({
           )}
         </GlassCard>
       </TouchableOpacity>
+
+      {/* Preview Modal */}
+      <Modal
+        visible={showPreviewModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPreviewModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowPreviewModal(false)}>
+          <View style={[styles.modalOverlay, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.7)' : 'rgba(0,0,0,0.5)' }]}>
+            <TouchableWithoutFeedback>
+              <View style={[styles.previewModal, { backgroundColor: theme.isDark ? '#1a1a1a' : '#ffffff' }]}>
+                {/* Modal Header */}
+                <View style={styles.previewHeader}>
+                  <View style={styles.previewBadge}>
+                    <Text style={[styles.previewBadgeText, { color: theme.text.primary }]}>
+                      Chapter {chapterNumber}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowPreviewModal(false)}
+                  >
+                    <Text style={[styles.closeButtonText, { color: theme.text.secondary }]}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <ScrollView style={styles.previewContent} showsVerticalScrollIndicator={false}>
+                  {/* Title */}
+                  <Text style={[styles.previewTitle, { color: theme.text.primary }]}>
+                    {title}
+                  </Text>
+
+                  {/* Content Preview */}
+                  <View style={styles.previewContentBox}>
+                    <Text style={[styles.previewLabel, { color: theme.primary }]}>Content Overview</Text>
+                    <Text style={[styles.previewDescription, { color: theme.text.primary }]}>
+                      Learn about {title.toLowerCase()}, covering key topics, detailed explanations, and practical applications. Complete all lessons and exercises in this chapter to master the concepts.
+                    </Text>
+                  </View>
+                </ScrollView>
+
+                {/* Action Buttons */}
+                <View style={styles.previewActions}>
+                  {status === 'not_started' && (
+                    <View style={styles.warningBox}>
+                      <Text style={[styles.warningText, { color: theme.text.primary }]}>
+                        📌 Start this chapter first. Complete any remaining previous chapters before moving ahead.
+                      </Text>
+                    </View>
+                  )}
+                  {status === 'completed' && (
+                    <View style={styles.completedBox}>
+                      <Text style={[styles.completedText, { color: '#10B981' }]}>
+                        ✓ You've already completed this chapter! Move on to the next one for more learning.
+                      </Text>
+                    </View>
+                  )}
+                  {status === 'in_progress' && (
+                    <View style={styles.buttonRowContainer}>
+                      <TouchableOpacity
+                        style={[styles.previewButton, styles.cancelPreviewButton, { borderColor: 'rgba(255,255,255,0.1)', flex: 1 }]}
+                        onPress={() => setShowPreviewModal(false)}
+                      >
+                        <Text style={[styles.cancelPreviewButtonText, { color: theme.text.secondary }]}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.previewButton, styles.continueButton, { backgroundColor: theme.primary, flex: 1, marginLeft: 10 }]}
+                        onPress={handleNavigateToDescription}
+                      >
+                        <Text style={styles.continueButtonText}>Continue →</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
   );
 };
@@ -242,27 +348,33 @@ const styles = StyleSheet.create({
   indicatorsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 16,
   },
   indicator: {
     flex: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.03)',
   },
   indicatorLabel: {
-    fontSize: RFValue(9),
+    fontSize: RFValue(7.5),
     fontWeight: 'bold',
-    letterSpacing: 1,
-    marginBottom: 6,
+    letterSpacing: 0.5,
+    marginBottom: 4,
   },
   indicatorValue: {
-    fontSize: RFValue(12),
+    fontSize: RFValue(10),
     fontWeight: 'bold',
     fontFamily: 'Inter-Bold',
   },
   statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: -8,
   },
   statusIcon: {
-    marginRight: 4,
+    marginRight: 2,
   },
   modalOverlay: {
     flex: 1,
@@ -319,6 +431,169 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     fontSize: RFValue(14),
     fontWeight: '600',
+  },
+  previewModal: {
+    borderRadius: 24,
+    padding: 24,
+    width: width * 0.88,
+    maxHeight: '75%',
+    marginHorizontal: 'auto',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  previewBadge: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  previewBadgeText: {
+    fontSize: RFValue(12),
+    fontWeight: 'bold',
+    fontFamily: 'Inter-Bold',
+  },
+  closeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  closeButtonText: {
+    fontSize: RFValue(18),
+    fontWeight: 'bold',
+  },
+  previewContent: {
+    maxHeight: '60%',
+    marginBottom: 16,
+  },
+  previewTitle: {
+    fontSize: RFValue(20),
+    fontWeight: 'bold',
+    fontFamily: 'Manrope-Bold',
+    marginBottom: 16,
+  },
+  previewContentBox: {
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  previewLabel: {
+    fontSize: RFValue(11),
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  previewDescription: {
+    fontSize: RFValue(13),
+    fontFamily: 'Inter-Regular',
+    lineHeight: 20,
+    opacity: 0.85,
+  },
+  previewStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  statItem: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
+  },
+  statLabel: {
+    fontSize: RFValue(9),
+    fontWeight: 'bold',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  statValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statValueText: {
+    fontSize: RFValue(12),
+    fontWeight: 'bold',
+    fontFamily: 'Inter-Bold',
+  },
+  previewActions: {
+    flexDirection: 'column',
+    gap: 10,
+    marginTop: 14,
+  },
+  buttonRowContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  previewButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 48,
+  },
+  cancelPreviewButton: {
+    borderWidth: 1.5,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  cancelPreviewButtonText: {
+    fontSize: RFValue(14),
+    fontWeight: '600',
+    fontFamily: 'Inter-Bold',
+  },
+  continueButton: {
+    backgroundColor: '#10B981',
+  },
+  continueButtonText: {
+    fontSize: RFValue(14),
+    fontWeight: 'bold',
+    fontFamily: 'Inter-Bold',
+    color: '#ffffff',
+  },
+  warningBox: {
+    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 193, 7, 0.3)',
+    width: '100%',
+  },
+  warningText: {
+    fontSize: RFValue(11),
+    fontFamily: 'Inter-Regular',
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  completedBox: {
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    borderRadius: 12,
+    padding: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
+    width: '100%',
+  },
+  completedText: {
+    fontSize: RFValue(11),
+    fontFamily: 'Inter-Regular',
+    lineHeight: 16,
+    fontWeight: '500',
+  },
+  startButton: {
+    backgroundColor: '#3B82F6',
   },
 });
 

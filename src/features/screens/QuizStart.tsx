@@ -6,7 +6,7 @@ import { goBack, navigate } from '../../utils/Navigation';
 import { BASE_URL } from '@service/config';
 import { useTheme } from '../../context/ThemeContext';
 import { ThemedContainer, GlassCard, ThemedText } from '../../components/ui/ThemedComponents';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { X, ClipboardList, Brain, Clock, Star, ChevronsRight } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -73,7 +73,7 @@ const QuizStart = () => {
     <ThemedContainer>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => goBack()}>
-            <Icon name="close" size={24} color={theme.text.primary} />
+            <X size={24} color={theme.text.primary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
@@ -82,7 +82,7 @@ const QuizStart = () => {
           <Animated.View entering={FadeInUp.duration(800)}>
             <GlassCard style={styles.briefingCard} opacity={0.12} glow={true}>
                <View style={styles.iconBox}>
-                  <Icon name="assignment" size={40} color={theme.primary} />
+                  <ClipboardList size={40} color={theme.primary} strokeWidth={2} />
                </View>
                
                <Text style={[styles.title, { color: theme.text.primary }]}>{quiz.title}</Text>
@@ -92,17 +92,17 @@ const QuizStart = () => {
                
                <View style={styles.paramsGrid}>
                   <View style={styles.paramItem}>
-                     <Icon name="psychology" size={20} color={theme.primary} />
+                     <Brain size={20} color={theme.primary} strokeWidth={2} />
                      <Text style={[styles.paramLabel, { color: theme.text.secondary }]}>DIFFICULTY</Text>
                      <Text style={[styles.paramVal, { color: theme.text.primary }]}>{quiz.difficulty.toUpperCase()}</Text>
                   </View>
                   <View style={styles.paramItem}>
-                     <Icon name="timer" size={20} color={theme.primary} />
+                     <Clock size={20} color={theme.primary} strokeWidth={2} />
                      <Text style={[styles.paramLabel, { color: theme.text.secondary }]}>DURATION</Text>
                      <Text style={[styles.paramVal, { color: theme.text.primary }]}>{quiz.duration} MINS</Text>
                   </View>
                   <View style={styles.paramItem}>
-                     <Icon name="stars" size={20} color={theme.primary} />
+                     <Star size={20} color={theme.primary} strokeWidth={2} />
                      <Text style={[styles.paramLabel, { color: theme.text.secondary }]}>REWARD</Text>
                      <Text style={[styles.paramVal, { color: theme.text.primary }]}>500 XP</Text>
                   </View>
@@ -121,7 +121,7 @@ const QuizStart = () => {
                 style={styles.engageBtn}
               >
                 <Text style={styles.btnText}>ENGAGE MISSION</Text>
-                <Icon name="double-arrow" size={20} color="#FFF" />
+                <ChevronsRight size={20} color="#FFF" strokeWidth={2} />
               </LinearGradient>
             </TouchableOpacity>
           </Animated.View>

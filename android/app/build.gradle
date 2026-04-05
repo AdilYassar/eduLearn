@@ -126,4 +126,7 @@ dependencies {
 
     // Add Firebase Authentication
     implementation("com.google.firebase:firebase-auth")
+
+    // Add Firebase Messaging
+    implementation("com.google.firebase:firebase-messaging")
 }

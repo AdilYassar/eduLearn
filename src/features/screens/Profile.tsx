@@ -14,6 +14,8 @@ import {
   PermissionsAndroid,
   Platform,
   Animated,
+  Modal,
+  TextInput,
 } from 'react-native';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -61,6 +63,7 @@ import { Colors } from '@utils/Constants';
 import { performCompleteLogout } from '@service/authUtils';
 import { useUser } from '@service/hooks/useUser';
 import UserProgressSection from '../../components/ui/UserProgressSection';
+import SuccessPopup from '../../components/ui/SuccessPopup';
 import { ThemedText as Text, GlassCard, ThemedContainer } from '../../components/ui/ThemedComponents';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -71,6 +74,7 @@ interface UserData {
   email: string;
   age?: number;
   phone?: string;
+  bio?: string;
   role: string;
   isActivated?: boolean;
   profileImage?: string;
@@ -166,9 +170,24 @@ const Profile = () => {
     getUserProfile,
     getEnrollmentStats,
     updateUserProfile,
+    uploadProfilePhoto,
     loading: apiLoading,
     error: apiError,
   } = useUser();
+
+  // Edit Profile Modal State
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editAge, setEditAge] = useState('');
+  const [editBio, setEditBio] = useState('');
+  const [selectedPhotoFile, setSelectedPhotoFile] = useState<any>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [updatingProfile, setUpdatingProfile] = useState(false);
+  const [photoMessage, setPhotoMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('Success!');
 
   useEffect(() => {
     fetchUserData();
@@ -277,22 +296,117 @@ const Profile = () => {
   };
 
   const updateProfileImage = () => {
-    launchImageLibrary({ mediaType: 'photo' }, async (response) => {
+    launchImageLibrary({ mediaType: 'photo' }, (response) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
       } else if (response.assets && response.assets.length > 0) {
-        const updatedUserData = { ...userData, profileImage: response.assets[0].uri };
-        setUserData(updatedUserData as UserData);
-        try {
-          await AsyncStorage.setItem('userData', JSON.stringify(updatedUserData));
-          console.log('Profile photo updated successfully');
-        } catch (error) {
-          console.error('Error updating profile photo:', error);
-        }
+        const file = response.assets[0];
+        // Just store the file for now, don't upload yet
+        setSelectedPhotoFile({
+          uri: file.uri,
+          type: file.type || 'image/jpeg',
+          name: file.fileName || `photo_${Date.now()}.jpg`,
+        });
       }
     });
+  };
+
+  const openEditModal = () => {
+    if (userData) {
+      setEditName(userData.name || '');
+      setEditEmail(userData.email || '');
+      setEditPhone(userData.phone || '');
+      setEditAge(userData.age?.toString() || '');
+      setEditBio(userData.bio || '');
+      setShowEditModal(true);
+    }
+  };
+
+  const closeEditModal = () => {
+    setShowEditModal(false);
+    setEditName('');
+    setEditEmail('');
+    setEditPhone('');
+    setEditAge('');
+    setEditBio('');
+    setSelectedPhotoFile(null);
+  };
+
+  const handleUpdateProfile = async () => {
+    if (!editName.trim()) {
+      Alert.alert('Validation Error', 'Name cannot be empty');
+      return;
+    }
+
+    setUpdatingProfile(true);
+    try {
+      const accessToken = await AsyncStorage.getItem('accessToken');
+      if (!accessToken) {
+        Alert.alert('Error', 'You must be logged in');
+        setUpdatingProfile(false);
+        return;
+      }
+
+      const updateData: any = {
+        name: editName.trim(),
+      };
+
+      if (editEmail.trim()) updateData.email = editEmail.trim();
+      if (editPhone.trim()) updateData.phone = editPhone.trim();
+      if (editAge.trim()) updateData.age = parseInt(editAge, 10);
+      if (editBio.trim()) updateData.bio = editBio.trim();
+
+      // First update the profile data
+      const result = await updateUserProfile(updateData, accessToken);
+
+      if (result) {
+        // Update local state with new data
+        setUserData(prev => prev ? {
+          ...prev,
+          ...updateData,
+        } : null);
+
+        // Then upload photo if one was selected
+        if (selectedPhotoFile) {
+          setUploadingPhoto(true);
+          try {
+            const photoResult = await uploadProfilePhoto(selectedPhotoFile);
+            
+            if (photoResult?.success) {
+              // Update userData with new photo
+              setUserData(prev => prev ? {
+                ...prev,
+                profileImage: photoResult.data?.photoUrl || selectedPhotoFile.uri,
+                photo: photoResult.data?.photoUrl || selectedPhotoFile.uri,
+              } : null);
+              setSuccessMessage('Profile and photo updated successfully!');
+              setShowSuccessPopup(true);
+            } else {
+              Alert.alert('Warning', 'Profile updated but photo upload failed. Try again later.');
+            }
+          } catch (photoError: any) {
+            console.error('Photo upload error:', photoError);
+            Alert.alert('Warning', 'Profile updated but photo upload failed. Try again later.');
+          } finally {
+            setUploadingPhoto(false);
+          }
+        } else {
+          setSuccessMessage('Profile updated successfully!');
+          setShowSuccessPopup(true);
+        }
+
+        closeEditModal();
+      } else {
+        Alert.alert('Error', apiError || 'Failed to update profile');
+      }
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      Alert.alert('Error', error.message || 'Failed to update profile');
+    } finally {
+      setUpdatingProfile(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -524,44 +638,65 @@ const Profile = () => {
       >
         {/* 2. HERO SECTION */}
         <View style={styles.heroSection}>
-          {/* Avatar with Conic Gradient Ring */}
+          {/* Avatar Container */}
           <View style={styles.avatarContainer}>
-            {/* Conic gradient ring animation */}
-            <View style={[styles.conicGradientRing, { backgroundColor: theme.primary }]} />
-            
-            {/* Avatar */}
             {(userData?.profileImage || userData?.photo) ? (
-              <Image
-                source={{ uri: userData.profileImage || userData.photo }}
-                style={[styles.avatarImage, { backgroundColor: theme.primary + '30' }]}
-              />
+              <>
+                {/* When photo exists - show image directly */}
+                <Image
+                  source={{ uri: userData.profileImage || userData.photo }}
+                  style={styles.avatarImageDirect}
+                />
+                {/* Edit badge on existing photo */}
+                <TouchableOpacity
+                  style={[
+                    styles.modernAddPhotoBadge,
+                    { backgroundColor: theme.primary },
+                  ]}
+                  onPress={updateProfileImage}
+                  disabled={uploadingPhoto}
+                  activeOpacity={0.8}
+                >
+                  {uploadingPhoto ? (
+                    <ActivityIndicator size="small" color="#FFF" />
+                  ) : (
+                    <Text style={styles.modernAddPhotoText}>✎</Text>
+                  )}
+                </TouchableOpacity>
+              </>
             ) : (
-              <View
-                style={[
-                  styles.avatarImage,
-                  {
-                    backgroundColor: theme.primary + '30',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                  },
-                ]}
-              >
-                <Text style={[styles.avatarInitials, { color: theme.primary }]}>
-                  {(userData?.name || 'AY')?.split(' ')?.map((n: string) => n[0])?.join('')?.toUpperCase() || 'AY'}
-                </Text>
-              </View>
+              <>
+                {/* When no photo - show add photo container */}
+                <View
+                  style={[
+                    styles.avatarPlaceholder,
+                    { backgroundColor: theme.primary + '15' },
+                  ]}
+                >
+                  <TouchableOpacity
+                    onPress={updateProfileImage}
+                    disabled={uploadingPhoto}
+                    style={styles.addPhotoCenter}
+                  >
+                    {uploadingPhoto ? (
+                      <ActivityIndicator size="large" color={theme.primary} />
+                    ) : (
+                      <>
+                        <Text style={styles.addPhotoIconBig}>📸</Text>
+                        <Text
+                          style={[
+                            styles.addPhotoTextSmall,
+                            { color: theme.primary },
+                          ]}
+                        >
+                          Add Photo
+                        </Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </>
             )}
-
-            {/* Online Status Dot */}
-            <View style={[styles.onlineStatusDot, { backgroundColor: '#22C55E' }]} />
-
-            {/* Add Photo Label */}
-            <TouchableOpacity
-              style={[styles.addPhotoLabel, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.3)' }]}
-              onPress={updateProfileImage}
-            >
-              <Text style={[styles.addPhotoText, { color: theme.text.primary }]}>Add Photo</Text>
-            </TouchableOpacity>
           </View>
 
           {/* Right side: Username, email, Edit Profile button */}
@@ -577,6 +712,7 @@ const Profile = () => {
                   backgroundColor: 'transparent',
                 },
               ]}
+              onPress={openEditModal}
             >
               <Edit size={16} color={theme.primary} style={{ marginRight: 6 }} />
               <Text style={[styles.editProfileButtonText, { color: theme.primary }]}>Edit Profile</Text>
@@ -1233,6 +1369,204 @@ const Profile = () => {
           <Text style={[styles.footerText, { color: theme.text.secondary }]}>App Version 2.3</Text>
         </View>
       </ScrollView>
+
+      {/* EDIT PROFILE MODAL */}
+      <Modal visible={showEditModal} transparent animationType="slide">
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
+          <View style={[styles.modalContainer, { backgroundColor: theme.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+              <TouchableOpacity onPress={closeEditModal}>
+                <Text style={[styles.modalCloseButton, { color: theme.text.primary }]}>✕</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: theme.text.primary }]}>Edit Profile</Text>
+              <TouchableOpacity
+                onPress={handleUpdateProfile}
+                disabled={updatingProfile}
+              >
+                <Text style={[styles.modalSaveButton, { color: theme.primary, opacity: updatingProfile ? 0.5 : 1 }]}>
+                  {updatingProfile ? 'Saving...' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+              {/* Full Name Field */}
+              <View style={styles.modalFormGroup}>
+                <Text style={[styles.modalLabel, { color: theme.text.primary }]}>Full Name</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: theme.text.primary, borderColor: theme.border, backgroundColor: theme.componentBackground[0] }]}
+                  placeholder="Enter your name"
+                  placeholderTextColor={theme.text.secondary}
+                  value={editName}
+                  onChangeText={setEditName}
+                  editable={!updatingProfile}
+                />
+              </View>
+
+              {/* Email Field */}
+              <View style={styles.modalFormGroup}>
+                <Text style={[styles.modalLabel, { color: theme.text.primary }]}>Email</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: theme.text.primary, borderColor: theme.border, backgroundColor: theme.componentBackground[0] }]}
+                  placeholder="Enter your email"
+                  placeholderTextColor={theme.text.secondary}
+                  value={editEmail}
+                  onChangeText={setEditEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  editable={!updatingProfile}
+                />
+              </View>
+
+              {/* Phone Field */}
+              <View style={styles.modalFormGroup}>
+                <Text style={[styles.modalLabel, { color: theme.text.primary }]}>Phone Number</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: theme.text.primary, borderColor: theme.border, backgroundColor: theme.componentBackground[0] }]}
+                  placeholder="Enter your phone number"
+                  placeholderTextColor={theme.text.secondary}
+                  value={editPhone}
+                  onChangeText={setEditPhone}
+                  keyboardType="phone-pad"
+                  editable={!updatingProfile}
+                />
+              </View>
+
+              {/* Age Field */}
+              <View style={styles.modalFormGroup}>
+                <Text style={[styles.modalLabel, { color: theme.text.primary }]}>Age</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: theme.text.primary, borderColor: theme.border, backgroundColor: theme.componentBackground[0] }]}
+                  placeholder="Enter your age"
+                  placeholderTextColor={theme.text.secondary}
+                  value={editAge}
+                  onChangeText={setEditAge}
+                  keyboardType="numeric"
+                  editable={!updatingProfile}
+                />
+              </View>
+
+              {/* Bio Field */}
+              <View style={styles.modalFormGroup}>
+                <Text style={[styles.modalLabel, { color: theme.text.primary }]}>Bio</Text>
+                <TextInput
+                  style={[styles.modalInput, { color: theme.text.primary, borderColor: theme.border, backgroundColor: theme.componentBackground[0], height: 100, textAlignVertical: 'top' }]}
+                  placeholder="Tell us about yourself"
+                  placeholderTextColor={theme.text.secondary}
+                  value={editBio}
+                  onChangeText={setEditBio}
+                  multiline
+                  numberOfLines={4}
+                  editable={!updatingProfile}
+                />
+              </View>
+
+              {/* Photo Upload Section - Beautiful Card */}
+              <View style={styles.photoUploadCard}>
+                {/* Header */}
+                <View style={styles.photoCardHeader}>
+                  <Text style={[styles.photoCardTitle, { color: theme.text.primary }]}>
+                    Profile Photo
+                  </Text>
+                  <Text style={[styles.photoCardSubtitle, { color: theme.text.secondary }]}>
+                    JPG, PNG • Max 5MB
+                  </Text>
+                </View>
+
+                {/* Photo Preview - Shows when photo is selected */}
+                {selectedPhotoFile ? (
+                  <View style={[styles.photoPreviewContainer, { backgroundColor: theme.componentBackground[0] }]}>
+                    <Image
+                      source={{ uri: selectedPhotoFile.uri }}
+                      style={styles.photoPreview}
+                    />
+                    <TouchableOpacity
+                      style={styles.clearPhotoButton}
+                      onPress={() => {
+                        setSelectedPhotoFile(null);
+                        setPhotoMessage({ type: 'success', text: 'Photo selection cleared' });
+                        setTimeout(() => setPhotoMessage(null), 2000);
+                      }}
+                    >
+                      <Text style={styles.clearPhotoText}>✕ Clear</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  /* Upload Button - Shows when no photo selected */
+                  <TouchableOpacity
+                    style={[
+                      styles.beautifulUploadButton,
+                      {
+                        backgroundColor: uploadingPhoto
+                          ? theme.componentBackground[0]
+                          : theme.primary,
+                        borderColor: theme.primary,
+                        opacity: uploadingPhoto ? 0.6 : 1,
+                      },
+                    ]}
+                    onPress={updateProfileImage}
+                    disabled={uploadingPhoto}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.uploadButtonContent}>
+                      {uploadingPhoto ? (
+                        <>
+                          <ActivityIndicator color={theme.primary} size="large" />
+                          <Text
+                            style={[
+                              styles.uploadButtonTextLoading,
+                              { color: theme.text.primary, marginTop: 12 },
+                            ]}
+                          >
+                            Uploading...
+                          </Text>
+                        </>
+                      ) : (
+                        <>
+                          <View style={styles.uploadIconCircle}>
+                            <Text style={styles.uploadEmoji}>📸</Text>
+                          </View>
+                          <Text
+                            style={[
+                              styles.uploadButtonTextMain,
+                              { color: '#FFF' },
+                            ]}
+                          >
+                            Choose Photo
+                          </Text>
+                          <Text
+                            style={[
+                              styles.uploadButtonTextSub,
+                              { color: 'rgba(255,255,255,0.8)' },
+                            ]}
+                          >
+                            Tap to upload from gallery
+                          </Text>
+                        </>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
+
+              </View>
+
+              <View style={{ height: 20 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Success Popup */}
+      <SuccessPopup
+        visible={showSuccessPopup}
+        onClose={() => {
+          setShowSuccessPopup(false);
+          setSelectedPhotoFile(null);
+        }}
+        title="Success!"
+        message={successMessage}
+        buttonText="Done"
+      />
     </ThemedContainer>
   );
 };
@@ -1280,34 +1614,57 @@ const styles = StyleSheet.create({
   },
   avatarContainer: {
     position: 'relative',
+    width: 100,
+    height: 100,
+    marginRight: 16,
+  },
+  avatarImageDirect: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  avatarPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#667EEA',
+  },
+  addPhotoCenter: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    flex: 1,
+  },
+  addPhotoIconBig: {
+    fontSize: 36,
+    marginBottom: 4,
+  },
+  addPhotoTextSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
   conicGradientRing: {
-    position: 'absolute',
-    width: 88,
-    height: 88,
-    borderRadius: 22,
-    opacity: 0.3,
+    display: 'none',
   },
   avatarImage: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
+    display: 'none',
   },
   avatarInitials: {
-    fontSize: 28,
-    fontWeight: '700',
-    fontFamily: 'Inter-Bold',
+    display: 'none',
   },
   onlineStatusDot: {
-    position: 'absolute',
-    bottom: 4,
-    right: 4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: 'white',
+    display: 'none',
   },
   addPhotoLabel: {
     marginTop: 8,
@@ -1319,6 +1676,141 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
+  },
+
+  // Modern Add Photo Badge
+  modernAddPhotoBadge: {
+    position: 'absolute',
+    bottom: -8,
+    right: -8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  modernAddPhotoText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    lineHeight: 26,
+  },
+
+  // Photo Upload Card Styles
+  photoUploadCard: {
+    backgroundColor: 'transparent',
+    borderRadius: 16,
+    padding: 0,
+    marginBottom: 20,
+  },
+  photoCardHeader: {
+    marginBottom: 16,
+  },
+  photoCardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  photoCardSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+    marginTop: 4,
+  },
+  photoPreviewContainer: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+    position: 'relative',
+    height: 200,
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
+  },
+  clearPhotoButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  clearPhotoText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+  },
+  photoAlertBox: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+  },
+  photoAlertText: {
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
+  },
+  beautifulUploadButton: {
+    borderRadius: 16,
+    paddingVertical: 32,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#667EEA',
+    borderWidth: 2,
+    borderColor: '#667EEA',
+    shadowColor: '#667EEA',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  uploadButtonContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  uploadIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  uploadEmoji: {
+    fontSize: 28,
+  },
+  uploadButtonTextMain: {
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+    marginBottom: 4,
+  },
+  uploadButtonTextSub: {
+    fontSize: 13,
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+  },
+  uploadButtonTextLoading: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: 'Inter-Medium',
   },
 
   heroInfoSection: {
@@ -1849,6 +2341,79 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginTop: 10,
     textAlign: 'center',
+  },
+
+  // EDIT PROFILE MODAL
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    maxHeight: '85%',
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+  },
+  modalCloseButton: {
+    fontSize: 28,
+    fontWeight: '600',
+    width: 36,
+    textAlign: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+    flex: 1,
+    textAlign: 'center',
+  },
+  modalSaveButton: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    width: 36,
+    textAlign: 'center',
+  },
+  modalContent: {
+    padding: 20,
+  },
+  modalFormGroup: {
+    marginBottom: 20,
+  },
+  modalLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 8,
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontFamily: 'Inter-Regular',
+  },
+  uploadPhotoButton: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    paddingVertical: 30,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

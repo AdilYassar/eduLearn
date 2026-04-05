@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons'; // Correct import for Icon
+import { Mic } from 'lucide-react-native';
 import CustomText from '@components/ui/CustomText';
 
 import { resetAndNavigate } from '@utils/Navigation';
@@ -82,7 +82,7 @@ const PodcastSplashScreen = () => {
           inputRange: [0, 10],
           outputRange: ['0deg', '10deg'],
         }) }] }}>
-        <Icon name="mic" size={50} color="black" />
+        <Mic size={50} color="black" strokeWidth={2} />
       </Animated.View>
     </View>
   );

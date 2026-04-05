@@ -8,7 +8,7 @@ import { useLiveMeetStore } from '../service/meetStore'
 import { navigate } from '../../../utils/Navigation'
 import { removeHyphens } from '../utils/Helpers'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { ChevronLeft, EllipsisVertical, Video } from 'lucide-react-native'
+import { ArrowLeft, EllipsisVertical, Video, ArrowRight } from 'lucide-react-native'
 import { RFValue } from 'react-native-responsive-fontsize'
 import LinearGradient from 'react-native-linear-gradient';
 import LegalModal from '../components/ui/LegalModal';
@@ -93,14 +93,17 @@ const JoinMeetScreen = () => {
 
   return (
     <ThemedContainer style={joinStyles.container}>
-     <SafeAreaView />
+     <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
      <View style={[joinStyles.headerContainer, { backgroundColor: theme.background[0] || theme.card }]}>
-      <ChevronLeft size={RFValue(20)} color={theme.text.primary} onPress={()=>navigate('HomeScreen')} />
+      <TouchableOpacity onPress={()=>navigate('HomeScreen')}>
+        <ArrowLeft size={RFValue(20)} color={theme.text.primary} strokeWidth={2} />
+      </TouchableOpacity>
       <ThemedText style={joinStyles.headerText}>
         Join Meetings
       </ThemedText>
       <EllipsisVertical size={RFValue(20)} color={theme.text.primary} />
      </View>
+     <View style={joinStyles.contentWrapper}>
     <View
     style={[joinStyles.gradientButton, { 
       backgroundColor: theme.primary, 
@@ -125,18 +128,25 @@ const JoinMeetScreen = () => {
       <ThemedText style = {joinStyles.labelText}>
         Enter The Meeting Code Provided By The Organizer
       </ThemedText>
-    <TextInput
-    style={[joinStyles.inputBox, { color: theme.text.primary, borderColor: theme.border }]}
-    value={code}
-    onChangeText={setCode}
-    returnKeyLabel='Join'
-    returnKeyType='join'
-   onSubmitEditing={()=>joinViaSessionId()} 
-    placeholder='XXXX-XXXX-XXXX'
-    placeholderTextColor={theme.text.secondary}
-
-
-    />
+      <View style={joinStyles.inputWrapper}>
+        <TextInput
+          style={[joinStyles.inputBox, { color: theme.text.primary, borderColor: theme.border }]}
+          value={code}
+          onChangeText={setCode}
+          returnKeyLabel='Join'
+          returnKeyType='join'
+          onSubmitEditing={()=>joinViaSessionId()} 
+          placeholder='XXXX-XXXX-XXXX'
+          placeholderTextColor={theme.text.secondary}
+        />
+        <TouchableOpacity 
+          style={[joinStyles.joinArrowButton, { backgroundColor: theme.primary }]}
+          onPress={()=>joinViaSessionId()}
+          activeOpacity={0.7}
+        >
+          <ArrowRight size={RFValue(20)} color="#FFFFFF" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
     <ThemedText style={joinStyles.noteText}>
       Note: This Meeting is not end-to-end encrypted, but is secured via cloud encryption.
     </ThemedText>
@@ -190,6 +200,7 @@ const JoinMeetScreen = () => {
       Participation in this meeting constitutes acceptance of organizational meeting policies and data handling procedures. Unauthorized access or distribution of meeting content is strictly prohibited.
     </ThemedText>
     </View>
+    </View>
 
     {/* Support Modals */}
     <LegalModal
@@ -212,6 +223,7 @@ const JoinMeetScreen = () => {
       content={<EnterprisePortalContent />}
       onAccept={closeEnterprisePortalModal}
     />
+    </SafeAreaView>
     </ThemedContainer>
   )
 }

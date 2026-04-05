@@ -23,7 +23,7 @@ const LiveMeetScreen = () => {
 
   return (
     <ThemedContainer style = {[styles.container, { backgroundColor: theme.background[0] || '#000' }]}>
-    <SafeAreaView />
+    <SafeAreaView style={{ flex: 1 }} edges={['bottom', 'left', 'right']}>
     <MeetHeader switchCamera={switchCamera} />
     <View style = {styles.peopleContainer} onLayout={onContainerLayout}>
     {containerDimensions && localStream && (
@@ -56,6 +56,7 @@ const LiveMeetScreen = () => {
     />
 
     <ChatModal visible={isChatVisible} onClose={() => setIsChatVisible(false)} />
+    </SafeAreaView>
     </ThemedContainer>
   )
 }

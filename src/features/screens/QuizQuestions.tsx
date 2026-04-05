@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useQuiz } from '@service/hooks/useQuiz';
 import { navigate, goBack } from '../../utils/Navigation';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { CheckCircle, X, ArrowRight } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInUp, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard, ThemedContainer, ThemedText } from '../../components/ui/ThemedComponents';
@@ -130,7 +130,7 @@ const QuizQuestions = () => {
                          <Text style={[styles.optText, { color: isSelected ? '#FFF' : theme.text.secondary }]}>
                             {opt}
                          </Text>
-                         {isSelected && <Icon name="check-circle" size={20} color="#FFF" />}
+                         {isSelected && <CheckCircle size={20} color="#FFF" strokeWidth={2} />}
                        </TouchableOpacity>
                      );
                   })
@@ -164,7 +164,7 @@ const QuizQuestions = () => {
     <ThemedContainer>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => goBack()}>
-            <Icon name="close" size={24} color={theme.text.primary} />
+            <X size={24} color={theme.text.primary} strokeWidth={2} />
         </TouchableOpacity>
         <View style={styles.progressTrack}>
             <View style={[styles.progressBg, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
@@ -213,7 +213,7 @@ const QuizQuestions = () => {
                     }}
                 >
                     <Text style={[styles.nextText, { color: theme.text.primary }]}>SKIP QUESTION</Text>
-                    <Icon name="arrow-forward" size={20} color={theme.text.primary} />
+                    <ArrowRight size={20} color={theme.text.primary} strokeWidth={2} />
                 </TouchableOpacity>
              )}
           </View>

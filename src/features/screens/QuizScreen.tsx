@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, 
 import { navigate, goBack } from '../../utils/Navigation';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useQuiz } from '@service/hooks/useQuiz';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import { Zap, Clock, ChevronRight, ArrowLeft } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { GlassCard, ThemedContainer } from '../../components/ui/ThemedComponents';
 
@@ -58,7 +58,7 @@ const QuizScreen = () => {
                         {isDue ? 'CRITICAL' : 'OPTIONAL'}
                     </Text>
                 </View>
-                <Icon name="bolt" size={20} color={isDue ? '#FFD700' : theme.text.secondary} />
+                <Zap size={20} color={isDue ? '#FFD700' : theme.text.secondary} strokeWidth={2} />
              </View>
              
              <View style={styles.cardMain}>
@@ -70,14 +70,14 @@ const QuizScreen = () => {
 
              <View style={styles.cardFooter}>
                 <View style={styles.metaRow}>
-                    <Icon name="timer" size={14} color={theme.text.secondary} />
+                    <Clock size={14} color={theme.text.secondary} strokeWidth={2} />
                     <Text style={[styles.metaText, { color: theme.text.secondary }]}>15 Mins</Text>
                     <Text style={[styles.metaDivider, { color: theme.text.secondary }]}>•</Text>
                     <Text style={[styles.metaText, { color: isDue ? '#FF4F4F' : theme.text.secondary }]}>
                         {isDue ? item.dueDate : 'No deadline'}
                     </Text>
                 </View>
-                <Icon name="chevron-right" size={24} color={theme.text.primary} />
+                <ChevronRight size={24} color={theme.text.primary} strokeWidth={2} />
              </View>
           </GlassCard>
         </TouchableOpacity>
@@ -89,7 +89,7 @@ const QuizScreen = () => {
     <ThemedContainer>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => goBack()}>
-            <Icon name="arrow-back-ios" size={20} color={theme.text.primary} />
+            <ArrowLeft size={20} color={theme.text.primary} strokeWidth={2} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Live Challenges</Text>
         <View style={{ width: 24 }} />

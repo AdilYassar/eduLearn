@@ -73,3 +73,15 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# Environment variables and secrets
+.env
+.env.local
+.env.*.local
+src/config/envConfig.ts
+
+# Environment configuration with secrets
+src/config/envConfig.ts
+.env
+.env.local
+.env.*.local

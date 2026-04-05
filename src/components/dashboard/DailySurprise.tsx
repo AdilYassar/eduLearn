@@ -62,7 +62,7 @@ const DailySurprise = () => {
       </View>
 
       <TouchableOpacity activeOpacity={0.9} onPress={handleTap}>
-        <View style={[styles.card, { backgroundColor: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.card, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : theme.componentBackground[0], borderColor: theme.isDark ? 'rgba(255,255,255,0.05)' : theme.border }]}>
           
           <View style={[styles.iconBox, { backgroundColor: 'rgba(217, 119, 6, 0.1)' }]}>
             <Briefcase size={20} color="#D97706" />

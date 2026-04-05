@@ -6,23 +6,15 @@ interface Student {
   name: string;
   email: string;
   phone: string;
-  role: string;
-  enrolledCourses: any[];
-  enrollmentCount: number;
-  quizPerformance: any[];
-  totalQuizzesTaken: number;
-  averageScore: number;
-  age?: number;
-}
-
-interface LoginResponse {
-  message: string;
-  accessToken: string;
-  refreshToken: string;
-  student: Student;
+  isActivated: boolean;
 }
 
 interface RegisterResponse {
+  message: string;
+  user: Student;
+}
+
+interface LoginResponse {
   message: string;
   accessToken: string;
   refreshToken: string;
@@ -39,7 +31,6 @@ export const useAuth = () => {
     password: string;
     name: string;
     phone: string;
-    age: number;
   }): Promise<RegisterResponse | null> => {
     setLoading(true);
     setError(null);
@@ -57,24 +48,11 @@ export const useAuth = () => {
       const result = await response.json();
       console.log('Registration response:', { status: response.status, result });
       
-      // Log detailed validation errors if they exist
-      if (result.errors) {
-        console.log('Validation errors:', JSON.stringify(result.errors, null, 2));
-      }
-      
-      if (response.status === 201 && result.accessToken) {
+      if (response.status === 201 || response.status === 200) {
         return result;
       } else {
         const errorMessage = result.message || `Registration failed with status ${response.status}`;
-        if (result.errors) {
-          // Try to extract specific validation errors
-          const validationErrors = Array.isArray(result.errors) ?
-            result.errors.map((err: any) => err.msg || err.message || JSON.stringify(err)).join(', ') :
-            JSON.stringify(result.errors);
-          throw new Error(`${errorMessage}: ${validationErrors}`);
-        } else {
-          throw new Error(errorMessage);
-        }
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
       console.error('Registration error:', err);
@@ -105,9 +83,11 @@ export const useAuth = () => {
       const result = await response.json();
       
       if (response.status === 200 && result.accessToken) {
+        // According to new flow, tokens are returned only when activated
         return result;
       } else {
-        throw new Error(result.message || 'Login failed');
+        const errorMessage = result.message || 'Login failed';
+        throw new Error(errorMessage);
       }
     } catch (err: any) {
       setError(err.message);
@@ -270,6 +250,121 @@ export const useAuth = () => {
     }
   }, []);
 
+  // Request Password Reset
+  const forgotPasswordRequest = useCallback(async (data: {
+    email: string;
+    role?: string;
+  }): Promise<any | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          role: data.role || 'Student',
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to request password reset');
+      }
+
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Verify OTP for password reset
+  const verifyResetOTP = useCallback(async (data: {
+    email: string;
+    otpCode: string;
+    role?: string;
+  }): Promise<any | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/verify-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          otpCode: data.otpCode,
+          role: data.role || 'Student',
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to verify OTP');
+      }
+
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Reset Password
+  const resetPassword = useCallback(async (data: {
+    email: string;
+    resetToken: string;
+    newPassword: string;
+    newPasswordConfirm: string;
+    verifyMethod: 'token' | 'otp';
+    role?: string;
+  }): Promise<any | null> => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${BASE_URL}/api/auth/forgot-password/reset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: data.email,
+          resetToken: data.resetToken,
+          newPassword: data.newPassword,
+          newPasswordConfirm: data.newPasswordConfirm,
+          verifyMethod: data.verifyMethod,
+          role: data.role || 'Student',
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Failed to reset password');
+      }
+
+      return result;
+    } catch (err: any) {
+      setError(err.message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   return {
     loading,
     error,
@@ -280,5 +375,8 @@ export const useAuth = () => {
     refreshToken: refreshAccessToken,
     logout,
     changePassword,
+    forgotPasswordRequest,
+    verifyResetOTP,
+    resetPassword,
   };
 };

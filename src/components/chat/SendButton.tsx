@@ -51,43 +51,33 @@ import VoiceRecordingModal from './VoiceRecordingModal';
 // Voice Recognition imports with safer loading
 let Voice: any = null;
 let Tts: any = null;
+let VoiceInitialized = false;
 
-// Enhanced module loading with better error handling and fresh reference
-const getVoiceModule = () => {
+// Load Voice module once at startup (singleton pattern)
+const initializeVoiceModuleOnce = () => {
+  if (VoiceInitialized) {
+    return Voice;
+  }
+
   try {
-    // Always get a fresh reference to avoid stale references
     const VoiceModule = require('@react-native-voice/voice');
-    const freshVoice = VoiceModule.default || VoiceModule;
+    Voice = VoiceModule.default || VoiceModule;
+    VoiceInitialized = true;
     
-    // Validate that Voice is properly loaded and has essential methods
-    if (freshVoice && typeof freshVoice === 'object') {
-      const requiredMethods = ['start', 'stop', 'destroy'];
-      const hasRequiredMethods = requiredMethods.every(method => 
-        typeof freshVoice[method] === 'function'
-      );
-      
-      if (hasRequiredMethods) {
-        console.log('Voice module loaded successfully:', Object.keys(freshVoice));
-        console.log('Voice module methods available:', Object.getOwnPropertyNames(freshVoice));
-        console.log('Voice module prototype methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(freshVoice)));
-        Voice = freshVoice; // Update the global reference
-        return freshVoice;
-      } else {
-        console.warn('Voice module missing required methods:', requiredMethods.filter(method => typeof freshVoice[method] !== 'function'));
-        return null;
-      }
-    } else {
-      console.warn('Voice module loaded but object is invalid');
-      return null;
+    if (Voice && typeof Voice === 'object') {
+      console.log('Voice module initialized as singleton');
+      return Voice;
     }
+    return null;
   } catch (error: any) {
     console.warn('Voice recognition module not available:', error.message);
+    Voice = null;
     return null;
   }
 };
 
-const loadVoiceModule = () => {
-  return getVoiceModule();
+const getVoiceModule = () => {
+  return Voice || initializeVoiceModuleOnce();
 };
 
 const loadTtsModule = () => {
@@ -184,22 +174,12 @@ const SendButton: React.FC<SendButtonProps> = ({
     }
   }, [presetMessage, onMessageSent]);
 
-  // Initialize modules once
+  // Initialize TTS module once
   useEffect(() => {
-    const initModules = () => {
-      const loadedVoice = loadVoiceModule();
-      const loadedTts = loadTtsModule();
-      
-      // Ensure Voice reference is maintained
-      if (loadedVoice) {
-        Voice = loadedVoice;
-      }
-      if (loadedTts) {
-        Tts = loadedTts;
-      }
-    };
-    
-    initModules();
+    const ttsModule = loadTtsModule();
+    if (ttsModule) {
+      Tts = ttsModule;
+    }
   }, []);
 
   // Request microphone permission
@@ -424,79 +404,66 @@ const SendButton: React.FC<SendButtonProps> = ({
   // Initialize Voice Recognition
   useEffect(() => {
     const initializeVoice = async () => {
-      // Get a fresh Voice module reference
-      const freshVoiceRef = getVoiceModule();
+      console.log('🎤 Voice initialization starting...');
       
-      if (!freshVoiceRef) {
-        console.log('Voice recognition module not available');
+      const voiceModule = getVoiceModule();
+      
+      if (!voiceModule) {
+        console.error('🎤 Voice module is null after getVoiceModule()');
         setVoiceAvailable(false);
         return;
       }
+      
+      console.log('🎤 Voice module loaded, type:', typeof voiceModule);
 
       try {
         // Check permissions first
+        console.log('🎤 Checking permissions...');
         const hasPermission = await requestMicrophonePermission();
         if (!hasPermission) {
-          console.log('No microphone permission');
+          console.log('🎤 No microphone permission');
+          setVoiceAvailable(false);
           return;
         }
+        console.log('🎤 Permissions granted');
 
-        // Check voice availability with fresh reference
+        // Setup event listeners BEFORE checking availability
+        // This is critical for @react-native-voice/voice to work properly
+        console.log('🎤 Setting up event listeners...');
+        voiceModule.onSpeechStart = onSpeechStart;
+        voiceModule.onSpeechRecognized = onSpeechRecognized;
+        voiceModule.onSpeechEnd = onSpeechEnd;
+        voiceModule.onSpeechError = onSpeechError;
+        voiceModule.onSpeechResults = onSpeechResults;
+        voiceModule.onSpeechPartialResults = onSpeechPartialResults;
+        voiceModule.onSpeechVolumeChanged = onSpeechVolumeChanged;
+        
+        console.log('🎤 Voice event listeners attached');
+
+        // Now check voice availability
+        console.log('🎤 Checking voice availability...');
         const available = await checkVoiceAvailability();
-        if (!available || !freshVoiceRef) {
-          console.log('Voice recognition not available or freshVoiceRef is null');
-          return;
-        }
-
-        // Destroy any existing instance first
-        try {
-          if (freshVoiceRef && typeof freshVoiceRef.destroy === 'function') {
-            await freshVoiceRef.destroy();
-            console.log('Previous Voice instance destroyed');
-          }
-        } catch (destroyError) {
-          console.log('No previous Voice instance to destroy');
-        }
-
-        // Get another fresh reference after destroy (in case destroy affected the reference)
-        const postDestroyVoice = getVoiceModule();
-        if (!postDestroyVoice) {
-          console.error('Voice became null after destroy operation');
+        if (!available) {
+          console.error('🎤 Voice recognition not available on this device');
           setVoiceAvailable(false);
           return;
         }
+        
+        console.log('🎤 Voice available on device');
 
-        // Set up event listeners using the fresh reference
-        if (postDestroyVoice && typeof postDestroyVoice === 'object') {
-          postDestroyVoice.onSpeechStart = onSpeechStart;
-          postDestroyVoice.onSpeechRecognized = onSpeechRecognized;
-          postDestroyVoice.onSpeechEnd = onSpeechEnd;
-          postDestroyVoice.onSpeechError = onSpeechError;
-          postDestroyVoice.onSpeechResults = onSpeechResults;
-          postDestroyVoice.onSpeechPartialResults = onSpeechPartialResults;
-          postDestroyVoice.onSpeechVolumeChanged = onSpeechVolumeChanged;
-          
-          console.log('Voice event listeners set up successfully');
-          
-          // Update the global reference with the working one
-          Voice = postDestroyVoice;
-        } else {
-          console.error('Voice object is not valid for setting up listeners');
-          setVoiceAvailable(false);
-          return;
-        }
-
+        setVoiceAvailable(true);
         setVoiceInitialized(true);
-        console.log('Voice recognition initialized successfully');
+        console.log('✅ Voice recognition initialized successfully');
         
       } catch (error) {
-        console.error('Voice initialization error:', error);
+        console.error('❌ Voice initialization error:', error);
         setVoiceAvailable(false);
         setVoiceInitialized(false);
       }
     };
 
     // Delay initialization to ensure modules are ready
+    console.log('🎤 Scheduling voice initialization in 1000ms');
     const timer = setTimeout(initializeVoice, 1000);
 
     return () => {
@@ -508,26 +475,21 @@ const SendButton: React.FC<SendButtonProps> = ({
         recordingTimerRef.current = null;
       }
       
+      // Clean up Voice module on unmount
       if (Voice && voiceInitialized) {
         try {
-          // Clean up event handlers
-          if (Voice && typeof Voice === 'object') {
-            Voice.onSpeechStart = null;
-            Voice.onSpeechRecognized = null;
-            Voice.onSpeechEnd = null;
-            Voice.onSpeechError = null;
-            Voice.onSpeechResults = null;
-            Voice.onSpeechPartialResults = null;
-            Voice.onSpeechVolumeChanged = null;
-          }
+          console.log('🎤 Cleaning up voice listeners on unmount');
+          Voice.onSpeechStart = null;
+          Voice.onSpeechRecognized = null;
+          Voice.onSpeechEnd = null;
+          Voice.onSpeechError = null;
+          Voice.onSpeechResults = null;
+          Voice.onSpeechPartialResults = null;
+          Voice.onSpeechVolumeChanged = null;
           
-          if (typeof Voice.destroy === 'function') {
-            Voice.destroy();
-          }
-          
-          console.log('Voice cleanup completed');
+          console.log('✅ Voice cleanup completed');
         } catch (error) {
-          console.error('Voice cleanup error:', error);
+          console.error('❌ Voice cleanup error:', error);
         }
       }
     };
@@ -535,20 +497,25 @@ const SendButton: React.FC<SendButtonProps> = ({
 
   // Start Voice Recognition
   const startListening = async () => {
-    // Get a fresh Voice module reference
-    const freshVoice = getVoiceModule();
+    console.log('🎤 startListening called');
     
-    if (!freshVoice) {
+    const voiceModule = getVoiceModule();
+    
+    if (!voiceModule) {
+      console.error('🎤 Voice module is not available');
       Alert.alert('Voice Recognition Unavailable', 'Voice recognition module is not available.');
+      setVoiceAvailable(false);
       return;
     }
 
     if (!voiceInitialized) {
+      console.warn('🎤 Voice not initialized yet');
       Alert.alert('Voice Recognition Not Ready', 'Please wait a moment and try again.');
       return;
     }
 
     try {
+      console.log('🎤 Checking permissions...');
       // Double-check permissions
       if (!hasPermissions) {
         const hasPermission = await requestMicrophonePermission();
@@ -557,28 +524,18 @@ const SendButton: React.FC<SendButtonProps> = ({
           return;
         }
       }
+      console.log('🎤 Permissions OK');
 
-      // Use the fresh Voice reference instead of the global one
-      if (!freshVoice || typeof freshVoice.start !== 'function') {
-        console.error('Fresh Voice module is null or start method unavailable');
+      // Verify start method exists
+      if (typeof voiceModule.start !== 'function') {
+        console.error('🎤 Voice module start method unavailable');
         Alert.alert('Voice Error', 'Voice recognition service is not available. Please restart the app.');
         setVoiceAvailable(false);
         setVoiceInitialized(false);
         return;
       }
-
-      // Stop any ongoing speech recognition first
-      try {
-        if (typeof freshVoice.stop === 'function') {
-          await freshVoice.stop();
-          console.log('Stopped previous voice session');
-        }
-      } catch (stopError) {
-        console.log('No previous voice session to stop');
-      }
-
-      // Wait a bit before starting
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      console.log('🎤 Start method available');
 
       // Reset flag before starting new session
       isIntentionallyStoppingRef.current = false;
@@ -602,31 +559,21 @@ const SendButton: React.FC<SendButtonProps> = ({
       // Start voice recognition with proper locale
       const locale = Platform.OS === 'ios' ? 'en-US' : 'en-US';
       
-      // Use the fresh Voice reference and double-check it's still valid
-      if (freshVoice && typeof freshVoice.start === 'function') {
-        console.log('Starting voice recognition with fresh reference...');
-        console.log('Fresh Voice object structure:', Object.keys(freshVoice));
-        console.log('Fresh Voice start method type:', typeof freshVoice.start);
-        
-        try {
-          await freshVoice.start(locale);
-          console.log(`Voice recognition started successfully with locale: ${locale}`);
-          
-          // Update the global reference with the working one
-          Voice = freshVoice;
-        } catch (startError) {
-          console.error('Detailed start error:', startError);
-          console.error('Start error name:', startError?.name);
-          console.error('Start error message:', startError?.message);
-          console.error('Start error stack:', startError?.stack);
-          throw startError;
-        }
-      } else {
-        throw new Error('Fresh Voice reference became invalid during execution');
+      console.log('🎤 Starting voice recognition with locale:', locale);
+      
+      try {
+        console.log('🎤 Calling voiceModule.start()...');
+        await voiceModule.start(locale);
+        console.log('✅ Voice recognition started successfully');
+      } catch (startError) {
+        console.error('❌ Detailed start error:', startError);
+        console.error('❌ Start error message:', startError?.message);
+        console.error('❌ Start error stack:', startError?.stack);
+        throw startError;
       }
       
     } catch (error) {
-      console.error('Error starting voice recognition:', error);
+      console.error('❌ Error starting voice recognition:', error);
       setIsVoiceMode(false);
       setIsListening(false);
       setShowVoiceModal(false);
@@ -641,19 +588,10 @@ const SendButton: React.FC<SendButtonProps> = ({
       
       if (errorMessage.includes('Permission') || errorMessage.includes('RECORD_AUDIO')) {
         Alert.alert('Permission Required', 'Please grant microphone permission in your device settings.');
-      } else if (errorMessage.includes('null') || errorMessage.includes('undefined') || errorMessage.includes('invalid')) {
-        Alert.alert('Voice Service Error', 'Voice recognition service is not available. Please restart the app.');
-        // Reset voice module
+      } else if (errorMessage.includes('null') || errorMessage.includes('undefined') || errorMessage.includes('startSpeech')) {
+        Alert.alert('Voice Service Error', 'Voice recognition service failed. The native handler was not initialized. Please restart the app.');
         setVoiceAvailable(false);
         setVoiceInitialized(false);
-        // Try to reinitialize
-        setTimeout(() => {
-          const reinitVoice = getVoiceModule();
-          if (reinitVoice) {
-            Voice = reinitVoice;
-            setVoiceAvailable(true);
-          }
-        }, 1000);
       } else {
         Alert.alert('Error', `Failed to start voice recognition: ${errorMessage}`);
       }
@@ -1047,7 +985,7 @@ const SendButton: React.FC<SendButtonProps> = ({
             value={message}
             style={[styles.textinput, { color: theme.text.primary }]}
             placeholder={isVoiceMode ? 'Neural Voice Listening...' : 'Query Neural Brain...'}
-            placeholderTextColor="rgba(255,255,255,0.3)"
+            placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
             onChangeText={handleTextChange}
             onContentSizeChange={handleContentSizeChange}
           />
@@ -1058,7 +996,8 @@ const SendButton: React.FC<SendButtonProps> = ({
             <TouchableOpacity
                 style={[
                     styles.circleBtn,
-                    { backgroundColor: isListening ? '#FF4F4F' : 'rgba(255,255,255,0.05)' }
+                    { backgroundColor: isListening ? '#FF4F4F' : 'rgba(255,255,255,0.05)' },
+                    theme.isDark ? { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 } : { shadowOpacity: 0, elevation: 0 }
                 ]}
                 onPress={isListening ? stopListening : startListening}
             >
@@ -1073,7 +1012,7 @@ const SendButton: React.FC<SendButtonProps> = ({
             {isTyping && (
             <Animated.View style={sendButtonStyle}>
                 <TouchableOpacity
-                style={[styles.circleBtn, { backgroundColor: theme.primary }]}
+                style={[styles.circleBtn, { backgroundColor: theme.primary }, theme.isDark ? { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 } : { shadowOpacity: 0, elevation: 0 }]}
                 onPress={async () => {
                     const chatIndex: number = chats.findIndex(
                     (chat: { id: string }) => chat.id === currentChatId
@@ -1146,11 +1085,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   audioIcon: {
     width: 22,

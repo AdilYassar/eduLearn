@@ -32,12 +32,12 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         if (savedMood && ['sad', 'neutral', 'happy', 'angry', 'crying'].includes(savedMood)) {
           dispatch(initializeTheme(savedMood as MoodType));
         } else {
-          dispatch(initializeTheme('happy')); // Default mood
+          dispatch(initializeTheme('neutral')); // Default mood - NEUTRAL
         }
         setIsThemeReady(true);
       } catch (error) {
         console.error('Error loading saved mood:', error);
-        dispatch(initializeTheme('happy')); // Fallback to default
+        dispatch(initializeTheme('neutral')); // Fallback to default - NEUTRAL
         setIsThemeReady(true);
       }
     };

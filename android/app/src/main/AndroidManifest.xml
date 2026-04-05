@@ -24,5 +24,24 @@
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
       </activity>
+
+      <!-- Custom Firebase Messaging Service for notification actions -->
+      <service
+        android:name=".notifications.CustomFirebaseMessagingService"
+        android:exported="false">
+        <intent-filter>
+          <action android:name="com.google.firebase.MESSAGING_EVENT" />
+        </intent-filter>
+      </service>
+
+      <!-- Notification Action Receiver -->
+      <receiver
+        android:name=".notifications.NotificationActionReceiver"
+        android:exported="false">
+        <intent-filter>
+          <action android:name="com.edulearn.ACTION_COPY_OTP" />
+          <action android:name="com.edulearn.ACTION_OPEN_LINK" />
+        </intent-filter>
+      </receiver>
     </application>
 </manifest>

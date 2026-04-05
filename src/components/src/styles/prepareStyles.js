@@ -4,6 +4,11 @@ import {RFValue} from 'react-native-responsive-fontsize';
 import {Colors} from '../utils/Constants'
 
 export const prepareStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 0,
+    paddingBottom: 0,
+  },
   image: {
     width: 40,
     height: 40,
@@ -142,7 +147,6 @@ export const prepareStyles = StyleSheet.create({
   },
   linkHeader: {
     fontSize: RFValue(12),
-    color: '#333',
     marginBottom: 5,
     fontFamily: 'OpenSans-Regular',
   },
@@ -154,7 +158,6 @@ export const prepareStyles = StyleSheet.create({
   complianceHeader: {
     fontSize: RFValue(14),
     fontWeight: '700',
-    color: '#1F2937',
     marginBottom: RFValue(12),
     marginTop: RFValue(20),
     marginLeft: RFValue(10),
@@ -164,7 +167,6 @@ export const prepareStyles = StyleSheet.create({
   },
   complianceText: {
     fontSize: RFValue(11),
-    color: '#374151',
     lineHeight: RFValue(18),
     marginBottom: RFValue(6),
     marginLeft: RFValue(10),
@@ -199,7 +201,6 @@ export const prepareStyles = StyleSheet.create({
   },
   disclaimerText: {
     fontSize: RFValue(10),
-    color: '#6B7280',
     lineHeight: RFValue(16),
     textAlign: 'justify',
     fontFamily: 'OpenSans-Regular',
