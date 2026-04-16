@@ -38,8 +38,18 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
   const isUser = message.role === 'user';
   const theme = useTheme();
-  const { playingMessageId, setPlayingMessageId } = useVoiceMessage();
-  const isPlaying = playingMessageId === message.id;
+  const { playingMessageId, setPlayingMessageId, playMessage, stopMessage, isPlaying } = useVoiceMessage();
+  const isPlaying_Message = playingMessageId === message.id && isPlaying;
+
+  const handlePlayPause = async () => {
+    if (playingMessageId === message.id && isPlaying) {
+      // If currently playing this message, stop it
+      await stopMessage();
+    } else {
+      // Play this message
+      await playMessage(message.id!, message.content);
+    }
+  };
 
   return (
     <Animated.View 
@@ -67,10 +77,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
             ) : message.isVoiceMessage ? (
                 <TouchableOpacity 
                     style={styles.voiceRow} 
-                    onPress={() => setPlayingMessageId(isPlaying ? null : message.id!)}
+                    onPress={handlePlayPause}
                 >
                     <View style={[styles.playBtn, { backgroundColor: theme.theme.primary }]}>
-                        {isPlaying ? <Pause size={16} color="#FFF" /> : <Play size={16} color="#FFF" />}
+                        {isPlaying_Message ? <Pause size={16} color="#FFF" /> : <Play size={16} color="#FFF" />}
                     </View>
                     <View style={styles.waveWrap}>
                         {[...Array(12)].map((_, i) => (
@@ -78,7 +88,11 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
                                 key={i} 
                                 style={[
                                     styles.waveBar, 
-                                    { height: 10 + Math.random() * 20, backgroundColor: isUser ? theme.theme.primary : theme.theme.text.secondary }
+                                    { 
+                                        height: 10 + Math.random() * 20, 
+                                        backgroundColor: isUser ? theme.theme.primary : theme.theme.text.secondary,
+                                        opacity: isPlaying_Message ? 1 : 0.5,
+                                    }
                                 ]} 
                             />
                         ))}
@@ -181,8 +195,7 @@ const styles = StyleSheet.create({
     waveBar: {
         width: 3,
         borderRadius: 1.5,
-        opacity: 0.5,
-    }
+    },
 });
 
 export default MessageBubble;

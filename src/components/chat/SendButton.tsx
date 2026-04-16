@@ -14,6 +14,8 @@ import {
   Alert,
   PermissionsAndroid,
   Image,
+  NativeModules,
+  NativeEventEmitter,
 } from 'react-native';
 import { GlassCard, ThemedText } from '../ui/ThemedComponents';
 import { useTheme } from '../../context/ThemeContext';
@@ -48,37 +50,20 @@ import {
 // Import Voice Recording Modal
 import VoiceRecordingModal from './VoiceRecordingModal';
 
-// Voice Recognition imports with safer loading
-let Voice: any = null;
+// Native Voice Recognition Module
+const { VoiceRecognition } = NativeModules;
+let voiceEventEmitter: NativeEventEmitter | null = null;
+
+// Initialize event emitter for voice events
+const initializeVoiceEventEmitter = () => {
+  if (!voiceEventEmitter && VoiceRecognition) {
+    voiceEventEmitter = new NativeEventEmitter(VoiceRecognition);
+  }
+  return voiceEventEmitter;
+};
+
+// TTS module
 let Tts: any = null;
-let VoiceInitialized = false;
-
-// Load Voice module once at startup (singleton pattern)
-const initializeVoiceModuleOnce = () => {
-  if (VoiceInitialized) {
-    return Voice;
-  }
-
-  try {
-    const VoiceModule = require('@react-native-voice/voice');
-    Voice = VoiceModule.default || VoiceModule;
-    VoiceInitialized = true;
-    
-    if (Voice && typeof Voice === 'object') {
-      console.log('Voice module initialized as singleton');
-      return Voice;
-    }
-    return null;
-  } catch (error: any) {
-    console.warn('Voice recognition module not available:', error.message);
-    Voice = null;
-    return null;
-  }
-};
-
-const getVoiceModule = () => {
-  return Voice || initializeVoiceModuleOnce();
-};
 
 const loadTtsModule = () => {
   try {
@@ -211,32 +196,19 @@ const SendButton: React.FC<SendButtonProps> = ({
 
   // Simplified voice availability check
   const checkVoiceAvailability = useCallback(async () => {
-    if (!Voice) {
-      console.log('Voice module not available');
+    if (!VoiceRecognition) {
+      console.log('🎤 Voice recognition module not available');
       setVoiceAvailable(false);
       return false;
     }
 
     try {
-      // Check if Voice has the essential methods
-      const requiredMethods = ['start', 'stop', 'destroy'];
-      const hasRequiredMethods = requiredMethods.every(method => 
-        typeof Voice[method] === 'function'
-      );
-
-      if (!hasRequiredMethods) {
-        console.log('Voice module missing required methods');
-        setVoiceAvailable(false);
-        return false;
-      }
-
-      // Just assume available on supported platforms if module loaded correctly
-      const available = Platform.OS === 'android' || Platform.OS === 'ios';
-      console.log('Voice recognition available:', available);
+      const available = await VoiceRecognition.isAvailable();
+      console.log('🎤 Voice recognition available:', available);
       setVoiceAvailable(available);
       return available;
     } catch (error) {
-      console.error('Voice availability check error:', error);
+      console.error('🎤 Voice availability check error:', error);
       setVoiceAvailable(false);
       return false;
     }
@@ -360,7 +332,7 @@ const SendButton: React.FC<SendButtonProps> = ({
 
   const onSpeechResults = useCallback((e) => {
     console.log('Final speech results:', e);
-    const result = e.value?.[0] || '';
+    const result = e.value || '';  // Get full string, not just first character
     if (result) {
       console.log('Final speech result:', result);
       setSpeechToTextResult(result);
@@ -368,8 +340,8 @@ const SendButton: React.FC<SendButtonProps> = ({
       setIsTyping(!!result);
       setIsVoiceMode(false);
       setIsListening(false);
-      setShowVoiceModal(false); // Close the modal when we get results
-      setIsCurrentMessageFromVoice(true); // Mark that this message came from voice
+      setShowVoiceModal(false);
+      setIsCurrentMessageFromVoice(true);
       
       // Clear recording timer
       if (recordingTimerRef.current) {
@@ -389,7 +361,7 @@ const SendButton: React.FC<SendButtonProps> = ({
 
   const onSpeechPartialResults = useCallback((e) => {
     console.log('Partial speech results:', e);
-    const partialResult = e.value?.[0] || '';
+    const partialResult = e.value || '';  // Get full string, not just first character
     if (partialResult) {
       console.log('Partial speech result:', partialResult);
       setRecognizedText(partialResult);
@@ -406,17 +378,22 @@ const SendButton: React.FC<SendButtonProps> = ({
     const initializeVoice = async () => {
       console.log('🎤 Voice initialization starting...');
       
-      const voiceModule = getVoiceModule();
-      
-      if (!voiceModule) {
-        console.error('🎤 Voice module is null after getVoiceModule()');
+      if (!VoiceRecognition) {
+        console.error('🎤 VoiceRecognition module not available');
         setVoiceAvailable(false);
         return;
       }
       
-      console.log('🎤 Voice module loaded, type:', typeof voiceModule);
-
       try {
+        // Initialize event emitter
+        const emitter = initializeVoiceEventEmitter();
+        if (!emitter) {
+          console.error('🎤 Failed to initialize event emitter');
+          setVoiceAvailable(false);
+          return;
+        }
+        console.log('🎤 Event emitter initialized');
+
         // Check permissions first
         console.log('🎤 Checking permissions...');
         const hasPermission = await requestMicrophonePermission();
@@ -427,34 +404,41 @@ const SendButton: React.FC<SendButtonProps> = ({
         }
         console.log('🎤 Permissions granted');
 
-        // Setup event listeners BEFORE checking availability
-        // This is critical for @react-native-voice/voice to work properly
+        // Setup event listeners
         console.log('🎤 Setting up event listeners...');
-        voiceModule.onSpeechStart = onSpeechStart;
-        voiceModule.onSpeechRecognized = onSpeechRecognized;
-        voiceModule.onSpeechEnd = onSpeechEnd;
-        voiceModule.onSpeechError = onSpeechError;
-        voiceModule.onSpeechResults = onSpeechResults;
-        voiceModule.onSpeechPartialResults = onSpeechPartialResults;
-        voiceModule.onSpeechVolumeChanged = onSpeechVolumeChanged;
+        const subscriptions = [
+          emitter.addListener('onSpeechStart', onSpeechStart),
+          emitter.addListener('onSpeechEnd', onSpeechEnd),
+          emitter.addListener('onSpeechError', onSpeechError),
+          emitter.addListener('onSpeechResults', onSpeechResults),
+          emitter.addListener('onSpeechPartialResults', onSpeechPartialResults),
+          emitter.addListener('onSpeechVolumeChanged', onSpeechVolumeChanged),
+          emitter.addListener('onBeginningOfSpeech', onSpeechRecognized),
+        ];
         
         console.log('🎤 Voice event listeners attached');
 
-        // Now check voice availability
+        // Check voice availability
         console.log('🎤 Checking voice availability...');
         const available = await checkVoiceAvailability();
         if (!available) {
           console.error('🎤 Voice recognition not available on this device');
           setVoiceAvailable(false);
+          subscriptions.forEach(sub => sub.remove());
           return;
         }
         
         console.log('🎤 Voice available on device');
-
         setVoiceAvailable(true);
         setVoiceInitialized(true);
         console.log('✅ Voice recognition initialized successfully');
         
+        // Store subscriptions for cleanup
+        const cleanupSubscriptions = () => {
+          subscriptions.forEach(sub => sub.remove());
+        };
+        
+        return cleanupSubscriptions;
       } catch (error) {
         console.error('❌ Voice initialization error:', error);
         setVoiceAvailable(false);
@@ -474,24 +458,6 @@ const SendButton: React.FC<SendButtonProps> = ({
         clearInterval(recordingTimerRef.current);
         recordingTimerRef.current = null;
       }
-      
-      // Clean up Voice module on unmount
-      if (Voice && voiceInitialized) {
-        try {
-          console.log('🎤 Cleaning up voice listeners on unmount');
-          Voice.onSpeechStart = null;
-          Voice.onSpeechRecognized = null;
-          Voice.onSpeechEnd = null;
-          Voice.onSpeechError = null;
-          Voice.onSpeechResults = null;
-          Voice.onSpeechPartialResults = null;
-          Voice.onSpeechVolumeChanged = null;
-          
-          console.log('✅ Voice cleanup completed');
-        } catch (error) {
-          console.error('❌ Voice cleanup error:', error);
-        }
-      }
     };
   }, [requestMicrophonePermission, checkVoiceAvailability, onSpeechStart, onSpeechRecognized, onSpeechEnd, onSpeechError, onSpeechResults, onSpeechPartialResults, onSpeechVolumeChanged]);
 
@@ -499,10 +465,8 @@ const SendButton: React.FC<SendButtonProps> = ({
   const startListening = async () => {
     console.log('🎤 startListening called');
     
-    const voiceModule = getVoiceModule();
-    
-    if (!voiceModule) {
-      console.error('🎤 Voice module is not available');
+    if (!VoiceRecognition) {
+      console.error('🎤 VoiceRecognition module is not available');
       Alert.alert('Voice Recognition Unavailable', 'Voice recognition module is not available.');
       setVoiceAvailable(false);
       return;
@@ -526,17 +490,6 @@ const SendButton: React.FC<SendButtonProps> = ({
       }
       console.log('🎤 Permissions OK');
 
-      // Verify start method exists
-      if (typeof voiceModule.start !== 'function') {
-        console.error('🎤 Voice module start method unavailable');
-        Alert.alert('Voice Error', 'Voice recognition service is not available. Please restart the app.');
-        setVoiceAvailable(false);
-        setVoiceInitialized(false);
-        return;
-      }
-      
-      console.log('🎤 Start method available');
-
       // Reset flag before starting new session
       isIntentionallyStoppingRef.current = false;
 
@@ -557,18 +510,17 @@ const SendButton: React.FC<SendButtonProps> = ({
       }, 1000);
       
       // Start voice recognition with proper locale
-      const locale = Platform.OS === 'ios' ? 'en-US' : 'en-US';
+      const locale = 'en-US';
       
-      console.log('🎤 Starting voice recognition with locale:', locale);
+      console.log('🎤 Starting native voice recognition with locale:', locale);
       
       try {
-        console.log('🎤 Calling voiceModule.start()...');
-        await voiceModule.start(locale);
+        console.log('🎤 Calling VoiceRecognition.startListening()...');
+        await VoiceRecognition.startListening(locale);
         console.log('✅ Voice recognition started successfully');
       } catch (startError) {
         console.error('❌ Detailed start error:', startError);
         console.error('❌ Start error message:', startError?.message);
-        console.error('❌ Start error stack:', startError?.stack);
         throw startError;
       }
       
@@ -588,10 +540,6 @@ const SendButton: React.FC<SendButtonProps> = ({
       
       if (errorMessage.includes('Permission') || errorMessage.includes('RECORD_AUDIO')) {
         Alert.alert('Permission Required', 'Please grant microphone permission in your device settings.');
-      } else if (errorMessage.includes('null') || errorMessage.includes('undefined') || errorMessage.includes('startSpeech')) {
-        Alert.alert('Voice Service Error', 'Voice recognition service failed. The native handler was not initialized. Please restart the app.');
-        setVoiceAvailable(false);
-        setVoiceInitialized(false);
       } else {
         Alert.alert('Error', `Failed to start voice recognition: ${errorMessage}`);
       }
@@ -603,7 +551,7 @@ const SendButton: React.FC<SendButtonProps> = ({
     // Set flag to ignore errors during stop
     isIntentionallyStoppingRef.current = true;
     
-    if (!Voice) {
+    if (!VoiceRecognition) {
       setIsVoiceMode(false);
       setIsListening(false);
       setShowVoiceModal(false);
@@ -617,10 +565,9 @@ const SendButton: React.FC<SendButtonProps> = ({
     }
 
     try {
-      if (typeof Voice.stop === 'function') {
-        await Voice.stop();
-        console.log('Voice recognition stopped');
-      }
+      console.log('🎤 Stopping voice recognition...');
+      await VoiceRecognition.stopListening();
+      console.log('✅ Voice recognition stopped');
       setIsVoiceMode(false);
       setIsListening(false);
       setShowVoiceModal(false);
@@ -637,7 +584,7 @@ const SendButton: React.FC<SendButtonProps> = ({
       }, 1000);
       
     } catch (error) {
-      console.error('Error stopping voice recognition:', error);
+      console.error('❌ Error stopping voice recognition:', error);
       setIsVoiceMode(false);
       setIsListening(false);
       setShowVoiceModal(false);

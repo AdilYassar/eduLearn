@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
-  Image,
   Dimensions,
+  ToastAndroid,
 } from 'react-native';
-import { Bell, LayoutGrid, ChevronDown, Trash2, Phone } from 'lucide-react-native';
+import { Menu, ChevronDown, Trash2, Phone, ArrowLeft } from 'lucide-react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
-import aiLogo from '../../assets/images/logo.png';
 import { useTheme } from '../../context/ThemeContext';
-import { useDispatch } from 'react-redux';
-import { clearAllChats } from '../../redux/reducers/chatSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearAllChats, setSelectedDate, selectSelectedDate, selectChatsByDate } from '../../redux/reducers/chatSlice';
 import SideDrawer from './SideDrawer';
+import DatePickerDropdown from './DatePickerDropdown';
 import { GlassCard, ThemedText } from '../ui/ThemedComponents';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedStyle, interpolate, Extrapolate, useSharedValue, Easing, withTiming } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +32,7 @@ interface ModernHeaderProps {
   userName?: string;
   showGradient?: boolean;
   onCallPress?: () => void;
+  onBackPress?: () => void;
 }
 
 const ModernHeader: React.FC<ModernHeaderProps> = ({
@@ -40,12 +41,52 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
   setCurrentChatId,
   userName = 'Learner',
   onCallPress,
+  onBackPress,
 }) => {
   const dispatch = useDispatch();
   const { theme } = useTheme();
   const [visible, setVisible] = useState(false);
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const selectedDate = useSelector(selectSelectedDate);
+  const chatsByDate = useSelector(selectChatsByDate);
+  const chevronRotation = useSharedValue(0);
+
+  // Auto-open drawer when date is selected with multiple chats
+  useEffect(() => {
+    if (selectedDate && chatsByDate && chatsByDate.length > 1) {
+      setVisible(true);
+    }
+  }, [selectedDate, chatsByDate]);
+
+  // Update chevron rotation when calendar visibility changes
+  useEffect(() => {
+    chevronRotation.value = withTiming(calendarVisible ? 1 : 0, {
+      duration: 300,
+      easing: Easing.ease,
+    });
+  }, [calendarVisible]);
+
+  // Animated style for chevron rotation
+  const chevronAnimatedStyle = useAnimatedStyle(() => {
+    const rotation = interpolate(
+      chevronRotation.value,
+      [0, 1],
+      [0, 180],
+      Extrapolate.CLAMP
+    );
+    return {
+      transform: [{ rotate: `${rotation}deg` }],
+    };
+  });
 
   const getCurrentDate = () => {
+    if (selectedDate) {
+      return new Date(selectedDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
     return new Date().toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
@@ -61,55 +102,107 @@ const ModernHeader: React.FC<ModernHeaderProps> = ({
   };
 
   const handleClearAll = () => {
-      dispatch(clearAllChats());
+    dispatch(clearAllChats());
   };
+
+  const handleDateSelect = (date: string) => {
+    dispatch(setSelectedDate(date));
+    setCalendarVisible(false);
+    
+    // After setting the selected date, check if there are chats for this date
+    // This will be handled in the useEffect below
+  };
+
+  // Handle chat selection when date is selected
+  useEffect(() => {
+    if (selectedDate && chatsByDate) {
+      if (chatsByDate.length === 1) {
+        // If only one chat, open it directly
+        setCurrentChatId(chatsByDate[0].id);
+      } else if (chatsByDate.length === 0) {
+        // If no chats, show a message for 3 seconds
+        ToastAndroid.show('No chats found for this date', ToastAndroid.LONG);
+      }
+      // If multiple chats (> 1), the drawer will auto-open from the previous useEffect
+    }
+  }, [selectedDate, chatsByDate]);
 
   return (
     <SafeAreaView style={styles.safe}>
       <Animated.View entering={FadeInDown.duration(600)} style={styles.container}>
         <View style={styles.topRow}>
+          {/* Back Button */}
           <TouchableOpacity
-            style={[styles.profileBg, { borderColor: theme.primary }]}
-            onPress={() => setVisible(true)}
+            style={[styles.backBtn, { borderColor: theme.primary }]}
+            onPress={onBackPress}
           >
-            <Image source={aiLogo} style={styles.profile} />
+            <ArrowLeft size={22} color={theme.primary} />
           </TouchableOpacity>
 
-          <GlassCard style={styles.dateSelection} opacity={0.05}>
-            <ThemedText style={styles.dateText} weight="bold">{getCurrentDate()}</ThemedText>
-            <ChevronDown size={14} color={theme.text.secondary} />
-          </GlassCard>
+          {/* Date Selection with Dropdown Calendar */}
+          <TouchableOpacity
+            onPress={() => setCalendarVisible(!calendarVisible)}
+            activeOpacity={0.7}
+            style={styles.dateButtonContainer}
+          >
+            <GlassCard 
+              style={[
+                styles.dateSelection,
+                selectedDate && { borderWidth: 1.5, borderColor: theme.primary }
+              ]} 
+              opacity={0.05}
+            >
+              <ThemedText style={styles.dateText} weight="bold">
+                {getCurrentDate()}
+              </ThemedText>
+              <Animated.View style={chevronAnimatedStyle}>
+                <ChevronDown size={14} color={theme.primary} />
+              </Animated.View>
+            </GlassCard>
+          </TouchableOpacity>
 
+          {/* Action Buttons */}
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.actionBtn} onPress={onCallPress}>
-                <Phone size={20} color={theme.text.secondary} />
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.primary + '15' }]} onPress={onCallPress}>
+              <Phone size={20} color={theme.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={handleClearAll}>
-                <Trash2 size={20} color={theme.text.secondary} />
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.primary + '15' }]} onPress={handleClearAll}>
+              <Trash2 size={20} color={theme.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.actionBtn} onPress={() => setVisible(true)}>
-                <LayoutGrid size={20} color={theme.text.secondary} />
+            <TouchableOpacity style={[styles.actionBtn, { backgroundColor: theme.primary + '15' }]} onPress={() => setVisible(true)}>
+              <Menu size={20} color={theme.primary} />
             </TouchableOpacity>
           </View>
         </View>
 
+        {/* Greeting */}
         <View style={styles.greetingWrap}>
-            <ThemedText style={styles.greeting} variant="secondary" weight="semibold">
-                {getGreeting()},
-            </ThemedText>
-            <ThemedText style={styles.name} weight="bold">
-                {userName}!
-            </ThemedText>
+          <ThemedText style={styles.greeting} variant="secondary" weight="semibold">
+            {getGreeting()},
+          </ThemedText>
+          <ThemedText style={styles.name} weight="bold">
+            {userName}!
+          </ThemedText>
         </View>
       </Animated.View>
 
+      {/* Side Drawer - shows filtered chats if date is selected */}
       {visible && (
         <SideDrawer
           setCurrentChatId={setCurrentChatId}
-          chats={chats}
+          chats={selectedDate ? chatsByDate : chats}
           OnPressHide={() => setVisible(false)}
           visibile={visible}
           currentChatId={currentChatId}
+        />
+      )}
+
+      {/* Dropdown Calendar - rendered outside SafeAreaView for proper positioning */}
+      {calendarVisible && (
+        <DatePickerDropdown
+          isVisible={calendarVisible}
+          onDateSelect={handleDateSelect}
+          selectedDate={selectedDate}
         />
       )}
     </SafeAreaView>
@@ -121,7 +214,7 @@ const styles = StyleSheet.create({
     paddingTop: 10,
   },
   container: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingBottom: 16,
   },
   topRow: {
@@ -129,52 +222,42 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 20,
+    gap: 12,
   },
-  profileBg: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    borderWidth: 1.5,
-    padding: 2,
+  backBtn: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    padding: 4,
   },
-  profile: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 20,
-    resizeMode: 'contain',
+  dateButtonContainer: {
+    flex: 1,
   },
   dateSelection: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
-    marginVertical: 0,
-    marginHorizontal: 0,
     borderRadius: 100,
   },
   dateText: {
-    fontSize: 12,
+    fontSize: RFValue(11),
     letterSpacing: 0.5,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
   },
   actionBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   greetingWrap: {
-    marginTop: 4,
+    marginTop: 8,
   },
   greeting: {
     fontSize: RFValue(13),

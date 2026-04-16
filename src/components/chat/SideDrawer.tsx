@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import React from 'react';
 import {
   View,
@@ -15,8 +14,10 @@ import { XCircleIcon } from 'react-native-heroicons/outline';
 import { TrashIcon } from 'react-native-heroicons/solid';
 import { useDispatch } from 'react-redux';
 import { createNewChat, clearAllChats, deleteChat } from '../../redux/reducers/chatSlice';
+import { useTheme } from '../../context/ThemeContext';
+import { GlassCard } from '../ui/ThemedComponents';
 import uuid from 'react-native-uuid';
-import { Colors } from '@utils/Constants';
+import Animated, { FadeInLeft } from 'react-native-reanimated';
 
 type Message = {
   id: string;
@@ -46,6 +47,7 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
   currentChatId,
 }) => {
   const dispatch = useDispatch();
+  const { theme } = useTheme();
 
   const clearAllChatsHandler = () => {
     dispatch(clearAllChats());
@@ -65,30 +67,40 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
     );
   };
 
-  const renderChats = ({ item }: { item: Chat }) => (
-    <TouchableOpacity
-      onPress={() => {
-        setCurrentChatId(item.id);
-        OnPressHide();
-      }}
-      style={[
-        styles.chatButton,
-        {
-          backgroundColor: currentChatId === item.id ? '#fff' : '#43F7B2FF',
-        },
-      ]}
-    >
-      <CustomText numberOfLines={1} style={{ width: '70%' }} size={RFValue(11)} >
-        {item.summary}
-      </CustomText>
-      <TouchableOpacity
-        onPress={() => deleteAChat(item.id)}
-        style={styles.trashIcon}
-      >
-        <TrashIcon color="#ef4444" size={RFValue(12)} />
-      </TouchableOpacity>
-    </TouchableOpacity>
-  );
+  const renderChats = ({ item }: { item: Chat }) => {
+    const isSelected = currentChatId === item.id;
+    return (
+      <Animated.View entering={FadeInLeft.delay(100)}>
+        <TouchableOpacity
+          onPress={() => {
+            setCurrentChatId(item.id);
+            OnPressHide();
+          }}
+          style={[
+            styles.chatButton,
+            {
+              backgroundColor: isSelected ? theme.primary : theme.secondary,
+              borderColor: isSelected ? theme.primary : 'transparent',
+            },
+          ]}
+        >
+          <CustomText 
+            numberOfLines={1} 
+            style={[styles.chatButtonText, { color: isSelected ? '#fff' : theme.text.primary }]} 
+            size={RFValue(11)} 
+          >
+            {item.summary}
+          </CustomText>
+          <TouchableOpacity
+            onPress={() => deleteAChat(item.id)}
+            style={styles.trashIcon}
+          >
+            <TrashIcon color="#ef4444" size={RFValue(12)} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
 
   return (
     <Modal
@@ -102,40 +114,48 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
       isVisible={visibile}
     >
       <SafeAreaView>
-        <View style={styles.modalContainer}>
-          <View style={{ height: '100%', width: '100%' }}>
-            <View style={styles.header}>
+        <View 
+          style={[styles.modalContainer, { backgroundColor: theme.secondary }]}
+        >
+          <View style={styles.fullHeight}>
+            <View style={[styles.header, { borderBottomColor: theme.text.secondary + '40' }]}>
               <View style={styles.flexRow}>
-                <Image style={{ height: 30, width: 30 }} source={require('../../assets/ai2.png')} />
-                <CustomText size={RFValue(16)} >
+                <Image style={styles.headerIcon} source={require('../../assets/ai2.png')} />
+                <CustomText size={RFValue(16)} style={{ color: theme.text.primary }}>
                   All Chats
                 </CustomText>
               </View>
               <TouchableOpacity onPress={OnPressHide}>
-                <XCircleIcon color="#ccc" size={RFValue(16)} />
+                <XCircleIcon color={theme.text.secondary} size={RFValue(16)} />
               </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.newChat} onPress={addNewChat}>
-              <CustomText size={RFValue(10)} >Add New Chat</CustomText>
+            <TouchableOpacity 
+              style={[styles.newChat, { backgroundColor: theme.primary }]} 
+              onPress={addNewChat}
+            >
+              <CustomText size={RFValue(10)} style={styles.newChatText}>
+                + Add New Chat
+              </CustomText>
             </TouchableOpacity>
-            <CustomText style={{ margin: 10, fontSize: RFValue(12) }} >
+            <CustomText 
+              style={[styles.recentLabel, { color: theme.text.primary }]} 
+              size={RFValue(12)} 
+            >
               Recent Chats
             </CustomText>
-            <View style={{ height: '60%' }}>
+            <View style={styles.chatsList}>
               <FlatList
                 data={[...chats].reverse()}
                 renderItem={renderChats}
                 keyExtractor={(item) => item.id}
-                contentContainerStyle={{
-                  paddingHorizontal: 5,
-                  paddingVertical: 5,
-                 paddingBottom: 20,
-                 paddingTop: 10,
-                }}
+                contentContainerStyle={styles.listContent}
               />
             </View>
-            <TouchableOpacity style={styles.clearAllChat} onPress={clearAllChatsHandler}>
-              <CustomText style={{color:'#fff'}} size={RFValue(10)}>
+            <TouchableOpacity 
+              style={styles.clearAllChat}
+              onPress={clearAllChatsHandler}
+            >
+              <CustomText style={styles.clearAllChatText} size={RFValue(10)}>
                 Clear All Chats
               </CustomText>
             </TouchableOpacity>
@@ -153,12 +173,16 @@ const styles = StyleSheet.create({
     margin: 10,
   },
   modalContainer: {
-    backgroundColor: Colors.teal_400,
     borderRadius: 20,
     overflow: 'hidden',
     width: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 0,
+  },
+  fullHeight: {
+    height: '100%',
+    width: '100%',
   },
   flexRow: {
     gap: 5,
@@ -171,40 +195,69 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderColor: Colors.teal_200,
+  },
+  headerIcon: {
+    height: 30,
+    width: 30,
   },
   newChat: {
-    backgroundColor: Colors.teal_200,
-    padding: 10,
+    padding: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 100,
-    width: '60%',
-    margin: 10,
+    borderRadius: 12,
+    width: '70%',
+    margin: 16,
     alignSelf: 'center',
+  },
+  newChatText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  recentLabel: {
+    marginLeft: 16,
+    marginTop: 8,
+    fontWeight: '600',
+  },
+  chatsList: {
+    height: '60%',
+  },
+  listContent: {
+    paddingHorizontal: 5,
+    paddingVertical: 5,
+    paddingBottom: 20,
+    paddingTop: 10,
   },
   clearAllChat: {
     backgroundColor: '#ef5432',
-    padding: 10,
-    borderRadius: 20,
+    padding: 12,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: 20,
+    margin: 16,
+  },
+  clearAllChatText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   trashIcon: {
-    padding: 5,
-    backgroundColor: 'white',
-    borderRadius: 20,
+    padding: 8,
+    borderRadius: 8,
   },
   chatButton: {
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginVertical: 6,
+    marginHorizontal: 8,
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginVertical: 0,
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  chatButtonText: {
+    width: '70%',
   },
 });
 
 export default SideDrawer;
+ 

@@ -1,9 +1,9 @@
-import { View, StyleSheet, BackHandler } from 'react-native';
+import { View, StyleSheet, BackHandler, KeyboardAvoidingView, Platform } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ModernHeader from '../../components/chat/ModernHeader';
 import { useDispatch, useSelector } from 'react-redux';
-import { changeCurrentChatId, selectChats, selectCurrentChatId, createNewChat } from '../../redux/reducers/chatSlice';
+import { changeCurrentChatId, selectChats, selectCurrentChatId, createNewChat, selectSelectedDate, selectChatsByDate } from '../../redux/reducers/chatSlice';
 import SendButton from '../../components/chat/SendButton';
 import Chat from '../../components/chat/Chat';
 import LiveKitCallModal from '../../components/chat/LiveKitCallModal';
@@ -16,6 +16,8 @@ const MetaAi = () => {
   const dispatch = useDispatch();
   const chats = useSelector(selectChats);
   const currentChatId = useSelector(selectCurrentChatId);
+  const selectedDate = useSelector(selectSelectedDate);
+  const chatsByDate = useSelector(selectChatsByDate);
   const [isTyping, setIsTyping] = useState(false);
   const [heightOfMessageBox, setHeightOfMessageBox] = useState(0);
   const [userName, setUserName] = useState<string>('Student');
@@ -74,23 +76,27 @@ const MetaAi = () => {
   };
 
   // Handle navigation back - create new empty chat (keep old chat in drawer)
+  const handleBackPress = () => {
+    // Create a new empty chat and switch to it
+    const newChatId = uuid.v4() as string;
+    dispatch(createNewChat({
+      chatId: newChatId,
+      messages: [],
+      summary: 'New Chat',
+    }));
+    
+    // Set the new chat as current
+    dispatch(changeCurrentChatId({ chatId: newChatId }));
+    
+    // Navigate back
+    navigation.goBack();
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       const onBackPress = () => {
-        // Don't clear the current chat - keep it with all messages in drawer
-        // Just create a new empty chat and switch to it
-        const newChatId = uuid.v4() as string;
-        dispatch(createNewChat({
-          chatId: newChatId,
-          messages: [],
-          summary: 'New Chat',
-        }));
-        
-        // Set the new chat as current
-        dispatch(changeCurrentChatId({ chatId: newChatId }));
-        
-        // Allow default back behavior
-        return false;
+        handleBackPress();
+        return true; // Prevent default back behavior
       };
 
       // Add event listener for Android back button
@@ -99,7 +105,7 @@ const MetaAi = () => {
       return () => {
         backHandler.remove();
       };
-    }, [dispatch])
+    }, [dispatch, navigation])
   );
 
   // Handle screen blur (when navigating away) - create new empty chat (keep old chat in drawer)
@@ -124,20 +130,29 @@ const MetaAi = () => {
   return (
     <ThemedContainer style={styles.container}>
       <ModernHeader
-      chats={chats}
-      currentChatId={currentChatId}
-      setCurrentChatId={(id) => setCurrentChatId(id)}
-      userName={userName}
-      showGradient={false}
-      onCallPress={() => setIsCallModalVisible(true)}
-       />
+        chats={selectedDate ? chatsByDate : chats}
+        currentChatId={currentChatId}
+        setCurrentChatId={(id) => setCurrentChatId(id)}
+        userName={userName}
+        showGradient={false}
+        onCallPress={() => setIsCallModalVisible(true)}
+        onBackPress={handleBackPress}
+      />
 
       {/* Main chat and input area container */}
-      <View style={styles.chatContainer}>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.chatContainer}
+        keyboardVerticalOffset={0}
+      >
         {/* Chat component with heightOfMessageBox to avoid overlap */}
         <Chat
           isTyping={isTyping}
-          messages={chats?.find((chat: { id: string }) => chat.id === currentChatId)?.messages || []}
+          messages={
+            selectedDate 
+              ? chatsByDate?.find((chat: { id: string }) => chat.id === currentChatId)?.messages || []
+              : chats?.find((chat: { id: string }) => chat.id === currentChatId)?.messages || []
+          }
           heightOfMessageBox={heightOfMessageBox}
           userName={userName}
           onCardPress={handleCardPress}
@@ -157,7 +172,7 @@ const MetaAi = () => {
           presetMessage={presetMessage}
           onMessageSent={() => setPresetMessage('')}
         />
-      </View>
+      </KeyboardAvoidingView>
       <LiveKitCallModal
         isVisible={isCallModalVisible}
         onClose={() => setIsCallModalVisible(false)}

@@ -188,12 +188,14 @@ const DashboardScreen = () => {
   const chatButtonPulse = useSharedValue(1);
 
   // Function to trigger all animations
-  const triggerAnimations = useCallback(() => {
-    // Reset container animation values
-    containerOpacity.value = 0;
-    containerScale.value = 0.95;
-    bottomNavOpacity.value = 0;
-    bottomNavTranslateY.value = 50;
+  const triggerAnimations = useCallback((skipReset: boolean = false) => {
+    // Only reset if not already visible (first load)
+    if (!skipReset) {
+      containerOpacity.value = 0;
+      containerScale.value = 0.95;
+      bottomNavOpacity.value = 0;
+      bottomNavTranslateY.value = 50;
+    }
 
     // Container fades in and scales up smoothly
     containerOpacity.value = withSpring(1, { damping: 15, stiffness: 100 });
@@ -202,9 +204,10 @@ const DashboardScreen = () => {
       withSpring(1, { damping: 12, stiffness: 120 })
     );
 
-    // Bottom nav appears after a delay
-    bottomNavOpacity.value = withDelay(800, withSpring(1, { damping: 15, stiffness: 100 }));
-    bottomNavTranslateY.value = withDelay(800, withSpring(0, { damping: 15, stiffness: 100 }));
+    // Bottom nav appears after a delay (or immediately if returning)
+    const navDelay = skipReset ? 0 : 800;
+    bottomNavOpacity.value = withDelay(navDelay, withSpring(1, { damping: 15, stiffness: 100 }));
+    bottomNavTranslateY.value = withDelay(navDelay, withSpring(0, { damping: 15, stiffness: 100 }));
 
     // Chat button floating animation - infinite subtle bounce
     chatButtonFloatY.value = withDelay(
@@ -246,7 +249,8 @@ const DashboardScreen = () => {
   // Trigger animations every time screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      triggerAnimations();
+      // Pass true to skipReset so button appears immediately when returning from navigation
+      triggerAnimations(true);
     }, [triggerAnimations])
   );
 

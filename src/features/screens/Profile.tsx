@@ -1980,7 +1980,8 @@ const styles = StyleSheet.create({
 
   chartAndLegendContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 24,
     gap: 20,
   },
@@ -2023,6 +2024,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    justifyContent: 'center',
   },
   statBox: {
     width: '31%',
