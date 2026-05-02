@@ -314,7 +314,7 @@ const PrepareMeetScreen = () => {
 
         <View style={{ marginLeft: RFValue(10) }}>
           <ThemedText style={prepareStyles.linkHeader}>Share this link to invite others...</ThemedText>
-          <ThemedText style={[prepareStyles.linkText, { color: theme.primary }]}>https://eduLearn.edu/join/{sessionId}</ThemedText>
+          <ThemedText style={[prepareStyles.linkText, { color: theme.primary }]}>https://romantic-nanete-adildevelopment-3ec66986.koyeb.app/meeting/{sessionId}</ThemedText>
         </View>
 
         {/* Compliance and Legal Information */}
@@ -385,7 +385,7 @@ const PrepareMeetScreen = () => {
         onClose={() => setShareModalVisible(false)}
         meetingData={{
           meetingId: sessionId,
-          meetingLink: `https://eduLearn.edu/join/${sessionId}`,
+          meetingLink: `https://romantic-nanete-adildevelopment-3ec66986.koyeb.app/meeting/${sessionId}`,
           startTime: new Date().toLocaleTimeString()
         }}
       />

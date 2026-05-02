@@ -17,12 +17,11 @@ export const useUserStore = create()(
 
                 }
             },
-            removeSession:(sessionId)=>{
-                const {sessions} = get();
-                const updatedSessions = sessionId.filter(s=>s !==sessionId);
+            removeSession: (sessionId) => {
+                const { sessions } = get();
+                const updatedSessions = sessions.filter(s => s !== sessionId);
                 set({
-                    sessions:updatedSessions,
-
+                    sessions: updatedSessions,
                 });
             },
             clear:()=>set({user:null, sessions:[]})

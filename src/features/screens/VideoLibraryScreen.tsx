@@ -13,7 +13,7 @@ import {
 import { useVideos } from '@service/hooks/useVideos';
 import { Play, ArrowLeft, Search, Calendar, HardDrive, Video } from 'lucide-react-native';
 import { goBack, push } from '../../utils/Navigation';
-import { GlassCard, ThemedContainer, ThemedText } from '../../components/ui/ThemedComponents';
+import { GlassCard, ThemedContainer, ThemedText, ThemedHeader } from '../../components/ui/ThemedComponents';
 import { useTheme } from '../../context/ThemeContext';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 
@@ -84,21 +84,24 @@ const VideoLibraryScreen = () => {
 
   return (
     <ThemedContainer>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => goBack()}>
-            <ArrowLeft size={20} color={theme.text.primary} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Video Library</Text>
-        <FileVideo size={20} color={theme.primary} />
-      </View>
+      <ThemedHeader 
+        title="Video Library"
+        showBack
+        rightAction={<FileVideo size={20} color={theme.primary} />}
+        style={{ paddingHorizontal: 16 }}
+      />
 
       <View style={styles.searchWrap}>
-        <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
+        <View style={[styles.searchBar, { 
+            backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            borderWidth: 1,
+            borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+        }]}>
             <Search size={18} color={theme.text.secondary} />
             <TextInput
                 style={[styles.input, { color: theme.text.primary }]}
                 placeholder="Search tutorials..."
-                placeholderTextColor="rgba(255,255,255,0.3)"
+                placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
                 value={searchQuery}
                 onChangeText={handleSearch}
             />

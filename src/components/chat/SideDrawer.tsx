@@ -120,7 +120,7 @@ const SideDrawer: React.FC<SideDrawerProps> = ({
           <View style={styles.fullHeight}>
             <View style={[styles.header, { borderBottomColor: theme.text.secondary + '40' }]}>
               <View style={styles.flexRow}>
-                <Image style={styles.headerIcon} source={require('../../assets/ai2.png')} />
+                <Image style={styles.headerIcon} source={require('../../assets/icons/appIcon.png')} />
                 <CustomText size={RFValue(16)} style={{ color: theme.text.primary }}>
                   All Chats
                 </CustomText>

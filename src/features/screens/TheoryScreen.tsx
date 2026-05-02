@@ -10,7 +10,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRoute, RouteProp } from '@react-navigation/native';
-import LottieView from 'lottie-react-native';
+import Loading from '@components/ui/Loading';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
@@ -147,17 +147,7 @@ const TheoryScreen = () => {
       </View>
 
       {loading ? (
-        <View style={styles.loaderContainer}>
-          <LottieView
-            source={require('../../assets/animations/student.json')}
-            autoPlay
-            loop
-            style={styles.loadingAnimation}
-          />
-          <Text style={[styles.loadingText, { color: theme.primary }]}>
-            Engaging Knowledge...
-          </Text>
-        </View>
+        <Loading message="Engaging Knowledge..." fullScreen={false} />
       ) : (
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           {theory ? (
@@ -179,7 +169,7 @@ const TheoryScreen = () => {
                             { 
                                 width: `${totalProgress * 100}%`, 
                                 backgroundColor: theme.primary,
-                                shadowColor: theme.primary,
+                                // Removed shadowColor
                             }
                         ]} 
                        />
@@ -282,10 +272,7 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: '100%',
     borderRadius: 3,
-    // Glow effect
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
+    // Removed glow effect
   },
   chapterSection: {
     marginTop: 8,
@@ -297,20 +284,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingLeft: 4,
   },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingAnimation: {
-    width: 200,
-    height: 200,
-  },
-  loadingText: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: -20,
-  },
+
   empty: {
     flex: 1,
     alignItems: 'center',

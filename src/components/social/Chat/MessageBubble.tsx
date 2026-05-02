@@ -1,22 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import type { Message as MessageType } from '../../../service/social/types';
-import { UserCircle } from 'lucide-react-native';
+import { UserCircle, Play, FileText, Image as ImageIcon } from 'lucide-react-native';
+import { Image, TouchableOpacity, Linking } from 'react-native';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../../context/ThemeContext';
 
 interface MessageBubbleProps {
     message: MessageType;
@@ -27,6 +15,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     message,
     isOwnMessage,
 }) => {
+    const { theme } = useTheme();
+    
     const formatTime = (timestamp: string): string => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('en-US', {
@@ -45,37 +35,72 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         >
             {/* Other user avatar */}
             {!isOwnMessage && (
-                <View style={styles.avatar}>
-                    <UserCircle size={26} color={C.primary} strokeWidth={1.5} />
+                <View style={[styles.avatar, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)' }]}>
+                    <UserCircle size={26} color={theme.primary} strokeWidth={1.5} />
                 </View>
             )}
 
             <View
                 style={[
                     styles.bubble,
-                    isOwnMessage ? styles.ownBubble : styles.otherBubble,
+                    isOwnMessage 
+                        ? [styles.ownBubble, { backgroundColor: theme.primary }] 
+                        : [styles.otherBubble, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }],
                 ]}
             >
                 {!isOwnMessage && message.sender && (
-                    <Text style={styles.senderName}>{message.sender.name}</Text>
+                    <Text style={[styles.senderName, { color: theme.primary }]}>{message.sender.name}</Text>
                 )}
 
                 {message.content.text && (
                     <Text
                         style={[
                             styles.messageText,
-                            isOwnMessage ? styles.ownMessageText : styles.otherMessageText,
+                            { color: isOwnMessage ? '#fff' : theme.text.primary }
                         ]}
                     >
                         {message.content.text}
                     </Text>
                 )}
 
-                {message.content.media && message.content.media.length > 0 && (
+                {/* Media Content */}
+                {message.type === 'image' && message.content.url && (
+                    <Image 
+                        source={{ uri: message.content.url }} 
+                        style={styles.chatImage} 
+                        resizeMode="cover"
+                    />
+                )}
+
+                {message.type === 'video' && message.content.url && (
+                    <View style={styles.videoPlaceholder}>
+                        <Play size={24} color="#fff" fill="#fff" />
+                    </View>
+                )}
+
+                {message.type === 'document' && message.content.url && (
+                    <TouchableOpacity 
+                        style={[styles.fileBox, { backgroundColor: isOwnMessage ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.05)' }]}
+                        onPress={() => Linking.openURL(message.content.url!)}
+                    >
+                        <FileText size={20} color={isOwnMessage ? '#fff' : theme.primary} />
+                        <View style={styles.fileInfo}>
+                            <Text style={[styles.fileName, { color: isOwnMessage ? '#fff' : theme.text.primary }]} numberOfLines={1}>
+                                {message.content.fileName || 'Document'}
+                            </Text>
+                            <Text style={[styles.fileSize, { color: isOwnMessage ? 'rgba(255,255,255,0.7)' : theme.text.secondary }]}>
+                                {message.content.mimeType?.split('/')[1].toUpperCase() || 'FILE'}
+                            </Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
+
+                {/* Legacy Media Array Support */}
+                {message.type === 'text' && message.content.media && message.content.media.length > 0 && (
                     <View style={styles.mediaContainer}>
                         {message.content.media.map((media, index) => (
-                            <View key={index} style={styles.mediaPlaceholder}>
-                                <Text style={styles.mediaText}>
+                            <View key={index} style={[styles.mediaPlaceholder, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                                <Text style={[styles.mediaText, { color: isOwnMessage ? 'rgba(255,255,255,0.8)' : theme.text.secondary }]}>
                                     {media.type.toUpperCase()} — {media.fileName}
                                 </Text>
                             </View>
@@ -87,7 +112,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     <Text
                         style={[
                             styles.timestamp,
-                            isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp,
+                            { color: isOwnMessage ? 'rgba(255,255,255,0.6)' : theme.text.secondary }
                         ]}
                     >
                         {formatTime(message.createdAt)}
@@ -96,7 +121,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         <Text
                             style={[
                                 styles.editedLabel,
-                                isOwnMessage ? styles.ownTimestamp : styles.otherTimestamp,
+                                { color: isOwnMessage ? 'rgba(255,255,255,0.6)' : theme.text.secondary }
                             ]}
                         >
                             {' '}• edited
@@ -107,15 +132,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 {message.reactions.length > 0 && (
                     <View style={styles.reactionsContainer}>
                         {message.reactions.map((reaction, index) => (
-                            <View key={index} style={styles.reactionBubble}>
+                            <View key={index} style={[styles.reactionBubble, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' }]}>
                                 <Text style={styles.reactionEmoji}>{reaction.emoji}</Text>
                             </View>
                         ))}
                     </View>
                 )}
             </View>
-
-            {isOwnMessage && <View style={styles.spacer} />}
         </View>
     );
 };
@@ -153,12 +176,9 @@ const styles = StyleSheet.create({
         paddingVertical: 10,
     },
     ownBubble: {
-        // Gradient approximation using solid primary (LinearGradient not imported by default)
-        backgroundColor: '#d946ef',
         borderBottomRightRadius: 4,
     },
     otherBubble: {
-        backgroundColor: '#201f1f',
         borderBottomLeftRadius: 4,
     },
 
@@ -232,6 +252,42 @@ const styles = StyleSheet.create({
     mediaText: {
         fontSize: 12,
         color: 'rgba(255,255,255,0.7)',
+    },
+
+    // ── Media Rendering ──
+    chatImage: {
+        width: 200,
+        height: 200,
+        borderRadius: 12,
+        marginBottom: 4,
+    },
+    videoPlaceholder: {
+        width: 200,
+        height: 120,
+        borderRadius: 12,
+        backgroundColor: '#000',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 4,
+    },
+    fileBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 4,
+        gap: 10,
+        minWidth: 180,
+    },
+    fileInfo: {
+        flex: 1,
+    },
+    fileName: {
+        fontSize: 13,
+        fontWeight: '600',
+    },
+    fileSize: {
+        fontSize: 11,
     },
 
     spacer: {

@@ -18,7 +18,6 @@ import QuizScreen from '../features/screens/QuizScreen';
 import DescriptionScreen from '../features/screens/DescriptionScreen';
 import LoginScreen from '../features/screens/LoginScreen';
 import RegisterScreen from '../features/screens/RegisterScreen';
-import AdminLoginScreen from '../features/screens/AdminLoginScreen';
 import DashboardScreen from '../features/screens/DashboardScreen';
 import Profile from '../features/screens/Profile';
 import TheoryScreen from '../features/screens/TheoryScreen';
@@ -30,6 +29,10 @@ import QuizQuestions from '../features/screens/QuizQuestions';
 import MetaAi from '../features/screens/MetaAi';
 import Ai from '../features/screens/Ai';
 import ScheduleManagementScreen from '../features/screens/ScheduleManagementScreen';
+import TimelineScreen from '../features/screens/TimelineScreen';
+import FeedbackScreen from '../features/screens/FeedbackScreen';
+import CustomerSupportScreen from '../features/screens/CustomerSupportScreen';
+import SupportChatScreen from '../features/screens/SupportChatScreen';
 
 import { WSProvider } from '@components/src/service/api/WSProvider';
 import HomeScreen from '@components/src/screens/HomeScreen';
@@ -37,15 +40,25 @@ import PrepareMeetScreen from '@components/src/screens/PrepareMeetScreen';
 import LiveMeetScreen from '@components/src/screens/LiveMeetScreen';
 import JoinMeetScreen from '@components/src/screens/JoinMeetScreen';
 import { SocialNavigator } from './SocialNavigator';
+import { AdminNavigator } from '../components/admin/AdminNavigator';
 
 
 const Stack = createNativeStackNavigator();
+
+const linking = {
+    prefixes: ['https://romantic-nanete-adildevelopment-3ec66986.koyeb.app', 'edulearn://'],
+    config: {
+        screens: {
+            HomeScreen: 'meeting/:meetingCode',
+        },
+    },
+};
 
 // create a component
 const Navigation: FC = () => {
     return (
         <WSProvider>
-            <NavigationContainer ref={navigationRef}>
+            <NavigationContainer ref={navigationRef} linking={linking}>
                 <Stack.Navigator
                     initialRouteName="SplashScreen" // Correct placement
                     screenOptions={{
@@ -62,6 +75,7 @@ const Navigation: FC = () => {
                     <Stack.Screen name="MetaAi" component={MetaAi} />
                     <Stack.Screen name="Ai" component={Ai} />
                     <Stack.Screen name="ScheduleManagementScreen" component={ScheduleManagementScreen} />
+                    <Stack.Screen name="TimelineScreen" component={TimelineScreen} />
                     <Stack.Screen name="MarkSummaryScreen" component={MarkSummaryScreen} />
                     <Stack.Screen name="BookScreen" component={BookScreen} />
                     <Stack.Screen name="VideoLibraryScreen" component={VideoLibraryScreen} />
@@ -75,11 +89,21 @@ const Navigation: FC = () => {
                     <Stack.Screen name="PrepareMeetScreen" component={PrepareMeetScreen} options={{ headerShown: false }} />
                     <Stack.Screen name="LiveMeetScreen" component={LiveMeetScreen} />
                     <Stack.Screen name="JoinMeetScreen" component={JoinMeetScreen} options={{ headerShown: false }} />
+                    <Stack.Screen name="FeedbackScreen" component={FeedbackScreen} />
+                    <Stack.Screen name="CustomerSupportScreen" component={CustomerSupportScreen} />
+                    <Stack.Screen name="SupportChatScreen" component={SupportChatScreen} />
 
                     {/* Social Microservice Screens */}
                     <Stack.Screen
                         name="SocialNavigator"
                         component={SocialNavigator}
+                        options={{ headerShown: false }}
+                    />
+
+                    {/* Admin Panel Screens */}
+                    <Stack.Screen
+                        name="AdminNavigator"
+                        component={AdminNavigator}
                         options={{ headerShown: false }}
                     />
 
@@ -108,11 +132,6 @@ const Navigation: FC = () => {
                             animation: 'fade',
                         }}
                         name="RegisterScreen" component={RegisterScreen} />
-                    <Stack.Screen
-                        options={{
-                            animation: 'fade',
-                        }}
-                        name="AdminLoginScreen" component={AdminLoginScreen} />
                 </Stack.Navigator>
             </NavigationContainer>
         </WSProvider>

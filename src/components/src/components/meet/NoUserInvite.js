@@ -13,7 +13,7 @@ const NoUserInvite = () => {
     const {sessionId} = useLiveMeetStore();
     const {user} = useUserStore();
 
-    const meetingLink = `call.google.com/${addHyphens(sessionId)}`;
+    const meetingLink = `https://romantic-nanete-adildevelopment-3ec66986.koyeb.app/meeting/${sessionId}`;
 
     const handleCopyLink = async () => {
         try {

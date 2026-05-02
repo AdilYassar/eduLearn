@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Volume2, VolumeX, Phone, Speaker, X } from 'lucide-react-native';
 import Slider from '@react-native-community/slider';
-import SystemSetting from 'react-native-system-setting';
+import { VolumeManager } from 'react-native-volume-manager';
 import { RFValue } from 'react-native-responsive-fontsize';
 
 const VolumeControlModal = ({ visible, onClose }) => {
@@ -19,16 +19,18 @@ const VolumeControlModal = ({ visible, onClose }) => {
 
   useEffect(() => {
     if (visible) {
-      SystemSetting.getVolume().then((volume) => {
-        setCurrentVolume(volume);
-        setIsMuted(volume === 0);
+      VolumeManager.getVolume().then((volume) => {
+        // volume can be an object {volume: number} or a number depending on platform
+        const vol = typeof volume === 'number' ? volume : volume.volume;
+        setCurrentVolume(vol);
+        setIsMuted(vol === 0);
       });
     }
   }, [visible]);
 
   const handleVolumeChange = async (newVolume) => {
     try {
-      await SystemSetting.setVolume(newVolume);
+      await VolumeManager.setVolume(newVolume);
       setCurrentVolume(newVolume);
       setIsMuted(newVolume === 0);
     } catch (error) {
@@ -39,11 +41,11 @@ const VolumeControlModal = ({ visible, onClose }) => {
   const toggleMute = async () => {
     try {
       if (isMuted) {
-        await SystemSetting.setVolume(0.5);
+        await VolumeManager.setVolume(0.5);
         setCurrentVolume(0.5);
         setIsMuted(false);
       } else {
-        await SystemSetting.setVolume(0);
+        await VolumeManager.setVolume(0);
         setCurrentVolume(0);
         setIsMuted(true);
       }

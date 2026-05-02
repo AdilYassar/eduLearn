@@ -6,39 +6,48 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    DeviceEventEmitter,
 } from 'react-native';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigation } from '@react-navigation/native';
 import { chatService } from '../../../service/social';
 import { setConversations, setLoadingConversations } from '../../../redux/reducers/socialSlice';
+import { useFocusEffect } from '@react-navigation/native';
 import type { Conversation } from '../../../service/social/types';
 import { MessageCircle, UserCircle } from 'lucide-react-native';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-    error: '#ff6e84',
-};
+import { useTheme } from '../../../context/ThemeContext';
+import { ThemedText } from '../../ui/ThemedComponents';
 
 export const ConversationsList: React.FC = () => {
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const conversations = useSelector((state: any) => state.social.conversations);
     const currentUser = useSelector((state: any) => state.social.currentUser);
     const isLoading = useSelector((state: any) => state.social.isLoadingConversations);
 
+    useFocusEffect(
+        React.useCallback(() => {
+            loadConversations();
+        }, [])
+    );
+
     useEffect(() => {
-        loadConversations();
+        // Subscribe to real-time social events
+        const subscription = DeviceEventEmitter.addListener('social_event', (event) => {
+            if (
+                event.subType === 'MESSAGE_RECEIVED' || 
+                event.subType === 'FRIEND_ACCEPTED' ||
+                event.subType === 'GROUP_CREATED' ||
+                event.subType === 'GROUP_MEMBER_ADDED'
+            ) {
+                console.log(`[ConversationsList] 🔄 Refreshing list due to: ${event.subType}`);
+                loadConversations();
+            }
+        });
+
+        return () => subscription.remove();
     }, []);
 
     const loadConversations = async () => {
@@ -74,25 +83,29 @@ export const ConversationsList: React.FC = () => {
 
         return (
             <TouchableOpacity
-                style={styles.conversationItem}
+                style={[styles.conversationItem, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}
                 onPress={() => handleConversationPress(item)}
                 activeOpacity={0.75}
             >
                 {/* Avatar with Aura Ring */}
                 <View style={styles.avatarWrapper}>
-                    <View style={[styles.auraRing, hasUnread && styles.auraRingActive]}>
-                        <View style={styles.avatar}>
-                            <UserCircle size={36} color={C.primary} strokeWidth={1.5} />
+                    <View style={[styles.auraRing, { borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }, hasUnread && { borderColor: theme.primary }]}>
+                        <View style={[styles.avatar, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                            <UserCircle size={36} color={theme.primary} strokeWidth={1.5} />
                         </View>
                     </View>
-                    {item.otherUser?.isOnline && <View style={styles.onlineIndicator} />}
+                    {item.otherUser?.isOnline && <View style={[styles.onlineIndicator, { borderColor: theme.isDark ? '#1a1919' : '#fff' }]} />}
                 </View>
 
                 {/* Conversation Info */}
                 <View style={styles.conversationInfo}>
                     <View style={styles.headerRow}>
                         <Text
-                            style={[styles.conversationName, hasUnread && styles.conversationNameUnread]}
+                            style={[
+                                styles.conversationName, 
+                                { color: theme.text.primary },
+                                hasUnread && { fontWeight: '700' }
+                            ]}
                             numberOfLines={1}
                         >
                             {item.type === 'direct'
@@ -100,9 +113,9 @@ export const ConversationsList: React.FC = () => {
                                 : item.groupName || 'Group Chat'}
                         </Text>
                         {item.lastMessage && (
-                            <Text style={styles.timestamp}>
+                            <ThemedText variant="secondary" size="tiny">
                                 {formatTimestamp(item.lastMessage.timestamp)}
-                            </Text>
+                            </ThemedText>
                         )}
                     </View>
 
@@ -111,14 +124,15 @@ export const ConversationsList: React.FC = () => {
                             <Text
                                 style={[
                                     styles.lastMessage,
-                                    hasUnread && styles.lastMessageUnread,
+                                    { color: theme.text.secondary },
+                                    hasUnread && { fontWeight: '600', color: theme.text.primary },
                                 ]}
                                 numberOfLines={1}
                             >
                                 {item.lastMessage.preview}
                             </Text>
                         ) : (
-                            <Text style={styles.noMessages}>No messages yet</Text>
+                            <Text style={[styles.noMessages, { color: theme.text.secondary }]}>No messages yet</Text>
                         )}
 
                         <View style={styles.badgesRow}>
@@ -126,7 +140,7 @@ export const ConversationsList: React.FC = () => {
                                 <Text style={styles.mutedText}>🔇</Text>
                             )}
                             {hasUnread && (
-                                <View style={styles.unreadBadge}>
+                                <View style={[styles.unreadBadge, { backgroundColor: theme.primary }]}>
                                     <Text style={styles.unreadCount}>
                                         {unreadCount > 99 ? '99+' : unreadCount}
                                     </Text>
@@ -142,8 +156,8 @@ export const ConversationsList: React.FC = () => {
     if (isLoading && conversations.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={C.primary} />
-                <Text style={styles.loadingText}>Loading conversations…</Text>
+                <ActivityIndicator size="large" color={theme.primary} />
+                <ThemedText variant="secondary" style={{ marginTop: 12 }}>Loading conversations…</ThemedText>
             </View>
         );
     }
@@ -151,11 +165,11 @@ export const ConversationsList: React.FC = () => {
     if (conversations.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <View style={styles.emptyIconWrap}>
-                    <MessageCircle size={40} color={C.primary} strokeWidth={1.5} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+                    <MessageCircle size={40} color={theme.primary} strokeWidth={1.5} />
                 </View>
-                <Text style={styles.emptyText}>No conversations yet</Text>
-                <Text style={styles.emptySubtext}>Start chatting with your friends!</Text>
+                <ThemedText weight="bold" size="large">No conversations yet</ThemedText>
+                <ThemedText variant="secondary" style={{ textAlign: 'center' }}>Start chatting with your friends!</ThemedText>
             </View>
         );
     }
@@ -167,6 +181,10 @@ export const ConversationsList: React.FC = () => {
             keyExtractor={(item) => item._id}
             contentContainerStyle={styles.listContainer}
             showsVerticalScrollIndicator={false}
+            removeClippedSubviews={true}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            initialNumToRender={8}
         />
     );
 };
@@ -199,7 +217,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 24,
-        backgroundColor: C.bg,
     },
 
     // ── Conversation Item ──
@@ -207,7 +224,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 14,
-        backgroundColor: C.surface,
         borderRadius: 20,
         marginBottom: 10,
     },
@@ -222,20 +238,14 @@ const styles = StyleSheet.create({
         height: 54,
         borderRadius: 27,
         borderWidth: 2,
-        borderColor: C.outlineVariant,
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
-    },
-    auraRingActive: {
-        borderColor: C.primary,
-        // Note: conic-gradient not natively available; solid primary border as fallback
     },
     avatar: {
         width: 46,
         height: 46,
         borderRadius: 23,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -248,7 +258,6 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: '#22c55e',
         borderWidth: 2,
-        borderColor: C.surface,
     },
 
     // ── Info ──
@@ -263,19 +272,8 @@ const styles = StyleSheet.create({
     },
     conversationName: {
         fontSize: 15,
-        fontWeight: '600',
-        color: C.onSurfaceVariant,
         flex: 1,
         marginRight: 8,
-    },
-    conversationNameUnread: {
-        color: C.onSurface,
-        fontWeight: '700',
-    },
-    timestamp: {
-        fontSize: 11,
-        color: C.outlineVariant,
-        fontWeight: '500',
     },
     messageRow: {
         flexDirection: 'row',
@@ -284,17 +282,11 @@ const styles = StyleSheet.create({
     },
     lastMessage: {
         fontSize: 13,
-        color: C.outlineVariant,
         flex: 1,
         marginRight: 8,
     },
-    lastMessageUnread: {
-        color: C.onSurfaceVariant,
-        fontWeight: '600',
-    },
     noMessages: {
         fontSize: 13,
-        color: C.outlineVariant,
         fontStyle: 'italic',
         flex: 1,
     },
@@ -304,7 +296,6 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     unreadBadge: {
-        backgroundColor: C.primary,
         borderRadius: 999,
         minWidth: 20,
         height: 20,
@@ -313,7 +304,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 6,
     },
     unreadCount: {
-        color: '#540061',
+        color: '#fff',
         fontSize: 10,
         fontWeight: '800',
     },
@@ -327,32 +318,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 32,
-        backgroundColor: C.bg,
     },
     emptyIconWrap: {
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
-    },
-    emptyText: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 14,
-        color: C.onSurfaceVariant,
-        textAlign: 'center',
-        lineHeight: 21,
-    },
-    loadingText: {
-        fontSize: 13,
-        color: C.onSurfaceVariant,
-        marginTop: 12,
     },
 });

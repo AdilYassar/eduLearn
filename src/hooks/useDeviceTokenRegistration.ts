@@ -12,9 +12,16 @@
  */
 
 import { useEffect, useRef } from 'react';
-import messaging from '@react-native-firebase/messaging';
-import notifee from '@notifee/react-native';
+import { 
+  getMessaging,
+  onMessage, 
+  onNotificationOpenedApp, 
+  getInitialNotification, 
+  onTokenRefresh 
+} from '@react-native-firebase/messaging';
+// import notifee from '@notifee/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DeviceEventEmitter } from 'react-native';
 import {
   registerDeviceTokenWithAuth,
   handleNewDeviceToken,
@@ -83,7 +90,7 @@ export const useDeviceTokenRegistration = () => {
           messageListenerRef.current();
         }
 
-        messageListenerRef.current = messaging().onMessage(async (remoteMessage) => {
+        messageListenerRef.current = onMessage(getMessaging(), async (remoteMessage) => {
           console.log('[FIREBASE_MESSAGE] 📬 Foreground message received');
           await handleForegroundMessage(remoteMessage);
         });
@@ -91,7 +98,7 @@ export const useDeviceTokenRegistration = () => {
 
         // 5. Listen for notification response (when user taps notification)
         console.log('[FIREBASE_INIT] Step 6️⃣  Setting up NOTIFICATION TAP listener...');
-        messaging().onNotificationOpenedApp((remoteMessage) => {
+        onNotificationOpenedApp(getMessaging(), (remoteMessage) => {
           console.log('[FIREBASE_MESSAGE] 👆 User tapped notification');
           if (remoteMessage) {
             handleNotificationResponse(remoteMessage.data);
@@ -101,7 +108,7 @@ export const useDeviceTokenRegistration = () => {
 
         // 6. Check for notification that launched the app
         console.log('[FIREBASE_INIT] Step 7️⃣  Checking for INITIAL notification...');
-        const initialNotification = await messaging().getInitialNotification();
+        const initialNotification = await getInitialNotification(getMessaging());
         if (initialNotification) {
           console.log('[FIREBASE_MESSAGE] 🚀 App was LAUNCHED from notification');
           handleNotificationResponse(initialNotification.data);
@@ -115,7 +122,7 @@ export const useDeviceTokenRegistration = () => {
           tokenRefreshListenerRef.current();
         }
 
-        tokenRefreshListenerRef.current = messaging().onTokenRefresh(async (newToken) => {
+        tokenRefreshListenerRef.current = onTokenRefresh(getMessaging(), async (newToken) => {
           console.log('[FIREBASE_MESSAGE] 🔄 Firebase token REFRESHED (new token received)');
           await handleNewDeviceToken(newToken);
         });
@@ -161,7 +168,7 @@ const handleForegroundMessage = async (remoteMessage: any) => {
     });
 
     try {
-      // Create and display notification using notifee
+      /* Commented out Notifee to prevent double notifications
       const channelId = await notifee.createChannel({
         id: 'edulearn-notifications',
         name: 'EduLearn Notifications',
@@ -180,6 +187,8 @@ const handleForegroundMessage = async (remoteMessage: any) => {
         data: data || {},
       });
       console.log('[FOREGROUND_MSG] ✅ Notification displayed successfully');
+      */
+      console.log('[FOREGROUND_MSG] ℹ️ Notifee is disabled, relying on FCM for notifications');
     } catch (error) {
       console.error('[FOREGROUND_MSG] ❌ Error displaying notification:', error);
     }
@@ -187,6 +196,17 @@ const handleForegroundMessage = async (remoteMessage: any) => {
 
   if (data) {
     console.log('[FOREGROUND_MSG] 📋 Message Data:', data);
+    
+    // Check for event-driven social updates
+    if (data.type === 'SOCIAL_EVENT') {
+      console.log(`[FOREGROUND_MSG] 📢 Social event detected: ${data.subType}`);
+      DeviceEventEmitter.emit('social_event', {
+        type: data.type,
+        subType: data.subType,
+        payload: data.payload,
+        sentAt: data.sentAt || new Date().toISOString()
+      });
+    }
   }
 };
 

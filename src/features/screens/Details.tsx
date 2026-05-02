@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import CustomText from '../../components/ui/CustomText';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { navigate } from '../../utils/Navigation';
+import { navigate, replace } from '../../utils/Navigation';
 
 const { width, height } = Dimensions.get('window');
 
@@ -77,9 +77,9 @@ const Details = () => {
     setSelectedRole(role);
     // Navigate based on role selection
     if (role === 'teacher') {
-      navigate('AdminLoginScreen');
+      replace('AdminNavigator');
     } else if (role === 'student') {
-      navigate('LoginScreen');
+      replace('LoginScreen');
     }
   };
 

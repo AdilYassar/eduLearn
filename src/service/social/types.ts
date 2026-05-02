@@ -83,6 +83,10 @@ export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'file' | 'locat
 export interface MessageContent {
   text?: string;
   media?: MediaItem[];
+  url?: string;
+  mediaId?: string;
+  fileName?: string;
+  mimeType?: string;
   location?: {
     latitude: number;
     longitude: number;
@@ -180,6 +184,7 @@ export interface Post {
     quizServerUUID: string;
   };
   isLiked?: boolean;
+  comments?: Comment[];
 }
 
 export interface Comment {

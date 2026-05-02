@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Dimensions,
   Alert,
+  Image,
 } from 'react-native';
 import { 
   Share2, 
@@ -26,9 +27,11 @@ const { width } = Dimensions.get('window');
 
 const ShareModal = ({ visible, onClose, meetingData }) => {
   const { theme } = useTheme();
+  const webLink = `https://romantic-nanete-adildevelopment-3ec66986.koyeb.app/meeting/${meetingData.meetingId}`;
+
   const handleCopyLink = async () => {
     try {
-      Clipboard.setString(meetingData.meetingLink);
+      Clipboard.setString(webLink);
       Alert.alert('Success', 'Meeting link copied to clipboard!');
       onClose();
     } catch (error) {
@@ -39,7 +42,7 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
   const handleWhatsAppShare = async () => {
     try {
       const shareOptions = {
-        message: `Join my meeting: ${meetingData.meetingLink}\nMeeting ID: ${meetingData.meetingId}`,
+        message: `Join my meeting: ${webLink}\nMeeting ID: ${meetingData.meetingId}`,
         social: Share.Social.WHATSAPP,
       };
       await Share.shareSingle(shareOptions);
@@ -53,7 +56,7 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
     try {
       const shareOptions = {
         title: 'Meeting Invitation',
-        message: `You're invited to join my meeting!\n\nMeeting Link: ${meetingData.meetingLink}\nMeeting ID: ${meetingData.meetingId}`,
+        message: `You're invited to join my meeting!\n\nMeeting Link: ${webLink}\nMeeting ID: ${meetingData.meetingId}`,
         email: '',
         subject: 'Meeting Invitation',
       };
@@ -68,7 +71,7 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
     try {
       const shareOptions = {
         title: 'Meeting Invitation',
-        message: `Join my meeting: ${meetingData.meetingLink}\nMeeting ID: ${meetingData.meetingId}`,
+        message: `Join my meeting: ${webLink}\nMeeting ID: ${meetingData.meetingId}`,
       };
       await Share.open(shareOptions);
       onClose();
@@ -103,7 +106,10 @@ const ShareModal = ({ visible, onClose, meetingData }) => {
           <View style={styles.header}>
             <View style={styles.headerLeft} />
             <View style={styles.headerCenter}>
-              <Users size={22} color={theme.primary} />
+              <Image
+                source={require('../../assets/icons/appIcon.png')}
+                style={{ width: 24, height: 24, borderRadius: 6 }}
+              />
               <Text style={[styles.title, { color: theme.text.primary }]}>Share Meeting</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={[styles.closeButton, { backgroundColor: theme.componentBackground[0] }]}>

@@ -17,22 +17,11 @@ import { addFeedPost } from '../../../redux/reducers/socialSlice';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { mediaService } from '../../../service/social';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../../context/ThemeContext';
+import { GlassCard, ThemedText } from '../../../components/ui/ThemedComponents';
 
 export const CreatePostWidget: React.FC = () => {
+    const { theme } = useTheme();
     const dispatch = useDispatch();
     const [text, setText] = useState('');
     const [loading, setLoading] = useState(false);
@@ -99,20 +88,20 @@ export const CreatePostWidget: React.FC = () => {
     const canPost = (text.trim().length > 0 || selectedImage) && !loading;
 
     return (
-        <View style={styles.container}>
+        <GlassCard style={styles.container} opacity={0.12}>
             <View style={styles.inputRow}>
                 {/* Aura Ring Avatar */}
-                <View style={styles.auraRing}>
+                <View style={[styles.auraRing, { borderColor: theme.primary }]}>
                     <View style={styles.avatar}>
-                        <UserCircle size={26} color={C.primary} strokeWidth={1.5} />
+                        <UserCircle size={26} color={theme.primary} strokeWidth={1.5} />
                     </View>
                 </View>
 
                 <View style={styles.inputWrapper}>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: theme.text.primary }]}
                         placeholder="What's on your mind?"
-                        placeholderTextColor={C.outlineVariant}
+                        placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
                         value={text}
                         onChangeText={setText}
                         multiline
@@ -136,35 +125,34 @@ export const CreatePostWidget: React.FC = () => {
                 </View>
             </View>
 
-            <View style={styles.actions}>
+            <View style={[styles.actions, { borderTopColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                 <TouchableOpacity style={styles.mediaButton} onPress={handlePickImage} activeOpacity={0.7}>
-                    <ImageIcon size={18} color={C.secondary} strokeWidth={1.5} />
-                    <Text style={styles.mediaText}>Photo</Text>
+                    <ImageIcon size={18} color={theme.primary} strokeWidth={1.5} />
+                    <ThemedText style={[styles.mediaText, { color: theme.primary }]}>Photo</ThemedText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    style={[styles.postButton, !canPost && styles.postButtonDisabled]}
+                    style={[styles.postButton, { backgroundColor: theme.primary }, !canPost && { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
                     onPress={handlePost}
                     disabled={!canPost}
                     activeOpacity={0.85}
                 >
                     {loading ? (
-                        <ActivityIndicator size="small" color="#540061" />
+                        <ActivityIndicator size="small" color="#fff" />
                     ) : (
                         <>
-                            <Text style={styles.postButtonText}>Post</Text>
-                            <Send size={14} color="#540061" strokeWidth={2} />
+                            <Text style={[styles.postButtonText, { color: '#fff' }]}>Post</Text>
+                            <Send size={14} color="#fff" strokeWidth={2} />
                         </>
                     )}
                 </TouchableOpacity>
             </View>
-        </View>
+        </GlassCard>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: '#1a1919',
         borderRadius: 24,
         padding: 16,
         marginBottom: 14,
@@ -181,7 +169,6 @@ const styles = StyleSheet.create({
         height: 42,
         borderRadius: 21,
         borderWidth: 2,
-        borderColor: C.primary,
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
@@ -192,7 +179,6 @@ const styles = StyleSheet.create({
         width: 34,
         height: 34,
         borderRadius: 17,
-        backgroundColor: '#201f1f',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -201,7 +187,6 @@ const styles = StyleSheet.create({
     },
     input: {
         fontSize: 15,
-        color: C.onSurface,
         minHeight: 40,
         lineHeight: 22,
     },
@@ -239,7 +224,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: 12,
         borderTopWidth: 1,
-        borderTopColor: 'rgba(72,72,71,0.3)',
     },
     mediaButton: {
         flexDirection: 'row',
@@ -249,12 +233,10 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
     },
     mediaText: {
-        color: C.secondary,
         fontWeight: '600',
         fontSize: 13,
     },
     postButton: {
-        backgroundColor: C.primary,
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 18,
@@ -263,10 +245,9 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     postButtonDisabled: {
-        backgroundColor: 'rgba(243, 130, 255, 0.25)',
+        opacity: 0.5,
     },
     postButtonText: {
-        color: '#540061',
         fontWeight: '800',
         fontSize: 14,
     },

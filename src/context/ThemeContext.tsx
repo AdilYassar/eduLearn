@@ -101,6 +101,9 @@ export const useTheme = (): ThemeContextType => {
   return context;
 };
 
+// Alias for admin components
+export const useAppTheme = useTheme;
+
 // Hook for getting themed styles
 export const useThemedStyles = () => {
   const { theme } = useTheme();

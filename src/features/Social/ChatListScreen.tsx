@@ -9,27 +9,17 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ConversationsList } from '../../components/social/Chat/ConversationsList';
-import { Edit, Users, UserPlus, X, MessageCircle } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Edit, Users, UserPlus, X, MessageCircle, Plus } from 'lucide-react-native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { SocialTabContext } from '../../navigation/SocialNavigator';
+import { Keyboard } from 'react-native';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { ThemedContainer, ThemedText } from '../../components/ui/ThemedComponents';
 
 export const ChatListScreen: React.FC = () => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const { switchTab } = useContext(SocialTabContext);
     const [modalVisible, setModalVisible] = useState(false);
 
@@ -38,100 +28,98 @@ export const ChatListScreen: React.FC = () => {
 
     const handleFindFriend = () => {
         closeModal();
-        // Switch to the Friends tab via context — no navigator needed
         setTimeout(() => switchTab('Friends'), 200);
     };
 
     const handleCreateGroup = () => {
         closeModal();
-        // CreateGroup is a stack screen, so navigation.navigate works fine here
         setTimeout(() => navigation.navigate('CreateGroup' as never), 200);
     };
 
+    useFocusEffect(
+        React.useCallback(() => {
+            Keyboard.dismiss();
+        }, [])
+    );
+
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-            {/* ── Header ── */}
-            <View style={[styles.header, { justifyContent: 'flex-end' }]}>
-                <TouchableOpacity
-                    style={styles.newMessageButton}
-                    onPress={openModal}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    activeOpacity={0.75}
-                >
-                    <Edit size={20} color={C.primary} strokeWidth={1.5} />
-                </TouchableOpacity>
+        <ThemedContainer style={styles.container} useGradient={false} edges={['left', 'right']}>
+            {/* ── Empty Header (for title if needed) ── */}
+            <View style={styles.header}>
+                <ThemedText weight="bold" size="xlarge">Messages</ThemedText>
             </View>
 
             <ConversationsList />
+
+            {/* ── Floating Action Button ── */}
+            <TouchableOpacity
+                style={[styles.fabButton, { backgroundColor: theme.primary }]}
+                onPress={openModal}
+                activeOpacity={0.8}
+            >
+                <Edit size={24} color="#FFF" strokeWidth={2} />
+            </TouchableOpacity>
 
             {/* ── Custom "New Conversation" Modal ── */}
             <Modal
                 visible={modalVisible}
                 transparent
-                animationType="fade"
+                animationType="slide"
                 statusBarTranslucent
                 onRequestClose={closeModal}
             >
                 {/* Backdrop */}
                 <Pressable style={styles.backdrop} onPress={closeModal}>
-                    {/* Sheet — stop propagation so tapping it doesn't dismiss */}
-                    <Pressable style={styles.sheet} onPress={() => {}}>
+                    {/* Sheet */}
+                    <View style={[styles.sheet, { backgroundColor: theme.background[0] }]}>
+                        <View style={[styles.handlePill, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]} />
 
-                        {/* Handle pill */}
-                        <View style={styles.handlePill} />
-
-                        {/* Header row */}
                         <View style={styles.modalHeader}>
                             <View style={styles.modalTitleRow}>
-                                <MessageCircle size={20} color={C.primary} strokeWidth={1.5} />
-                                <Text style={styles.modalTitle}>New Conversation</Text>
+                                <MessageCircle size={20} color={theme.primary} strokeWidth={1.5} />
+                                <ThemedText weight="bold" size="large">New Conversation</ThemedText>
                             </View>
                             <TouchableOpacity
-                                style={styles.closeButton}
+                                style={[styles.closeButton, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}
                                 onPress={closeModal}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <X size={18} color={C.onSurfaceVariant} strokeWidth={1.5} />
+                                <X size={18} color={theme.text.secondary} strokeWidth={1.5} />
                             </TouchableOpacity>
                         </View>
 
-                        <Text style={styles.modalSubtitle}>
+                        <ThemedText variant="secondary" style={styles.modalSubtitle}>
                             Choose how you'd like to start a chat
-                        </Text>
+                        </ThemedText>
 
                         {/* Options */}
                         <TouchableOpacity
-                            style={styles.option}
+                            style={[styles.option, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}
                             onPress={handleFindFriend}
                             activeOpacity={0.75}
                         >
-                            <View style={[styles.optionIcon, { backgroundColor: 'rgba(243,130,255,0.12)' }]}>
-                                <UserPlus size={22} color={C.primary} strokeWidth={1.5} />
+                            <View style={[styles.optionIcon, { backgroundColor: 'rgba(243,130,255,0.1)' }]}>
+                                <UserPlus size={22} color={theme.primary} strokeWidth={1.5} />
                             </View>
                             <View style={styles.optionText}>
-                                <Text style={styles.optionLabel}>Direct Message</Text>
-                                <Text style={styles.optionDesc}>Find a friend and start chatting</Text>
+                                <ThemedText weight="bold">Direct Message</ThemedText>
+                                <ThemedText variant="secondary" size="small">Find a friend and start chatting</ThemedText>
                             </View>
-                            <View style={styles.optionChevron}>
-                                <Text style={styles.chevronText}>›</Text>
-                            </View>
+                            <ThemedText variant="secondary" style={{ fontSize: 22 }}>›</ThemedText>
                         </TouchableOpacity>
 
                         <TouchableOpacity
-                            style={styles.option}
+                            style={[styles.option, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}
                             onPress={handleCreateGroup}
                             activeOpacity={0.75}
                         >
-                            <View style={[styles.optionIcon, { backgroundColor: 'rgba(172,138,255,0.12)' }]}>
-                                <Users size={22} color={C.secondary} strokeWidth={1.5} />
+                            <View style={[styles.optionIcon, { backgroundColor: 'rgba(172,138,255,0.1)' }]}>
+                                <Users size={22} color={theme.secondary} strokeWidth={1.5} />
                             </View>
                             <View style={styles.optionText}>
-                                <Text style={styles.optionLabel}>Create Group</Text>
-                                <Text style={styles.optionDesc}>Start a group conversation</Text>
+                                <ThemedText weight="bold">Create Group</ThemedText>
+                                <ThemedText variant="secondary" size="small">Start a group conversation</ThemedText>
                             </View>
-                            <View style={styles.optionChevron}>
-                                <Text style={styles.chevronText}>›</Text>
-                            </View>
+                            <ThemedText variant="secondary" style={{ fontSize: 22 }}>›</ThemedText>
                         </TouchableOpacity>
 
                         {/* Cancel */}
@@ -140,71 +128,66 @@ export const ChatListScreen: React.FC = () => {
                             onPress={closeModal}
                             activeOpacity={0.7}
                         >
-                            <Text style={styles.cancelText}>Cancel</Text>
+                            <ThemedText weight="semibold" variant="secondary">Cancel</ThemedText>
                         </TouchableOpacity>
-                    </Pressable>
+                    </View>
                 </Pressable>
             </Modal>
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
     },
 
     // ── Header ──
     header: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: C.bg,
+        paddingTop: 12,
+        paddingBottom: 4,
     },
-    headerTitle: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: C.onSurface,
-        letterSpacing: -0.5,
-    },
-    newMessageButton: {
-        width: 38,
-        height: 38,
-        borderRadius: 19,
-        backgroundColor: C.surface,
+    fabButton: {
+        position: 'absolute',
+        bottom: 30,
+        right: 20,
+        width: 56,
+        height: 56,
+        borderRadius: 28,
         justifyContent: 'center',
         alignItems: 'center',
+        elevation: 6,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+        zIndex: 10,
     },
 
     // ── Modal ──
     backdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.72)',
+        backgroundColor: 'rgba(0,0,0,0.6)',
         justifyContent: 'flex-end',
     },
     sheet: {
-        backgroundColor: C.surface,
         borderTopLeftRadius: 28,
         borderTopRightRadius: 28,
         paddingTop: 10,
         paddingHorizontal: 20,
         paddingBottom: 36,
     },
-
-    // Handle
     handlePill: {
         width: 40,
         height: 4,
         borderRadius: 2,
-        backgroundColor: C.outlineVariant,
         alignSelf: 'center',
         marginBottom: 20,
     },
-
-    // Modal header
     modalHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -216,32 +199,20 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 10,
     },
-    modalTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        color: C.onSurface,
-        letterSpacing: -0.3,
-    },
     closeButton: {
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
     modalSubtitle: {
-        fontSize: 13,
-        color: C.onSurfaceVariant,
         marginBottom: 22,
         lineHeight: 18,
     },
-
-    // Option rows
     option: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: C.surfaceHigh,
         borderRadius: 18,
         paddingVertical: 14,
         paddingHorizontal: 16,
@@ -259,35 +230,9 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 3,
     },
-    optionLabel: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: C.onSurface,
-    },
-    optionDesc: {
-        fontSize: 12,
-        color: C.onSurfaceVariant,
-    },
-    optionChevron: {
-        width: 24,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    chevronText: {
-        fontSize: 22,
-        color: C.outlineVariant,
-        lineHeight: 26,
-    },
-
-    // Cancel
     cancelOption: {
         alignItems: 'center',
         paddingVertical: 14,
         marginTop: 4,
-    },
-    cancelText: {
-        fontSize: 15,
-        color: C.onSurfaceVariant,
-        fontWeight: '600',
     },
 });

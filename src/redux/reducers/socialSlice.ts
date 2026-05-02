@@ -157,7 +157,7 @@ const socialSlice = createSlice({
         (m) => m._id === message._id
       );
       if (!exists) {
-        state.messages[conversationId].push(message);
+        state.messages[conversationId].unshift(message);
       }
     },
     updateMessage: (

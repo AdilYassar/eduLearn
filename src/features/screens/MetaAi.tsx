@@ -84,10 +84,10 @@ const MetaAi = () => {
       messages: [],
       summary: 'New Chat',
     }));
-    
+
     // Set the new chat as current
     dispatch(changeCurrentChatId({ chatId: newChatId }));
-    
+
     // Navigate back
     navigation.goBack();
   };
@@ -121,7 +121,7 @@ const MetaAi = () => {
           messages: [],
           summary: 'New Chat',
         }));
-        
+
         dispatch(changeCurrentChatId({ chatId: newChatId }));
       };
     }, [dispatch])
@@ -140,7 +140,7 @@ const MetaAi = () => {
       />
 
       {/* Main chat and input area container */}
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.chatContainer}
         keyboardVerticalOffset={0}
@@ -149,7 +149,7 @@ const MetaAi = () => {
         <Chat
           isTyping={isTyping}
           messages={
-            selectedDate 
+            selectedDate
               ? chatsByDate?.find((chat: { id: string }) => chat.id === currentChatId)?.messages || []
               : chats?.find((chat: { id: string }) => chat.id === currentChatId)?.messages || []
           }

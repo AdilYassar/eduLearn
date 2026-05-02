@@ -1,12 +1,18 @@
-﻿/**
+/**
  * Device Token Registration Service
  * Handles Firebase device token registration with the shared DB via social microservice
  */
 
-import messaging from "@react-native-firebase/messaging";
+import {
+  getMessaging,
+  requestPermission,
+  getToken,
+  AuthorizationStatus
+} from "@react-native-firebase/messaging";
 import { Platform } from "react-native";
 import DeviceInfo from "react-native-device-info";
 import { getConfigValue } from "../config/envConfig";
+import { check, request, RESULTS } from 'react-native-permissions';
 
 // Base URL from config
 const BASE_URL = getConfigValue("BASE_URL");
@@ -80,10 +86,10 @@ export const registerDeviceToken = async (
     console.log("[DEVICE_TOKEN] \ud83d\udce5 FULL BODY:", JSON.stringify(result, null, 2));
 
     if (response.ok) {
-        console.log("[DEVICE_TOKEN] \u2705 Success!");
-        return result;
+      console.log("[DEVICE_TOKEN] \u2705 Success!");
+      return result;
     } else {
-        throw new Error(result.message || "Device registration failed");
+      throw new Error(result.message || "Device registration failed");
     }
   } catch (error: any) {
     console.error("[DEVICE_TOKEN] \ud83d\udea8 ERROR:", error.message);
@@ -96,7 +102,7 @@ export const registerDeviceToken = async (
  */
 export const getFirebaseToken = async (): Promise<string | null> => {
   try {
-    const token = await messaging().getToken();
+    const token = await getToken(getMessaging());
     return token;
   } catch (error) {
     console.error("[DEVICE_TOKEN] \u274c FCM Token Error:", error);
@@ -105,14 +111,32 @@ export const getFirebaseToken = async (): Promise<string | null> => {
 };
 
 /**
- * Check Firebase messaging permissions
+ * Check and request Firebase messaging permissions
+ * Handles both iOS and Android (including Android 13+ POST_NOTIFICATIONS)
  */
 export const checkMessagingPermission = async (): Promise<boolean> => {
   try {
-    const authorizationStatus = await messaging().requestPermission();
+    // For Android 13+, we need to check POST_NOTIFICATIONS specifically
+    if (Platform.OS === 'android' && Platform.Version >= 33) {
+      // Use direct string since the constant seems missing in this version of the library
+      const notificationPermission = 'android.permission.POST_NOTIFICATIONS' as any;
+
+      console.log("[PERMISSIONS] Checking Android 13+ POST_NOTIFICATIONS status...");
+      const status = await check(notificationPermission);
+      console.log("[PERMISSIONS] Current status:", status);
+
+      if (status !== RESULTS.GRANTED && status !== RESULTS.BLOCKED) {
+        console.log("[PERMISSIONS] Requesting POST_NOTIFICATIONS permission...");
+        const result = await request(notificationPermission);
+        console.log("[PERMISSIONS] Request result:", result);
+      }
+    }
+
+    // Standard Firebase permission request
+    const authorizationStatus = await requestPermission(getMessaging());
     const granted =
-      authorizationStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-      authorizationStatus === messaging.AuthorizationStatus.PROVISIONAL;
+      authorizationStatus === AuthorizationStatus.AUTHORIZED ||
+      authorizationStatus === AuthorizationStatus.PROVISIONAL;
 
     console.log("[PERMISSIONS] Firebase messaging permission status:", authorizationStatus);
     return granted;
@@ -141,7 +165,7 @@ export const registerDeviceTokenWithAuth = async (token: string): Promise<boolea
     });
 
     const result = await response.json();
-    
+
     if (response.ok) {
       console.log('[AUTH_DEVICE_TOKEN] ✅ Device token registered with auth');
       return true;

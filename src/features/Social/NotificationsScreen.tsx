@@ -17,18 +17,12 @@ import {
 import { NotificationItem } from '../../components/social/Notifications/NotificationItem';
 import { CheckCheck, Bell } from 'lucide-react-native';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    primary: '#f382ff',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { ThemedContainer, ThemedText } from '../../components/ui/ThemedComponents';
 
 export const NotificationsScreen: React.FC = () => {
     const dispatch = useDispatch();
+    const { theme } = useTheme();
     const notifications = useSelector((state: any) => state.social.notifications);
     const loading = useSelector((state: any) => state.social.isLoadingNotifications);
 
@@ -66,16 +60,16 @@ export const NotificationsScreen: React.FC = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <ThemedContainer style={styles.container} useGradient={false} edges={['left', 'right']}>
             {/* Header */}
             <View style={[styles.header, { justifyContent: 'flex-end' }]}>
                 <TouchableOpacity
                     onPress={handleMarkAllRead}
-                    style={styles.markReadButton}
+                    style={[styles.markReadButton, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}
                     activeOpacity={0.7}
                 >
-                    <CheckCheck size={16} color={C.primary} strokeWidth={1.5} />
-                    <Text style={styles.markReadText}>All read</Text>
+                    <CheckCheck size={16} color={theme.primary} strokeWidth={1.5} />
+                    <Text style={[styles.markReadText, { color: theme.primary }]}>All read</Text>
                 </TouchableOpacity>
             </View>
 
@@ -89,30 +83,29 @@ export const NotificationsScreen: React.FC = () => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
-                        tintColor={C.primary}
-                        colors={[C.primary]}
+                        tintColor={theme.primary}
+                        colors={[theme.primary]}
                     />
                 }
                 ListEmptyComponent={
                     !loading ? (
                         <View style={styles.emptyContainer}>
-                            <View style={styles.emptyIconWrap}>
-                                <Bell size={32} color={C.outlineVariant} strokeWidth={1.5} />
+                            <View style={[styles.emptyIconWrap, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                                <Bell size={32} color={theme.isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)'} strokeWidth={1.5} />
                             </View>
-                            <Text style={styles.emptyText}>No notifications</Text>
-                            <Text style={styles.emptySubtext}>You're all caught up!</Text>
+                            <ThemedText weight="bold" size="large">No notifications</ThemedText>
+                            <ThemedText variant="secondary">You're all caught up!</ThemedText>
                         </View>
                     ) : null
                 }
             />
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
     },
 
     // ── Header ──
@@ -121,26 +114,17 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: C.bg,
-    },
-    headerTitle: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: C.onSurface,
-        letterSpacing: -0.5,
+        paddingVertical: 12,
     },
     markReadButton: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: C.surface,
         paddingHorizontal: 12,
         paddingVertical: 7,
         borderRadius: 999,
     },
     markReadText: {
-        color: C.primary,
         fontWeight: '700',
         fontSize: 12,
     },
@@ -165,18 +149,8 @@ const styles = StyleSheet.create({
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 6,
-    },
-    emptyText: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-    },
-    emptySubtext: {
-        fontSize: 14,
-        color: C.onSurfaceVariant,
     },
 });

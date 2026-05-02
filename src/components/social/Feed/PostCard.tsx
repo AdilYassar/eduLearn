@@ -20,22 +20,10 @@ import {
     FileText,
 } from 'lucide-react-native';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
+import { useTheme } from '../../../context/ThemeContext';
+import { GlassCard, ThemedText } from '../../../components/ui/ThemedComponents';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+const SCREEN_WIDTH = Dimensions.get('window').width;
 
 interface PostCardProps {
     post: PostType;
@@ -50,6 +38,7 @@ export const PostCard: React.FC<PostCardProps> = ({
     onComment,
     onShare,
 }) => {
+    const { theme } = useTheme();
     const navigation = useNavigation();
     const [isLiked, setIsLiked] = useState(post.isLiked || false);
     const [likeCount, setLikeCount] = useState(post.stats.likes);
@@ -83,47 +72,47 @@ export const PostCard: React.FC<PostCardProps> = ({
     };
 
     return (
-        <View style={styles.container}>
+        <GlassCard style={styles.container} opacity={0.1}>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.authorInfo}>
                     {/* Aura Ring Avatar */}
-                    <View style={styles.auraRing}>
+                    <View style={[styles.auraRing, { borderColor: theme.primary }]}>
                         <View style={styles.avatar}>
-                            <UserCircle size={32} color={C.primary} strokeWidth={1.5} />
+                            <UserCircle size={32} color={theme.primary} strokeWidth={1.5} />
                         </View>
                     </View>
                     <View style={styles.authorMeta}>
-                        <Text style={styles.authorName}>{post.author?.name || 'Unknown'}</Text>
-                        <Text style={styles.timestamp}>{formatTime(post.createdAt)}</Text>
+                        <ThemedText style={styles.authorName}>{post.author?.name || 'Unknown'}</ThemedText>
+                        <ThemedText style={styles.timestamp}>{formatTime(post.createdAt)}</ThemedText>
                     </View>
                 </View>
                 <TouchableOpacity style={styles.moreButton} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <MoreVertical size={18} color={C.onSurfaceVariant} strokeWidth={1.5} />
+                    <MoreVertical size={18} color={theme.text.secondary} strokeWidth={1.5} />
                 </TouchableOpacity>
             </View>
 
             {/* Content */}
             <View style={styles.content}>
                 {post.content.text && (
-                    <Text style={styles.postText}>{post.content.text}</Text>
+                    <ThemedText style={styles.postText}>{post.content.text}</ThemedText>
                 )}
 
                 {/* Progress Badge */}
                 {post.type === 'progress' && post.content.progress && (
                     <View style={styles.progressBadge}>
-                        <Text style={styles.progressType}>
+                        <ThemedText style={[styles.progressType, { color: theme.primary }]}>
                             🎉 {post.content.progress.type.replace(/_/g, ' ').toUpperCase()}
-                        </Text>
+                        </ThemedText>
                         {post.content.progress.courseName && (
-                            <Text style={styles.progressCourse}>
+                            <ThemedText style={styles.progressCourse}>
                                 {post.content.progress.courseName}
-                            </Text>
+                            </ThemedText>
                         )}
                         {post.content.progress.score !== undefined && (
-                            <Text style={styles.progressScore}>
+                            <ThemedText style={styles.progressScore}>
                                 Score: {post.content.progress.score}%
-                            </Text>
+                            </ThemedText>
                         )}
                     </View>
                 )}
@@ -159,10 +148,10 @@ export const PostCard: React.FC<PostCardProps> = ({
                             // fallback for other/unknown types
                             return (
                                 <View key={index} style={styles.mediaFallback}>
-                                    <FileText size={22} color={C.outlineVariant} strokeWidth={1.5} />
-                                    <Text style={styles.mediaFallbackText}>
+                                    <FileText size={22} color={theme.text.secondary} strokeWidth={1.5} />
+                                    <ThemedText style={styles.mediaFallbackText}>
                                         {media.type?.toUpperCase() ?? 'FILE'}
-                                    </Text>
+                                    </ThemedText>
                                 </View>
                             );
                         })}
@@ -173,9 +162,9 @@ export const PostCard: React.FC<PostCardProps> = ({
                 {post.hashtags && post.hashtags.length > 0 && (
                     <View style={styles.hashtagsContainer}>
                         {post.hashtags.map((tag, index) => (
-                            <Text key={index} style={styles.hashtag}>
+                            <ThemedText key={index} style={[styles.hashtag, { color: theme.primary }]}>
                                 #{tag}
-                            </Text>
+                            </ThemedText>
                         ))}
                     </View>
                 )}
@@ -183,17 +172,17 @@ export const PostCard: React.FC<PostCardProps> = ({
 
             {/* Stats */}
             <View style={styles.stats}>
-                <Text style={styles.statsText}>
+                <ThemedText style={styles.statsText}>
                     {likeCount} {likeCount === 1 ? 'like' : 'likes'}
-                </Text>
-                <Text style={styles.statsDot}>·</Text>
-                <Text style={styles.statsText}>
+                </ThemedText>
+                <ThemedText style={styles.statsDot}>·</ThemedText>
+                <ThemedText style={styles.statsText}>
                     {post.stats.comments} {post.stats.comments === 1 ? 'comment' : 'comments'}
-                </Text>
+                </ThemedText>
             </View>
 
             {/* Actions */}
-            <View style={styles.actions}>
+            <View style={[styles.actions, { borderTopColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
                 <TouchableOpacity
                     style={styles.actionButton}
                     onPress={handleLike}
@@ -201,13 +190,13 @@ export const PostCard: React.FC<PostCardProps> = ({
                 >
                     <Heart
                         size={20}
-                        color={isLiked ? C.primary : C.onSurfaceVariant}
-                        fill={isLiked ? C.primary : 'none'}
+                        color={isLiked ? theme.primary : theme.text.secondary}
+                        fill={isLiked ? theme.primary : 'none'}
                         strokeWidth={1.5}
                     />
-                    <Text style={[styles.actionText, isLiked && styles.actionTextActive]}>
+                    <ThemedText style={[styles.actionText, isLiked && { color: theme.primary }]}>
                         Like
-                    </Text>
+                    </ThemedText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -215,8 +204,8 @@ export const PostCard: React.FC<PostCardProps> = ({
                     onPress={onComment}
                     activeOpacity={0.7}
                 >
-                    <MessageCircle size={20} color={C.onSurfaceVariant} strokeWidth={1.5} />
-                    <Text style={styles.actionText}>Comment</Text>
+                    <MessageCircle size={20} color={theme.text.secondary} strokeWidth={1.5} />
+                    <ThemedText style={styles.actionText}>Comment</ThemedText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -224,17 +213,35 @@ export const PostCard: React.FC<PostCardProps> = ({
                     onPress={onShare}
                     activeOpacity={0.7}
                 >
-                    <Share2 size={20} color={C.onSurfaceVariant} strokeWidth={1.5} />
-                    <Text style={styles.actionText}>Share</Text>
+                    <Share2 size={20} color={theme.text.secondary} strokeWidth={1.5} />
+                    <ThemedText style={styles.actionText}>Share</ThemedText>
                 </TouchableOpacity>
             </View>
-        </View>
+
+            {/* Inline Comments */}
+            {post.comments && post.comments.length > 0 && (
+                <View style={[styles.commentsSection, { borderTopColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                    {post.comments.slice(0, 2).map((comment, index) => (
+                        <View key={comment._id || index} style={styles.commentItem}>
+                            <ThemedText style={styles.commentAuthor}>{comment.author?.name || 'User'}</ThemedText>
+                            <ThemedText style={styles.commentText}>{comment.content.text}</ThemedText>
+                        </View>
+                    ))}
+                    {post.stats.comments > 2 && (
+                        <TouchableOpacity onPress={onComment} style={styles.viewMoreComments}>
+                            <ThemedText style={[styles.viewMoreText, { color: theme.primary }]}>
+                                View all {post.stats.comments} comments
+                            </ThemedText>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
+        </GlassCard>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        backgroundColor: C.surface,
         borderRadius: 24,
         marginBottom: 14,
         overflow: 'hidden',
@@ -258,7 +265,6 @@ const styles = StyleSheet.create({
         height: 46,
         borderRadius: 23,
         borderWidth: 2,
-        borderColor: C.primary,
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
@@ -268,7 +274,6 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -278,12 +283,11 @@ const styles = StyleSheet.create({
     authorName: {
         fontSize: 15,
         fontWeight: '700',
-        color: C.onSurface,
         letterSpacing: -0.2,
     },
     timestamp: {
         fontSize: 12,
-        color: C.outlineVariant,
+        opacity: 0.6,
     },
     moreButton: {
         padding: 4,
@@ -297,35 +301,31 @@ const styles = StyleSheet.create({
     postText: {
         fontSize: 15,
         lineHeight: 22,
-        color: C.onSurface,
         marginBottom: 12,
     },
 
     // Progress Badge
     progressBadge: {
-        backgroundColor: C.surfaceHigh,
         borderRadius: 16,
         padding: 14,
         marginTop: 4,
         borderLeftWidth: 3,
-        borderLeftColor: C.primary,
+        backgroundColor: 'rgba(128,128,128,0.05)',
     },
     progressType: {
         fontSize: 13,
         fontWeight: '800',
-        color: C.primary,
         marginBottom: 4,
         textTransform: 'uppercase',
         letterSpacing: 0.5,
     },
     progressCourse: {
         fontSize: 13,
-        color: C.onSurface,
         marginBottom: 2,
     },
     progressScore: {
         fontSize: 12,
-        color: C.onSurfaceVariant,
+        opacity: 0.7,
     },
 
     // Media
@@ -337,13 +337,11 @@ const styles = StyleSheet.create({
         width: '100%',
         height: 220,
         borderRadius: 16,
-        backgroundColor: C.surfaceHigh,
     },
     videoPlaceholder: {
         width: '100%',
         height: 200,
         borderRadius: 16,
-        backgroundColor: C.surfaceHigh,
         overflow: 'hidden',
         justifyContent: 'center',
         alignItems: 'center',
@@ -358,17 +356,17 @@ const styles = StyleSheet.create({
     },
     mediaFallback: {
         height: 80,
-        backgroundColor: C.surfaceHigh,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         gap: 6,
+        backgroundColor: 'rgba(128,128,128,0.05)',
     },
     mediaFallbackText: {
         fontSize: 12,
-        color: C.outlineVariant,
         fontWeight: '600',
         letterSpacing: 0.5,
+        opacity: 0.6,
     },
 
     // Hashtags
@@ -380,7 +378,6 @@ const styles = StyleSheet.create({
     },
     hashtag: {
         fontSize: 13,
-        color: C.secondary,
         fontWeight: '600',
     },
 
@@ -394,18 +391,17 @@ const styles = StyleSheet.create({
     },
     statsText: {
         fontSize: 12,
-        color: C.outlineVariant,
+        opacity: 0.6,
     },
     statsDot: {
         fontSize: 12,
-        color: C.outlineVariant,
+        opacity: 0.6,
     },
 
     // ── Actions ──
     actions: {
         flexDirection: 'row',
         borderTopWidth: 1,
-        borderTopColor: 'rgba(72,72,71,0.3)',
         paddingVertical: 6,
     },
     actionButton: {
@@ -418,10 +414,36 @@ const styles = StyleSheet.create({
     },
     actionText: {
         fontSize: 13,
-        color: C.onSurfaceVariant,
         fontWeight: '600',
     },
     actionTextActive: {
-        color: C.primary,
+    },
+    // ── Comments ──
+    commentsSection: {
+        paddingHorizontal: 16,
+        paddingBottom: 16,
+        paddingTop: 8,
+        borderTopWidth: 1,
+    },
+    commentItem: {
+        flexDirection: 'row',
+        marginBottom: 4,
+        gap: 6,
+    },
+    commentAuthor: {
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    commentText: {
+        fontSize: 13,
+        flex: 1,
+        opacity: 0.8,
+    },
+    viewMoreComments: {
+        marginTop: 6,
+    },
+    viewMoreText: {
+        fontSize: 12,
+        fontWeight: '600',
     },
 });

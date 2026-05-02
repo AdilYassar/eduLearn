@@ -13,20 +13,12 @@ import { useNavigation } from '@react-navigation/native';
 import { ArrowLeft, Users } from 'lucide-react-native';
 import { groupService } from '../../service/social';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    primary: '#f382ff',
-    secondary: '#ac8aff',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { ThemedContainer, ThemedText, ThemedHeader } from '../../components/ui/ThemedComponents';
 
 export const CreateGroupScreen: React.FC = () => {
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [loading, setLoading] = useState(false);
@@ -54,118 +46,89 @@ export const CreateGroupScreen: React.FC = () => {
     const canCreate = name.trim().length > 0;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <ThemedContainer style={styles.container} useGradient={false}>
             {/* ── Header ── */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => navigation.goBack()}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <ArrowLeft size={20} color={C.onSurfaceVariant} strokeWidth={1.5} />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>New Group</Text>
-
-                <TouchableOpacity
-                    style={[styles.createButton, (!canCreate || loading) && styles.createButtonDisabled]}
-                    onPress={handleCreate}
-                    disabled={!canCreate || loading}
-                    activeOpacity={0.85}
-                >
-                    {loading ? (
-                        <ActivityIndicator size="small" color="#540061" />
-                    ) : (
-                        <Text style={styles.createButtonText}>Create</Text>
-                    )}
-                </TouchableOpacity>
-            </View>
+            <ThemedHeader 
+                title="New Group"
+                showBack
+                rightAction={
+                    <TouchableOpacity
+                        style={[
+                            styles.createButton, 
+                            { backgroundColor: theme.primary },
+                            (!canCreate || loading) && styles.createButtonDisabled
+                        ]}
+                        onPress={handleCreate}
+                        disabled={!canCreate || loading}
+                        activeOpacity={0.85}
+                    >
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.createButtonText}>Create</Text>
+                        )}
+                    </TouchableOpacity>
+                }
+                style={{ borderBottomWidth: 1, borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+            />
 
             <View style={styles.content}>
                 {/* Group icon placeholder */}
                 <View style={styles.iconSection}>
-                    <View style={styles.groupIconWrap}>
-                        <Users size={36} color={C.primary} strokeWidth={1.5} />
+                    <View style={[styles.groupIconWrap, { borderColor: theme.primary, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <Users size={36} color={theme.primary} strokeWidth={1.5} />
                     </View>
-                    <Text style={styles.iconHint}>Group icon</Text>
+                    <Text style={[styles.iconHint, { color: theme.primary }]}>Group icon</Text>
                 </View>
 
                 {/* Form Card */}
-                <View style={styles.formCard}>
+                <View style={[styles.formCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
                     {/* Name */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.fieldLabel}>GROUP NAME</Text>
+                        <ThemedText variant="secondary" weight="bold" style={styles.fieldLabel}>GROUP NAME</ThemedText>
                         <TextInput
-                            style={styles.fieldInput}
+                            style={[styles.fieldInput, { color: theme.text.primary }]}
                             value={name}
                             onChangeText={setName}
                             placeholder="e.g. Study Group"
-                            placeholderTextColor={C.outlineVariant}
+                            placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
                             maxLength={50}
-                            selectionColor={C.primary}
+                            selectionColor={theme.primary}
                         />
                     </View>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} />
 
                     {/* Description */}
                     <View style={styles.fieldGroup}>
                         <View style={styles.fieldLabelRow}>
-                            <Text style={styles.fieldLabel}>DESCRIPTION</Text>
-                            <Text style={styles.charCount}>{description.length}/200</Text>
+                            <ThemedText variant="secondary" weight="bold" style={styles.fieldLabel}>DESCRIPTION</ThemedText>
+                            <ThemedText variant="secondary" size="small">{description.length}/200</ThemedText>
                         </View>
                         <TextInput
-                            style={[styles.fieldInput, styles.textArea]}
+                            style={[styles.fieldInput, styles.textArea, { color: theme.text.primary }]}
                             value={description}
                             onChangeText={setDescription}
                             placeholder="Describe your group…"
-                            placeholderTextColor={C.outlineVariant}
+                            placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
                             multiline
                             numberOfLines={4}
                             maxLength={200}
                             textAlignVertical="top"
-                            selectionColor={C.primary}
+                            selectionColor={theme.primary}
                         />
                     </View>
                 </View>
             </View>
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
-    },
-
-    // ── Header ──
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        backgroundColor: C.bg,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(72,72,71,0.3)',
-    },
-    cancelButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: C.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-        letterSpacing: -0.2,
     },
     createButton: {
-        backgroundColor: C.primary,
         paddingHorizontal: 18,
         paddingVertical: 8,
         borderRadius: 999,
@@ -173,10 +136,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     createButtonDisabled: {
-        backgroundColor: 'rgba(243,130,255,0.25)',
+        opacity: 0.5,
     },
     createButtonText: {
-        color: '#540061',
+        color: '#fff',
         fontWeight: '800',
         fontSize: 14,
     },
@@ -193,22 +156,18 @@ const styles = StyleSheet.create({
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: C.surface,
         borderWidth: 2,
-        borderColor: C.primary,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 10,
     },
     iconHint: {
         fontSize: 12,
-        color: C.primary,
         fontWeight: '600',
     },
 
     // ── Form Card ──
     formCard: {
-        backgroundColor: C.surface,
         borderRadius: 20,
         paddingHorizontal: 18,
         paddingVertical: 6,
@@ -223,27 +182,18 @@ const styles = StyleSheet.create({
     },
     fieldLabel: {
         fontSize: 10,
-        fontWeight: '700',
-        color: C.outlineVariant,
         letterSpacing: 0.8,
         marginBottom: 8,
     },
     fieldInput: {
         fontSize: 15,
-        color: C.onSurface,
         paddingVertical: 0,
     },
     textArea: {
         minHeight: 72,
         lineHeight: 22,
     },
-    charCount: {
-        fontSize: 11,
-        color: C.outlineVariant,
-        marginBottom: 8,
-    },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(72,72,71,0.3)',
     },
 });

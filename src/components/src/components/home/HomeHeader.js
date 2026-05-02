@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useUserStore } from '../../service/userStore';
 import InquiryModal from './InquiryModal';
 import { RFValue } from 'react-native-responsive-fontsize';
-import { CircleUser, Menu } from 'lucide-react-native';
+import { CircleUser, Menu, ArrowLeft } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { headerStyles } from '../../styles/headerStyles';
 import { navigate } from '../../../../utils/Navigation.tsx';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -13,7 +14,8 @@ import { useLiveMeetStore } from '../../service/meetStore';
 import { removeHyphens } from '../../utils/Helpers';
 import { checkSession } from '../../service/api/session';
 
-const HomeHeader = () => {
+const HomeHeader = ({ fromAdmin }) => {
+  const navigation = useNavigation();
   const [visible, setVisible] = useState(false);
   const [meetingCode, setMeetingCode] = useState('');
   const { user } = useUserStore();
@@ -79,7 +81,13 @@ const HomeHeader = () => {
   return (
     <SafeAreaView style={{ flex: 0 }} edges={['bottom', 'left', 'right']}>
       <View style={[headerStyles.container, { backgroundColor: theme.background[0] || theme.card }]}>
-        <Menu size={RFValue(20)} color={theme.text.primary} />
+        {fromAdmin ? (
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <ArrowLeft size={RFValue(20)} color={theme.text.primary} />
+          </TouchableOpacity>
+        ) : (
+          <Menu size={RFValue(20)} color={theme.text.primary} />
+        )}
         <TextInput
           style={[headerStyles.textContainer, {
             backgroundColor: 'transparent',

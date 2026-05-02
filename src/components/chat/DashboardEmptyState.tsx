@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { RFValue } from 'react-native-responsive-fontsize';
 import { useTheme } from '../../context/ThemeContext';
@@ -144,7 +145,13 @@ const DashboardEmptyState: React.FC<DashboardEmptyStateProps> = ({
           style={[styles.addTeamCard, { backgroundColor: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.15)' }]}
           onPress={() => handlePress('I need help with my studies')}
         >
-          <Text style={[styles.addTeamText, { color: theme.text.primary }]}>Ask EduLearn AI{'\n'}for help!</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+            <Image
+              source={require('../../assets/icons/appIcon.png')}
+              style={{ width: 32, height: 32, borderRadius: 8 }}
+            />
+            <Text style={[styles.addTeamText, { color: theme.text.primary }]}>Ask EduLearn AI{'\n'}for help!</Text>
+          </View>
           <View style={styles.addTeamButton}>
             <Text style={styles.addTeamButtonText}>+</Text>
           </View>

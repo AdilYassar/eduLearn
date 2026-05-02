@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, FlatList, Image, Alert, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { homeStyles } from '../styles/homeStyles';
 import HomeHeader from '../components/home/HomeHeader';
 import { navigate } from '../../../utils/Navigation';
@@ -25,8 +26,42 @@ const HomeScreen = () => {
   const { user, sessions, addSession, removeSession } = useUserStore();
   const {addSessionId, removeSessionId} = useLiveMeetStore();
   const { theme } = useTheme();
+  const route = useRoute();
+  const navigation = useNavigation();
+  const fromAdmin = route.params?.fromAdmin === true;
+  
+  console.log('EduLearn Trace: HomeScreen Context', { fromAdmin });
 
   const [visible, setVisible] = useState(false);
+  const [pendingMeetingCode, setPendingMeetingCode] = useState(null);
+
+  React.useEffect(() => {
+    const meetingCode = route.params?.meetingCode;
+    if (meetingCode) {
+      handleDeepLink(meetingCode);
+    }
+  }, [route.params?.meetingCode]);
+
+  const handleDeepLink = (code) => {
+    const storedName = user?.name;
+    if (!storedName) {
+      setPendingMeetingCode(code);
+      setVisible(true);
+    } else {
+      joinViaSessionId(code);
+    }
+  };
+
+  const handleModalClose = () => {
+    setVisible(false);
+    if (pendingMeetingCode) {
+      // Check if user saved their info
+      if (user?.name) {
+        joinViaSessionId(pendingMeetingCode);
+      }
+      setPendingMeetingCode(null);
+    }
+  };
 
   const handleNavigation = () => {
     const storedName = user?.name;
@@ -92,7 +127,7 @@ const HomeScreen = () => {
   return (
     <ThemedContainer style={styles.container}>
       <View style={styles.contentWrapper}>
-        <HomeHeader />
+        <HomeHeader fromAdmin={fromAdmin} />
         <FlatList
           data={sessions}
           renderItem={renderSessions}
@@ -125,8 +160,12 @@ const HomeScreen = () => {
           <ThemedText style={[homeStyles.buttonText, { fontWeight: '600' }]}>Join a Meeting</ThemedText>
         </TouchableOpacity>
 
-        {/* Bottom Navigation Bar */}
-        <BottomNavigationBar backgroundColor={theme.componentBackground[0]} currentScreen="HomeScreen" />
+        {/* Bottom Navigation Bar - Only show if not from Admin */}
+        {!fromAdmin && (
+          <BottomNavigationBar backgroundColor={theme.componentBackground[0]} currentScreen="HomeScreen" />
+        )}
+
+        <InquiryModal visible={visible} onClose={handleModalClose} />
       </View>
     </ThemedContainer>
   );

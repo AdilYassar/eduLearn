@@ -48,9 +48,9 @@ export const chatSlice = createSlice({
         },
         createNewChat: (state, action) => {
             const { chatId, messages = [], summary = '' } = action.payload;
-            state.chats.push({ 
-                id: chatId, 
-                messages, 
+            state.chats.push({
+                id: chatId,
+                messages,
                 summary,
                 createdAt: new Date().toISOString(),
             });
@@ -113,15 +113,15 @@ export const chatSlice = createSlice({
     }
 });
 
-export const { 
-    updateChatSummary, 
-    deleteChat, 
-    clearChat, 
+export const {
+    updateChatSummary,
+    deleteChat,
+    clearChat,
     markMessageAsRead,
-    clearAllChats, 
+    clearAllChats,
     addAssistantMessage,
-    createNewChat, 
-    addMessages, 
+    createNewChat,
+    addMessages,
     changeCurrentChatId,
     updateAssistantMessage,
     setSelectedDate,
@@ -135,7 +135,7 @@ export const selectSelectedDate = (state: { chat: { selectedDate: any; }; }) => 
 // Selector to get chats filtered by selected date
 export const selectChatsByDate = (state: { chat: ChatState }) => {
     if (!state.chat.selectedDate) return state.chat.chats;
-    
+
     const selectedDateStr = state.chat.selectedDate.split('T')[0]; // Get date part only
     return state.chat.chats.filter(chat => {
         // If chat doesn't have createdAt, include it (old chats)

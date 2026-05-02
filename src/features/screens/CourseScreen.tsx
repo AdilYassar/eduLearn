@@ -25,7 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BarChart3, Search, X } from 'lucide-react-native';
 import EnrollPopup from '../../components/ui/EnrollPopup';
 import { useTheme } from '../../context/ThemeContext';
-import { GlassCard, ThemedContainer } from '../../components/ui/ThemedComponents';
+import { GlassCard, ThemedContainer, ThemedHeader } from '../../components/ui/ThemedComponents';
 import BottomNavigationBar from '../../components/ui/BottomNavigationBar';
 
 const { width } = Dimensions.get('window');
@@ -230,25 +230,31 @@ const CourseScreen = () => {
   return (
     <ThemedContainer>
       <View style={styles.container}>
-        <View style={styles.header}>
-           <View style={{ width: 24 }} />
-           <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Neural Academy</Text>
-           <TouchableOpacity onPress={() => setShowSearchBar(!showSearchBar)}>
+        <ThemedHeader 
+          title="Neural Academy"
+          rightAction={
+            <TouchableOpacity onPress={() => setShowSearchBar(!showSearchBar)}>
               <Search size={24} color={theme.text.primary} strokeWidth={2} />
-           </TouchableOpacity>
-        </View>
+            </TouchableOpacity>
+          }
+          style={{ paddingHorizontal: 16 }}
+        />
 
         {showSearchBar && (
-             <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.searchWrap}>
-                <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                   <Search size={20} color={theme.text.secondary} strokeWidth={2} />
-                   <TextInput 
-                      placeholder="Search courses..." 
-                      placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
-                      style={[styles.input, { color: theme.text.primary }]}
-                      value={searchQuery}
-                      onChangeText={setSearchQuery}
-                   />
+              <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.searchWrap}>
+                 <View style={[styles.searchBar, { 
+                    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                    borderWidth: 1,
+                    borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                 }]}>
+                    <Search size={20} color={theme.text.secondary} strokeWidth={2} />
+                    <TextInput 
+                       placeholder="Search courses..." 
+                       placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
+                       style={[styles.input, { color: theme.text.primary }]}
+                       value={searchQuery}
+                       onChangeText={setSearchQuery}
+                    />
                    {searchQuery.length > 0 && (
                        <TouchableOpacity onPress={() => setSearchQuery('')}>
                           <X size={20} color={theme.text.secondary} strokeWidth={2} />

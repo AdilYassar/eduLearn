@@ -18,23 +18,13 @@ import { userService, mediaService } from '../../service/social';
 import { updateCurrentUser } from '../../redux/reducers/socialSlice';
 import { launchImageLibrary } from 'react-native-image-picker';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    secondary: '#ac8aff',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-    error: '#ff6e84',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { ThemedContainer, ThemedText, ThemedHeader } from '../../components/ui/ThemedComponents';
 
 export const EditProfileScreen: React.FC = () => {
     const dispatch = useDispatch();
     const navigation = useNavigation();
+    const { theme } = useTheme();
     const currentUser = useSelector((state: any) => state.social.currentUser);
 
     const [name, setName] = useState(currentUser?.name || '');
@@ -73,32 +63,31 @@ export const EditProfileScreen: React.FC = () => {
     const canSave = name.trim().length > 0;
 
     return (
-        <SafeAreaView style={styles.container}>
+        <ThemedContainer style={styles.container} useGradient={false}>
             {/* ── Header ── */}
-            <View style={styles.header}>
-                <TouchableOpacity
-                    style={styles.cancelButton}
-                    onPress={() => navigation.goBack()}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                    <ArrowLeft size={20} color={C.onSurfaceVariant} strokeWidth={1.5} />
-                </TouchableOpacity>
-
-                <Text style={styles.headerTitle}>Edit Profile</Text>
-
-                <TouchableOpacity
-                    style={[styles.saveButton, (!canSave || loading) && styles.saveButtonDisabled]}
-                    onPress={handleUpdate}
-                    disabled={!canSave || loading}
-                    activeOpacity={0.85}
-                >
-                    {loading ? (
-                        <ActivityIndicator size="small" color="#540061" />
-                    ) : (
-                        <Text style={styles.saveButtonText}>Save</Text>
-                    )}
-                </TouchableOpacity>
-            </View>
+            <ThemedHeader 
+                title="Edit Profile"
+                showBack
+                rightAction={
+                    <TouchableOpacity
+                        style={[
+                            styles.saveButton, 
+                            { backgroundColor: theme.primary },
+                            (!canSave || loading) && styles.saveButtonDisabled
+                        ]}
+                        onPress={handleUpdate}
+                        disabled={!canSave || loading}
+                        activeOpacity={0.85}
+                    >
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                            <Text style={styles.saveButtonText}>Save</Text>
+                        )}
+                    </TouchableOpacity>
+                }
+                style={{ borderBottomWidth: 1, borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }}
+            />
 
             <ScrollView
                 style={styles.scroll}
@@ -109,101 +98,75 @@ export const EditProfileScreen: React.FC = () => {
                 <View style={styles.avatarSection}>
                     <TouchableOpacity style={styles.avatarWrapper} onPress={handleChoosePhoto} activeOpacity={0.8}>
                         {/* Aura Ring */}
-                        <View style={styles.auraRing}>
+                        <View style={[styles.auraRing, { borderColor: theme.primary }]}>
                             {avatar ? (
                                 <Image source={{ uri: avatar }} style={styles.avatarImage} />
                             ) : (
-                                <View style={styles.avatarFallback}>
-                                    <UserCircle size={56} color={C.primary} strokeWidth={1.5} />
+                                <View style={[styles.avatarFallback, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                                    <UserCircle size={56} color={theme.primary} strokeWidth={1.5} />
                                 </View>
                             )}
                         </View>
                         {/* Camera Badge */}
-                        <View style={styles.cameraBadge}>
-                            <Camera size={14} color='#540061' strokeWidth={2} />
+                        <View style={[styles.cameraBadge, { backgroundColor: theme.primary, borderColor: theme.background[0] }]}>
+                            <Camera size={14} color="#fff" strokeWidth={2} />
                         </View>
                     </TouchableOpacity>
-                    <Text style={styles.changePhotoText}>Change Profile Photo</Text>
+                    <TouchableOpacity onPress={handleChoosePhoto}>
+                        <Text style={[styles.changePhotoText, { color: theme.primary }]}>Change Profile Photo</Text>
+                    </TouchableOpacity>
                     {currentUser?.name && (
-                        <Text style={styles.currentName}>{currentUser.name}</Text>
+                        <ThemedText variant="secondary" style={styles.currentName}>{currentUser.name}</ThemedText>
                     )}
                 </View>
 
                 {/* ── Form ── */}
-                <View style={styles.formCard}>
+                <View style={[styles.formCard, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
                     {/* Name */}
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.fieldLabel}>NAME</Text>
+                        <ThemedText variant="secondary" weight="bold" style={styles.fieldLabel}>NAME</ThemedText>
                         <TextInput
-                            style={styles.fieldInput}
+                            style={[styles.fieldInput, { color: theme.text.primary }]}
                             value={name}
                             onChangeText={setName}
                             placeholder="Your name"
-                            placeholderTextColor={C.outlineVariant}
-                            selectionColor={C.primary}
+                            placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
+                            selectionColor={theme.primary}
                         />
                     </View>
 
-                    <View style={styles.divider} />
+                    <View style={[styles.divider, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]} />
 
                     {/* Bio */}
                     <View style={styles.fieldGroup}>
                         <View style={styles.fieldLabelRow}>
-                            <Text style={styles.fieldLabel}>BIO</Text>
-                            <Text style={styles.charCount}>{bio.length}/160</Text>
+                            <ThemedText variant="secondary" weight="bold" style={styles.fieldLabel}>BIO</ThemedText>
+                            <ThemedText variant="secondary" size="small">{bio.length}/160</ThemedText>
                         </View>
                         <TextInput
-                            style={[styles.fieldInput, styles.bioInput]}
+                            style={[styles.fieldInput, styles.bioInput, { color: theme.text.primary }]}
                             value={bio}
                             onChangeText={setBio}
                             placeholder="Write something about yourself…"
-                            placeholderTextColor={C.outlineVariant}
+                            placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'}
                             multiline
                             numberOfLines={4}
                             maxLength={160}
                             textAlignVertical="top"
-                            selectionColor={C.primary}
+                            selectionColor={theme.primary}
                         />
                     </View>
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
-    },
-
-    // ── Header ──
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        backgroundColor: C.bg,
-        borderBottomWidth: 1,
-        borderBottomColor: 'rgba(72,72,71,0.3)',
-    },
-    cancelButton: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: C.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    headerTitle: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-        letterSpacing: -0.2,
     },
     saveButton: {
-        backgroundColor: C.primary,
         paddingHorizontal: 18,
         paddingVertical: 8,
         borderRadius: 999,
@@ -211,10 +174,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     saveButtonDisabled: {
-        backgroundColor: 'rgba(243,130,255,0.25)',
+        opacity: 0.5,
     },
     saveButtonText: {
-        color: '#540061',
+        color: '#fff',
         fontWeight: '800',
         fontSize: 14,
     },
@@ -235,7 +198,6 @@ const styles = StyleSheet.create({
         height: 96,
         borderRadius: 48,
         borderWidth: 3,
-        borderColor: C.primary,
         padding: 3,
         justifyContent: 'center',
         alignItems: 'center',
@@ -249,7 +211,6 @@ const styles = StyleSheet.create({
         width: 86,
         height: 86,
         borderRadius: 43,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -257,29 +218,23 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 2,
         right: 2,
-        backgroundColor: C.primary,
         width: 26,
         height: 26,
         borderRadius: 13,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: C.bg,
     },
     changePhotoText: {
-        color: C.primary,
         fontSize: 13,
         fontWeight: '600',
     },
     currentName: {
-        color: C.onSurfaceVariant,
-        fontSize: 12,
         marginTop: 4,
     },
 
     // ── Form Card ──
     formCard: {
-        backgroundColor: C.surface,
         borderRadius: 20,
         paddingHorizontal: 18,
         paddingVertical: 6,
@@ -294,27 +249,18 @@ const styles = StyleSheet.create({
     },
     fieldLabel: {
         fontSize: 10,
-        fontWeight: '700',
-        color: C.outlineVariant,
         letterSpacing: 0.8,
         marginBottom: 8,
     },
     fieldInput: {
         fontSize: 15,
-        color: C.onSurface,
         paddingVertical: 0,
     },
     bioInput: {
         minHeight: 72,
         lineHeight: 22,
     },
-    charCount: {
-        fontSize: 11,
-        color: C.outlineVariant,
-        marginBottom: 8,
-    },
     divider: {
         height: 1,
-        backgroundColor: 'rgba(72,72,71,0.3)',
     },
 });

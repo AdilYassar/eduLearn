@@ -25,7 +25,7 @@ const chatTransform = createTransform(
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage, // Use AsyncStorage for React Native
-  whitelist: ['chat', 'theme'], // Specify reducers to persist
+  whitelist: ['chat', 'theme', 'timeline'], // Specify reducers to persist
   transforms: [chatTransform],
 };
 

@@ -10,6 +10,7 @@ import {
   Alert,
   BackHandler,
   SafeAreaView,
+  Linking,
 } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import Video from 'react-native-video';
@@ -255,11 +256,15 @@ const VideoPlayerScreen = () => {
                 
                 Alert.alert(
                   'Playback Error',
-                  `Unable to play this video. ${errorMessage}`,
+                  `Unable to play this video. ${errorMessage}\n\nWould you like to open it in your browser instead?`,
                   [
                     {
-                      text: 'OK',
-                      onPress: () => console.log('Error alert dismissed'),
+                      text: 'Cancel',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Open in Browser',
+                      onPress: () => Linking.openURL(video.url),
                     },
                   ],
                 );
@@ -395,6 +400,27 @@ const VideoPlayerScreen = () => {
             <ThemedText style={styles.sectionTitle}>Description</ThemedText>
           </View>
           <ThemedText style={styles.description}>{video.description}</ThemedText>
+
+          <TouchableOpacity 
+            onPress={() => Linking.openURL(video.url)}
+            style={{ 
+              marginTop: 30, 
+              flexDirection: 'row', 
+              alignItems: 'center',
+              backgroundColor: theme.primary + '20',
+              padding: 16,
+              borderRadius: 16,
+              borderWidth: 1,
+              borderColor: theme.primary + '40',
+              marginBottom: 40
+            }}
+          >
+            <PlayCircle size={24} color={theme.primary} style={{ marginRight: 12 }} />
+            <View>
+              <Text style={{ color: theme.text.primary, fontWeight: '700', fontSize: 16 }}>Open in Cloud Player</Text>
+              <Text style={{ color: theme.text.secondary, fontSize: 12 }}>Open directly in Google Drive for high speed</Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </ThemedContainer>

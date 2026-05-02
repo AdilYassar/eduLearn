@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   TextInput,
   Dimensions,
+  Linking,
 } from 'react-native';
 import Animated, {
   FadeIn,
@@ -23,9 +24,9 @@ import RNFS from 'react-native-fs'; // For file handling
 import FileViewer from 'react-native-file-viewer'; // For opening files
 import { useLearningMaterials } from '@service/hooks/useLearningMaterials';
 import { push } from '../../utils/Navigation';
-import { Search, X, Video } from 'lucide-react-native';
+import { Search, X, Video, BookOpen } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
-import { ThemedContainer, GlassCard } from '../../components/ui/ThemedComponents';
+import { ThemedContainer, GlassCard, ThemedHeader } from '../../components/ui/ThemedComponents';
 import BottomNavigationBar from '../../components/ui/BottomNavigationBar';
 
 interface BookName {
@@ -36,6 +37,7 @@ interface BookName {
   pages?: number;
   language?: string;
   publishedDate?: string;
+  pdfUrl?: string;
 }
 
 const { width } = Dimensions.get('window');
@@ -55,7 +57,7 @@ const AnimatedBookCard = React.memo(({
   index: number;
   theme: any;
   downloadingBookId: string | null;
-  onPress: (id: string) => void;
+  onPress: (book: BookName) => void;
   scrollX: Animated.SharedValue<number>;
 }) => {
   const inputRange = [
@@ -86,7 +88,7 @@ const AnimatedBookCard = React.memo(({
 
   return (
     <Animated.View style={[{ width: ITEM_WIDTH }, animatedStyle]}>
-      <TouchableOpacity activeOpacity={0.9} onPress={() => onPress(book._id)}>
+      <TouchableOpacity activeOpacity={0.9} onPress={() => onPress(book)}>
         <GlassCard style={[styles.courseCard, { backgroundColor: theme.isDark ? 'rgba(20, 40, 30, 0.6)' : 'rgba(50, 120, 80, 0.4)' }]} opacity={0.15}>
           {/* Header Row - Language Badge + Pages Count */}
           <View style={styles.cardHeader}>
@@ -138,14 +140,17 @@ const AnimatedBookCard = React.memo(({
 
           {/* Download Button */}
           <TouchableOpacity
-            onPress={() => onPress(book._id)}
+            onPress={() => onPress(book)}
             disabled={isDownloading}
             style={[styles.downloadButton, { backgroundColor: theme.primary }]}
           >
             {isDownloading ? (
               <ActivityIndicator size="small" color="#FFF" />
             ) : (
-              <Text style={styles.downloadButtonText}>Download</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <BookOpen size={18} color="#FFF" style={{ marginRight: 8 }} />
+                <Text style={styles.downloadButtonText}>Read Book</Text>
+              </View>
             )}
           </TouchableOpacity>
         </GlassCard>
@@ -212,7 +217,20 @@ const BookScreen = () => {
   };
 
   // Fetch full book details when a book is selected
-  const handleBookSelect = async (bookId: string) => {
+  const handleBookSelect = async (book: BookName) => {
+    const bookId = book._id;
+    
+    // If the book already has a cloud URL, open it instantly
+    if (book.pdfUrl) {
+      console.log('🔗 Opening Google Drive URL:', book.pdfUrl);
+      try {
+        await Linking.openURL(book.pdfUrl);
+        return;
+      } catch (linkError) {
+        console.error('Failed to open link:', linkError);
+      }
+    }
+
     try {
       setDownloadingBookId(bookId);
       console.log('🔍 Fetching PDF for book ID:', bookId);
@@ -224,16 +242,15 @@ const BookScreen = () => {
         return;
       }
 
-      console.log('📦 PDF fetched successfully:', {
-        title: result.title,
-        pdfLength: result.pdf?.length || 0,
-      });
+      // result can contain pdf (base64) or pdfUrl (Google Drive)
+      const finalPdf = result.pdfUrl || result.pdf;
+      const finalTitle = result.title || book.title;
 
-      if (result.pdf) {
-        console.log('✅ PDF found, starting download...');
-        await displayPdf(result.pdf, result.title);
+      if (finalPdf) {
+        console.log('✅ PDF found, starting display...');
+        await displayPdf(finalPdf, finalTitle);
       } else {
-        console.error('❌ No PDF property in result');
+        console.error('❌ No PDF data found');
         Alert.alert('Error', 'This book does not have a PDF available');
       }
     } catch (error) {
@@ -244,35 +261,31 @@ const BookScreen = () => {
     }
   };
 
-  // Save and open PDF using react-native-fs
-  const displayPdf = async (base64Pdf: string | undefined, title: string) => {
+  // Save and open PDF or Open URL
+  const displayPdf = async (pdfData: string | undefined, title: string) => {
     try {
-      if (!base64Pdf || base64Pdf.trim() === '') {
+      if (!pdfData || pdfData.trim() === '') {
         console.error('❌ PDF data is empty or undefined');
         Alert.alert('Error', 'PDF data is not available');
         return;
       }
 
-      // Sanitize the title for filename
+      if (pdfData.startsWith('http')) {
+        await Linking.openURL(pdfData);
+        return;
+      }
+
+      // Base64 fallback
       const sanitizedTitle = title.replace(/[^a-z0-9]/gi, '_').substring(0, 50);
       const path = `${RNFS.DocumentDirectoryPath}/${sanitizedTitle}.pdf`;
-
-      // Remove data URL prefix if present
-      const cleanBase64 = base64Pdf.replace(/^data:application\/pdf;base64,/, '');
+      const cleanBase64 = pdfData.replace(/^data:application\/pdf;base64,/, '');
 
       console.log('💾 Saving PDF to:', path);
-      console.log('📏 PDF base64 length:', cleanBase64.length);
-
-      // Save the PDF to the file system
       await RNFS.writeFile(path, cleanBase64, 'base64');
-      console.log(`✅ PDF saved at ${path}`);
-
-      // Open the PDF
       await FileViewer.open(path, { showOpenWithDialog: true });
-      console.log('📖 PDF opened successfully');
     } catch (pdfError) {
-      console.error('Error downloading or opening PDF:', pdfError);
-      Alert.alert('Error', `Failed to download or open PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
+      console.error('Error opening PDF:', pdfError);
+      Alert.alert('Error', `Failed to open PDF: ${pdfError instanceof Error ? pdfError.message : 'Unknown error'}`);
     }
   };
 
@@ -285,28 +298,37 @@ const BookScreen = () => {
     <ThemedContainer>
       <View style={styles.container}>
         {/* Header with Video Icon */}
-        <View style={styles.header}>
-           <TouchableOpacity onPress={() => push('VideoLibraryScreen')}>
-              <Video size={22} color={theme.text.primary} />
-           </TouchableOpacity>
-           <Text style={[styles.headerTitle, { color: theme.text.primary }]}>Digital Library</Text>
-           <TouchableOpacity onPress={() => setShowSearchBar(!showSearchBar)}>
-              <Search size={22} color={theme.text.primary} />
-           </TouchableOpacity>
-        </View>
+        <ThemedHeader 
+          title="Digital Library"
+          rightAction={
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <TouchableOpacity onPress={() => push('VideoLibraryScreen')}>
+                <Video size={22} color={theme.text.primary} />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowSearchBar(!showSearchBar)}>
+                <Search size={22} color={theme.text.primary} />
+              </TouchableOpacity>
+            </View>
+          }
+          style={{ paddingHorizontal: 16 }}
+        />
 
         {/* Search Bar */}
         {showSearchBar && (
-             <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.searchWrap}>
-                <View style={[styles.searchBar, { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
-                   <Search size={18} color={theme.text.secondary} />
-                   <TextInput 
-                      placeholder="Search books..." 
-                      placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
-                      style={[styles.input, { color: theme.text.primary }]}
-                      value={searchQuery}
-                      onChangeText={handleSearch}
-                   />
+              <Animated.View entering={FadeIn} exiting={FadeOut} style={styles.searchWrap}>
+                 <View style={[styles.searchBar, { 
+                    backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                    borderWidth: 1,
+                    borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'
+                 }]}>
+                    <Search size={18} color={theme.text.secondary} />
+                    <TextInput 
+                       placeholder="Search books..." 
+                       placeholderTextColor={theme.isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.4)'}
+                       style={[styles.input, { color: theme.text.primary }]}
+                       value={searchQuery}
+                       onChangeText={handleSearch}
+                    />
                    {searchQuery.length > 0 && (
                        <TouchableOpacity onPress={() => handleSearch('')}>
                           <X size={18} color={theme.text.secondary} />

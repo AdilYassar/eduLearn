@@ -16,21 +16,14 @@ import { chatService } from '../../service/social';
 import { addConversation, setActiveConversation } from '../../redux/reducers/socialSlice';
 import type { Friend } from '../../service/social/types';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    primary: '#f382ff',
-    secondary: '#ac8aff',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../context/ThemeContext';
+import { ThemedContainer, ThemedHeader } from '../../components/ui/ThemedComponents';
 
 export const FriendsScreen: React.FC = () => {
     const layout = useWindowDimensions();
     const navigation = useNavigation();
     const dispatch = useDispatch();
+    const { theme } = useTheme();
     const [index, setIndex] = useState(0);
     const [routes] = useState([
         { key: 'friends', title: 'Friends' },
@@ -78,17 +71,24 @@ export const FriendsScreen: React.FC = () => {
     const renderTabBar = (props: any) => (
         <TabBar
             {...props}
-            indicatorStyle={{ backgroundColor: C.primary, height: 2, borderRadius: 2 }}
-            style={{ backgroundColor: C.bg, elevation: 0, shadowOpacity: 0 }}
-            activeColor={C.primary}
-            inactiveColor={C.outlineVariant}
+            indicatorStyle={{ backgroundColor: theme.primary, height: 3, borderRadius: 2 }}
+            style={{
+                backgroundColor: theme.background[0],
+                elevation: 0,
+                shadowOpacity: 0,
+                borderBottomWidth: 1,
+                borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'
+            }}
+            activeColor={theme.primary}
+            inactiveColor={theme.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)'}
             labelStyle={{ fontWeight: '700', fontSize: 13, textTransform: 'none' }}
             tabStyle={{ paddingVertical: 10 }}
         />
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <ThemedContainer style={styles.container} useGradient={false} edges={['left', 'right']}>
+            <ThemedHeader title="Neural Friends" />
             <TabView
                 navigationState={{ index, routes }}
                 renderScene={renderScene}
@@ -96,24 +96,12 @@ export const FriendsScreen: React.FC = () => {
                 initialLayout={{ width: layout.width }}
                 renderTabBar={renderTabBar}
             />
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
-    },
-    header: {
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        backgroundColor: C.bg,
-    },
-    headerTitle: {
-        fontSize: 26,
-        fontWeight: '800',
-        color: C.onSurface,
-        letterSpacing: -0.5,
     },
 });

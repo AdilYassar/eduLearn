@@ -5,9 +5,14 @@ import {
     StyleSheet,
     ActivityIndicator,
     RefreshControl,
-    Text,
-    TouchableOpacity,
     Image,
+    TextInput,
+    Keyboard,
+    TouchableWithoutFeedback,
+    TouchableOpacity,
+    ScrollView,
+    KeyboardAvoidingView,
+    DeviceEventEmitter,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -16,38 +21,43 @@ import { useDispatch, useSelector } from 'react-redux';
 import { feedService } from '../../service/social';
 import {
     setFeedPosts,
-    addFeedPost,
     setLoadingFeed,
     setHasMorePosts,
-    setFeedPage
+    setFeedPage,
+    addFeedPost,
 } from '../../redux/reducers/socialSlice';
+import { ThemedContainer, ThemedText, ThemedHeader } from '../../components/ui/ThemedComponents';
+import { useTheme } from '../../context/ThemeContext';
 import { PostCard } from '../../components/social/Feed/PostCard';
 import { CreatePostWidget } from '../../components/social/Feed/CreatePostWidget';
 
-// ── Design Tokens ─────────────────────────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    primary: '#f382ff',
-    secondary: '#ac8aff',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
-
 export const FeedScreen: React.FC = () => {
+    const { theme } = useTheme();
     const navigation = useNavigation();
     const dispatch = useDispatch();
     const feedPosts = useSelector((state: any) => state.social.feedPosts);
     const isLoading = useSelector((state: any) => state.social.isLoadingFeed);
     const hasMore = useSelector((state: any) => state.social.hasMorePosts);
     const page = useSelector((state: any) => state.social.feedPage);
-    const currentUser = useSelector((state: any) => state.social.currentUser);
 
     const [refreshing, setRefreshing] = useState(false);
 
     useEffect(() => {
         loadFeed(1);
+
+        // Subscribe to real-time social events
+        const subscription = DeviceEventEmitter.addListener('social_event', (event) => {
+            if (event.subType === 'POST_CREATED') {
+                try {
+                    const payload = JSON.parse(event.payload);
+                    dispatch(addFeedPost(payload));
+                } catch (e) {
+                    console.error('[FeedScreen] Error parsing post payload:', e);
+                }
+            }
+        });
+
+        return () => subscription.remove();
     }, []);
 
     const loadFeed = async (pageNum: number) => {
@@ -85,6 +95,17 @@ export const FeedScreen: React.FC = () => {
 
     const renderHeader = () => (
         <View style={styles.headerContainer}>
+            <ThemedHeader
+                title="Neural Feed"
+                rightAction={
+                    <TouchableOpacity style={styles.profileButton} activeOpacity={0.7}>
+                        <View style={[styles.profileAvatarFallback, { borderColor: theme.primary, backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                            <UserCircle size={20} color={theme.primary} strokeWidth={1.5} />
+                        </View>
+                    </TouchableOpacity>
+                }
+                style={{ paddingHorizontal: 0 }}
+            />
             <CreatePostWidget />
         </View>
     );
@@ -92,13 +113,13 @@ export const FeedScreen: React.FC = () => {
     const renderEmpty = () =>
         !isLoading ? (
             <View style={styles.emptyContainer}>
-                <Text style={styles.emptyText}>No posts yet.</Text>
-                <Text style={styles.emptySubText}>Be the first to share something!</Text>
+                <ThemedText weight="bold" size="large">No posts yet.</ThemedText>
+                <ThemedText variant="secondary">Be the first to share something!</ThemedText>
             </View>
         ) : null;
 
     return (
-        <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+        <ThemedContainer style={styles.container} edges={['left', 'right']}>
             <FlatList
                 data={feedPosts}
                 renderItem={({ item }) => <PostCard post={item} />}
@@ -110,8 +131,8 @@ export const FeedScreen: React.FC = () => {
                     <RefreshControl
                         refreshing={refreshing}
                         onRefresh={handleRefresh}
-                        colors={[C.primary]}
-                        tintColor={C.primary}
+                        colors={[theme.primary]}
+                        tintColor={theme.primary}
                     />
                 }
                 onEndReached={handleLoadMore}
@@ -119,22 +140,20 @@ export const FeedScreen: React.FC = () => {
                 showsVerticalScrollIndicator={false}
                 ListFooterComponent={
                     isLoading && !refreshing
-                        ? <ActivityIndicator color={C.primary} style={{ margin: 20 }} />
+                        ? <ActivityIndicator color={theme.primary} style={{ margin: 20 }} />
                         : null
                 }
             />
-        </SafeAreaView>
+        </ThemedContainer>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: C.bg,
     },
     listContent: {
         paddingHorizontal: 16,
-        paddingBottom: 24,
     },
 
     // ── Header ──
@@ -151,7 +170,6 @@ const styles = StyleSheet.create({
     headerTitle: {
         fontSize: 26,
         fontWeight: '800',
-        color: C.onSurface,
         letterSpacing: -0.5,
     },
     profileButton: {
@@ -169,11 +187,9 @@ const styles = StyleSheet.create({
         width: 38,
         height: 38,
         borderRadius: 19,
-        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: C.primary,
     },
 
     // ── Empty ──
@@ -185,10 +201,9 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 17,
         fontWeight: '700',
-        color: C.onSurface,
     },
     emptySubText: {
         fontSize: 14,
-        color: C.onSurfaceVariant,
+        opacity: 0.6,
     },
 });

@@ -28,6 +28,7 @@ import { ChatScreen } from '../features/Social/ChatScreen';
 import { NotificationsScreen } from '../features/Social/NotificationsScreen';
 import { EditProfileScreen } from '../features/Social/EditProfileScreen';
 import { CreateGroupScreen } from '../features/Social/CreateGroupScreen';
+import { AddMembersScreen } from '../features/Social/AddMembersScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -50,52 +51,54 @@ const SocialTabs = () => {
     const [activeTab, setActiveTab] = useState('Feed');
     const unreadNotifications = useSelector((state: any) => state.social.unreadNotificationCount);
 
-    // Design tokens for the social tabs
-    const C = {
-        bg: '#0e0e0e',
-        surface: '#1a1919',
-        primary: '#f382ff',
-        outlineVariant: '#484847',
-    };
-
     return (
         <SocialTabContext.Provider value={{ switchTab: setActiveTab }}>
-            <SafeAreaView style={styles.tabContainer} edges={['top', 'left', 'right']}>
-                <StatusBar barStyle="light-content" backgroundColor={C.bg} />
+            <View style={[styles.tabContainer, { backgroundColor: theme.background[0] }]}>
+                <StatusBar 
+                    barStyle={theme.isDark ? 'light-content' : 'dark-content'} 
+                    backgroundColor="transparent" 
+                    translucent
+                />
 
                 {/* ── Top Icon Tab Bar ── */}
-                <View style={styles.topBar}>
-                    <View style={styles.tabRow}>
-                        {TABS.map(({ key, label, Icon }) => {
-                            const isActive = activeTab === key;
-                            const hasBadge = key === 'Notifications' && unreadNotifications > 0;
-                            return (
-                                <TouchableOpacity
-                                    key={key}
-                                    style={styles.tabItem}
-                                    onPress={() => setActiveTab(key)}
-                                    activeOpacity={0.7}
-                                >
-                                    <View style={styles.tabIconWrap}>
-                                        <Icon
-                                            size={22}
-                                            color={isActive ? C.primary : C.outlineVariant}
-                                            strokeWidth={isActive ? 2 : 1.5}
-                                        />
-                                        {hasBadge && <View style={styles.badge} />}
-                                    </View>
-                                    <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
-                                        {label}
-                                    </Text>
-                                    {isActive && <View style={styles.tabIndicator} />}
-                                </TouchableOpacity>
-                            );
-                        })}
+                <SafeAreaView edges={['top']} style={{ backgroundColor: theme.background[0] }}>
+                    <View style={[styles.topBar, { backgroundColor: theme.background[0], borderBottomColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
+                        <View style={styles.tabRow}>
+                            {TABS.map(({ key, label, Icon }) => {
+                                const isActive = activeTab === key;
+                                const hasBadge = key === 'Notifications' && unreadNotifications > 0;
+                                return (
+                                    <TouchableOpacity
+                                        key={key}
+                                        style={styles.tabItem}
+                                        onPress={() => setActiveTab(key)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <View style={styles.tabIconWrap}>
+                                            <Icon
+                                                size={22}
+                                                color={isActive ? theme.primary : (theme.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)')}
+                                                strokeWidth={isActive ? 2 : 1.5}
+                                            />
+                                            {hasBadge && <View style={[styles.badge, { backgroundColor: theme.primary, borderColor: theme.background[0] }]} />}
+                                        </View>
+                                        <Text style={[
+                                            styles.tabLabel, 
+                                            { color: isActive ? theme.primary : (theme.isDark ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.4)') },
+                                            isActive && styles.tabLabelActive
+                                        ]}>
+                                            {label}
+                                        </Text>
+                                        {isActive && <View style={[styles.tabIndicator, { backgroundColor: theme.primary }]} />}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
                     </View>
-                </View>
+                </SafeAreaView>
 
                 {/* ── All screens mounted; only active one is visible ── */}
-                <View style={styles.screenContainer}>
+                <View style={[styles.screenContainer, { backgroundColor: theme.background[0] }]}>
                     {TABS.map(({ key, Component }) => (
                         <View
                             key={key}
@@ -108,7 +111,7 @@ const SocialTabs = () => {
                         </View>
                     ))}
                 </View>
-            </SafeAreaView>
+            </View>
         </SocialTabContext.Provider>
     );
 };
@@ -156,6 +159,7 @@ export const SocialNavigator = () => {
             <Stack.Screen name="ChatScreen" component={ChatScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ presentation: 'modal' }} />
             <Stack.Screen name="CreateGroup" component={CreateGroupScreen} options={{ presentation: 'modal' }} />
+            <Stack.Screen name="AddMembers" component={AddMembersScreen} options={{ presentation: 'modal' }} />
         </Stack.Navigator>
     );
 };
@@ -163,15 +167,12 @@ export const SocialNavigator = () => {
 const styles = StyleSheet.create({
     tabContainer: {
         flex: 1,
-        backgroundColor: '#0e0e0e',
     },
     topBar: {
-        backgroundColor: '#0e0e0e',
     },
     tabRow: {
         flexDirection: 'row',
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(72,72,71,0.3)',
     },
     tabItem: {
         flex: 1,
@@ -184,13 +185,11 @@ const styles = StyleSheet.create({
     },
     tabLabel: {
         fontSize: 10,
-        color: '#484847',
         fontWeight: '600',
         marginTop: 3,
         letterSpacing: 0.3,
     },
     tabLabelActive: {
-        color: '#f382ff',
     },
     tabIndicator: {
         position: 'absolute',
@@ -198,7 +197,6 @@ const styles = StyleSheet.create({
         left: '20%',
         right: '20%',
         height: 2,
-        backgroundColor: '#f382ff',
         borderRadius: 2,
     },
     badge: {
@@ -208,13 +206,10 @@ const styles = StyleSheet.create({
         width: 7,
         height: 7,
         borderRadius: 4,
-        backgroundColor: '#f382ff',
         borderWidth: 1.5,
-        borderColor: '#0e0e0e',
     },
     screenContainer: {
         flex: 1,
-        backgroundColor: '#0e0e0e',
     },
     screenSlot: {
         flex: 1,

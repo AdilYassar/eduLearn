@@ -15,20 +15,8 @@ import { setFriends, setLoadingConversations } from '../../../redux/reducers/soc
 import type { Friend } from '../../../service/social/types';
 import { UserCircle, MessageCircle } from 'lucide-react-native';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-};
+import { useTheme } from '../../../context/ThemeContext';
+import { ThemedText } from '../../ui/ThemedComponents';
 
 interface FriendsListProps {
     onFriendPress?: (friend: Friend) => void;
@@ -36,6 +24,7 @@ interface FriendsListProps {
 
 export const FriendsList: React.FC<FriendsListProps> = ({ onFriendPress }) => {
     const dispatch = useDispatch();
+    const { theme } = useTheme();
     const friends = useSelector((state: any) => state.social.friends);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
@@ -68,29 +57,29 @@ export const FriendsList: React.FC<FriendsListProps> = ({ onFriendPress }) => {
 
     const renderFriend = ({ item }: { item: Friend }) => (
         <TouchableOpacity
-            style={styles.friendItem}
+            style={[styles.friendItem, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}
             onPress={() => onFriendPress?.(item)}
             activeOpacity={0.75}
         >
             {/* Aura Ring Avatar */}
             <View style={styles.avatarWrapper}>
-                <View style={[styles.auraRing, item.isOnline && styles.auraRingOnline]}>
-                    <View style={styles.avatar}>
-                        <UserCircle size={32} color={C.primary} strokeWidth={1.5} />
+                <View style={[styles.auraRing, { borderColor: theme.isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }, item.isOnline && styles.auraRingOnline]}>
+                    <View style={[styles.avatar, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <UserCircle size={32} color={theme.primary} strokeWidth={1.5} />
                     </View>
                 </View>
-                {item.isOnline && <View style={styles.onlineIndicator} />}
+                {item.isOnline && <View style={[styles.onlineIndicator, { borderColor: theme.isDark ? '#1a1919' : '#fff' }]} />}
             </View>
 
             <View style={styles.friendInfo}>
-                <Text style={styles.friendName}>{item.name}</Text>
-                <Text style={[styles.friendStatus, item.isOnline && styles.friendStatusOnline]}>
+                <ThemedText weight="bold" size="medium">{item.name}</ThemedText>
+                <Text style={[styles.friendStatus, item.isOnline ? styles.friendStatusOnline : { color: theme.text.secondary }]}>
                     {item.isOnline ? '● Online' : `Last seen ${formatLastSeen(item.lastSeen)}`}
                 </Text>
             </View>
 
-            <TouchableOpacity style={styles.chatButton} activeOpacity={0.7}>
-                <MessageCircle size={18} color={C.secondary} strokeWidth={1.5} />
+            <TouchableOpacity style={[styles.chatButton, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]} activeOpacity={0.7}>
+                <MessageCircle size={18} color={theme.secondary} strokeWidth={1.5} />
             </TouchableOpacity>
         </TouchableOpacity>
     );
@@ -98,7 +87,7 @@ export const FriendsList: React.FC<FriendsListProps> = ({ onFriendPress }) => {
     if (loading && friends.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={C.primary} />
+                <ActivityIndicator size="large" color={theme.primary} />
             </View>
         );
     }
@@ -106,11 +95,11 @@ export const FriendsList: React.FC<FriendsListProps> = ({ onFriendPress }) => {
     if (friends.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <View style={styles.emptyIconWrap}>
-                    <UserCircle size={36} color={C.primary} strokeWidth={1.5} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+                    <UserCircle size={36} color={theme.primary} strokeWidth={1.5} />
                 </View>
-                <Text style={styles.emptyText}>No friends yet</Text>
-                <Text style={styles.emptySubtext}>Start by sending friend requests!</Text>
+                <ThemedText weight="bold" size="large">No friends yet</ThemedText>
+                <ThemedText variant="secondary" style={{ textAlign: 'center' }}>Start by sending friend requests!</ThemedText>
             </View>
         );
     }
@@ -126,8 +115,8 @@ export const FriendsList: React.FC<FriendsListProps> = ({ onFriendPress }) => {
                 <RefreshControl
                     refreshing={refreshing}
                     onRefresh={handleRefresh}
-                    tintColor={C.primary}
-                    colors={[C.primary]}
+                    tintColor={theme.primary}
+                    colors={[theme.primary]}
                 />
             }
         />
@@ -154,7 +143,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 24,
-        backgroundColor: C.bg,
     },
 
     // ── Friend Item ──
@@ -162,7 +150,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 14,
-        backgroundColor: C.surface,
         borderRadius: 20,
         marginBottom: 10,
     },
@@ -177,7 +164,6 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 25,
         borderWidth: 2,
-        borderColor: C.outlineVariant,
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
@@ -189,7 +175,6 @@ const styles = StyleSheet.create({
         width: 42,
         height: 42,
         borderRadius: 21,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -202,7 +187,6 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         backgroundColor: '#22c55e',
         borderWidth: 2,
-        borderColor: C.surface,
     },
 
     // ── Info ──
@@ -210,15 +194,8 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 4,
     },
-    friendName: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: C.onSurface,
-        letterSpacing: -0.2,
-    },
     friendStatus: {
         fontSize: 12,
-        color: C.outlineVariant,
     },
     friendStatusOnline: {
         color: '#22c55e',
@@ -229,7 +206,6 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -240,27 +216,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 32,
-        backgroundColor: C.bg,
     },
     emptyIconWrap: {
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
-    },
-    emptyText: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 14,
-        color: C.onSurfaceVariant,
-        textAlign: 'center',
-        lineHeight: 21,
     },
 });

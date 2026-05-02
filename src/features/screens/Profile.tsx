@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import Svg, { Circle, Path, Text as SvgText } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import LottieView from 'lottie-react-native';
+import Loading from '../../components/ui/Loading';
 import { useSharedValue, withSpring, useAnimatedStyle } from 'react-native-reanimated';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Geolocation from '@react-native-community/geolocation';
@@ -58,7 +58,7 @@ import {
   Zap,
   BarChart3,
 } from 'lucide-react-native';
-import { navigate } from '../../utils/Navigation';
+import { navigate, replace } from '../../utils/Navigation';
 import { Colors } from '@utils/Constants';
 import { performCompleteLogout } from '@service/authUtils';
 import { useUser } from '@service/hooks/useUser';
@@ -575,10 +575,10 @@ const Profile = () => {
   };
 
   const documentScan = () => Alert.alert('Document Scan', 'Document scanning feature is coming soon! 📱✨', [{ text: 'OK' }]);
-  const messageFriend = () => Alert.alert('Message a Friend', 'Messaging feature is coming soon! 💬✨', [{ text: 'OK' }]);
+  const messageFriend = () => navigate('SocialNavigator');
   const inviteFriend = () => Alert.alert('Invite a Friend', 'Friend invitation feature is coming soon! 👥✨', [{ text: 'OK' }]);
-  const giveFeedback = () => Alert.alert('Give Feedback', 'Feedback system is coming soon! 💭✨', [{ text: 'OK' }]);
-  const customerSupport = () => Alert.alert('Customer Support', 'Customer support chat is coming soon! 🎧✨', [{ text: 'OK' }]);
+  const giveFeedback = () => navigate('FeedbackScreen');
+  const customerSupport = () => navigate('CustomerSupportScreen');
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -589,15 +589,7 @@ const Profile = () => {
 
   if (loading || apiLoading) {
     return (
-      <ThemedContainer style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <LottieView
-          source={require('../../assets/animations/student.json')}
-          autoPlay
-          loop
-          style={styles.loadingAnimation}
-        />
-        <Text style={[styles.loadingText, { color: theme.text.primary }]}>Loading profile...</Text>
-      </ThemedContainer>
+      <Loading message="Loading profile..." />
     );
   }
 
@@ -825,9 +817,6 @@ const Profile = () => {
             </View>
             <Text style={[styles.featureItemText, { color: theme.text.primary }]}>Message a Friend</Text>
             <View style={styles.featureRight}>
-              <View style={[styles.soonBadge, { backgroundColor: 'rgba(217, 119, 6, 0.15)' }]}>
-                <Text style={styles.soonText}>Soon</Text>
-              </View>
               <ChevronRight size={18} color={theme.text.secondary} />
             </View>
           </TouchableOpacity>
@@ -870,9 +859,6 @@ const Profile = () => {
             </View>
             <Text style={[styles.featureItemText, { color: theme.text.primary }]}>Give Feedback</Text>
             <View style={styles.featureRight}>
-              <View style={[styles.soonBadge, { backgroundColor: 'rgba(217, 119, 6, 0.15)' }]}>
-                <Text style={styles.soonText}>Soon</Text>
-              </View>
               <ChevronRight size={18} color={theme.text.secondary} />
             </View>
           </TouchableOpacity>
@@ -885,347 +871,19 @@ const Profile = () => {
             </View>
             <Text style={[styles.featureItemText, { color: theme.text.primary }]}>Customer Support</Text>
             <View style={styles.featureRight}>
-              <View style={[styles.soonBadge, { backgroundColor: 'rgba(217, 119, 6, 0.15)' }]}>
-                <Text style={styles.soonText}>Soon</Text>
-              </View>
               <ChevronRight size={18} color={theme.text.secondary} />
             </View>
           </TouchableOpacity>
         </GlassCard>
 
-        {/* 6. USER PROGRESS SECTION - Learning Statistics */}
-        <View style={styles.sectionLabelContainer}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>USER PROGRESS</Text>
-        </View>
-        <GlassCard
-          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 20 }]}
-          opacity={0.05}
-          glow={false}
-        >
-          {/* Title with Subtitle */}
-          <View style={styles.learningStatsHeader}>
-            <Text style={[styles.learningStatsTitle, { color: theme.text.primary }]}>Learning Statistics</Text>
-            <Text style={[styles.learningStatsSubtitle, { color: theme.text.secondary }]}>All time</Text>
-          </View>
+        {/* 6. DYNAMIC USER PROGRESS SECTION */}
+        {userData && (
+          <UserProgressSection 
+            userData={userData} 
+            enrollmentStats={enrollmentStats} 
+          />
+        )}
 
-          {/* Donut Chart + Legend */}
-          <View style={styles.chartAndLegendContainer}>
-            {/* Donut SVG Chart */}
-            <View style={styles.donutChartContainer}>
-              <Svg width="100" height="100" viewBox="0 0 100 100">
-                {/* Arc segments for 4 colored segments */}
-                <Circle cx="50" cy="50" r="35" fill="none" stroke="#8B5CF6" strokeWidth="8" strokeDasharray="50 360" />
-                <Circle cx="50" cy="50" r="35" fill="none" stroke="#22C55E" strokeWidth="8" strokeDasharray="30 360" strokeDashoffset="-50" />
-                <Circle cx="50" cy="50" r="35" fill="none" stroke="#F97316" strokeWidth="8" strokeDasharray="20 360" strokeDashoffset="-80" />
-                <Circle cx="50" cy="50" r="35" fill="none" stroke="#3B82F6" strokeWidth="8" strokeDasharray="10 360" strokeDashoffset="-100" />
-
-                {/* Center text */}
-                <SvgText x="50" y="45" textAnchor="middle" fontSize="14" fill={theme.text.primary} fontWeight="700">
-                  2
-                </SvgText>
-                <SvgText x="50" y="60" textAnchor="middle" fontSize="12" fill={theme.text.secondary}>
-                  courses
-                </SvgText>
-              </Svg>
-            </View>
-
-            {/* Legend */}
-            <View style={styles.chartLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
-                <View style={styles.legendTextContainer}>
-                  <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Enrolled</Text>
-                  <Text style={[styles.legendValue, { color: theme.text.primary }]}>2</Text>
-                </View>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
-                <View style={styles.legendTextContainer}>
-                  <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Quizzes</Text>
-                  <Text style={[styles.legendValue, { color: theme.text.primary }]}>1</Text>
-                </View>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#F97316' }]} />
-                <View style={styles.legendTextContainer}>
-                  <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Chapters</Text>
-                  <Text style={[styles.legendValue, { color: theme.text.primary }]}>0</Text>
-                </View>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: '#3B82F6' }]} />
-                <View style={styles.legendTextContainer}>
-                  <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Avg Score</Text>
-                  <Text style={[styles.legendValue, { color: theme.text.primary }]}>0</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Statistics Grid - 3x2 */}
-          <View style={styles.statsGrid}>
-            {/* Enrolled Courses */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                  borderColor: 'rgba(139, 92, 246, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>2</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Enrolled</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#8B5CF6' }]} />
-            </View>
-
-            {/* Quizzes Taken */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(34, 197, 94, 0.08)',
-                  borderColor: 'rgba(34, 197, 94, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#22C55E' }]}>1</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Quizzes</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#22C55E' }]} />
-            </View>
-
-            {/* Chapters Done */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(249, 115, 22, 0.08)',
-                  borderColor: 'rgba(249, 115, 22, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#F97316' }]}>0</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Chapters</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#F97316' }]} />
-            </View>
-
-            {/* Avg Score */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                  borderColor: 'rgba(59, 130, 246, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#3B82F6' }]}>0</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Avg Score</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#3B82F6' }]} />
-            </View>
-
-            {/* Learning Streak */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(236, 72, 153, 0.08)',
-                  borderColor: 'rgba(236, 72, 153, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#EC4899' }]}>0</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Streak</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#EC4899' }]} />
-            </View>
-
-            {/* Learning Days */}
-            <View
-              style={[
-                styles.statBox,
-                {
-                  backgroundColor: 'rgba(14, 165, 233, 0.08)',
-                  borderColor: 'rgba(14, 165, 233, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.statNumber, { color: '#0EA5E9' }]}>0</Text>
-              <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Days</Text>
-              <View style={[styles.statBottomBar, { backgroundColor: '#0EA5E9' }]} />
-            </View>
-          </View>
-        </GlassCard>
-
-        {/* 7. ENROLLMENT DETAILS SECTION */}
-        <View style={styles.sectionLabelContainer}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>ENROLLMENT DETAILS</Text>
-        </View>
-        <GlassCard
-          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 20 }]}
-          opacity={0.05}
-          glow={false}
-        >
-          {/* Top Row: Label, Number, and Progress Percentage */}
-          <View style={styles.enrollmentTopRow}>
-            <View>
-              <Text style={[styles.enrollmentLabel, { color: theme.text.secondary }]}>Total Enrollments</Text>
-              <Text style={[styles.enrollmentNumber, { color: theme.primary }]}>
-                {enrollmentStats?.totalEnrollments || 2}
-              </Text>
-            </View>
-            <View style={styles.progressPercentageContainer}>
-              <Text style={[styles.progressPercentage, { color: '#22C55E' }]}>20%</Text>
-              <Text style={[styles.progressSubtitle, { color: theme.text.secondary }]}>overall progress</Text>
-            </View>
-          </View>
-
-          {/* Gradient Progress Bar */}
-          <View style={[styles.enrollmentProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-            <View style={styles.enrollmentProgressFill} />
-          </View>
-
-          {/* Latest Enrolled Card */}
-          <View
-            style={[
-              styles.latestEnrolledCard,
-              {
-                backgroundColor: theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)',
-                borderColor: 'rgba(255,255,255,0.07)',
-              },
-            ]}
-          >
-            <Text style={[styles.latestEnrolledLabel, { color: theme.text.secondary }]}>LATEST ENROLLED</Text>
-            <Text style={[styles.latestEnrolledCourse, { color: theme.text.primary }]}>
-              📚 Natural Language Processing
-            </Text>
-            <Text style={[styles.latestEnrolledDesc, { color: theme.text.secondary }]}>
-              Advanced course in NLP techniques and applications
-            </Text>
-          </View>
-        </GlassCard>
-
-        {/* 8. ENROLLED COURSES SECTION */}
-        <View style={styles.sectionLabelContainer}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>ENROLLED COURSES</Text>
-        </View>
-
-        {/* Course Card 1 */}
-        <GlassCard
-          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 16 }]}
-          opacity={0.05}
-          glow={false}
-        >
-          <View style={styles.courseCardHeader}>
-            <Text style={[styles.courseCardName, { color: theme.text.primary }]}>UI/UX Design</Text>
-            <Text style={[styles.courseCardPercentage, { color: '#EC4899' }]}>50%</Text>
-          </View>
-          <View style={[styles.courseProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-            <View style={[styles.courseProgressFill, { width: '50%', backgroundColor: '#EC4899' }]} />
-          </View>
-          <Text style={[styles.courseCardDesc, { color: theme.text.secondary }]}>
-            Master the principles of modern UI/UX design
-          </Text>
-        </GlassCard>
-
-        {/* Course Card 2 */}
-        <GlassCard
-          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 16 }]}
-          opacity={0.05}
-          glow={false}
-        >
-          <View style={styles.courseCardHeader}>
-            <Text style={[styles.courseCardName, { color: theme.text.primary }]}>Natural Language Processing</Text>
-            <Text style={[styles.courseCardPercentage, { color: '#0EA5E9' }]}>64%</Text>
-          </View>
-          <View style={[styles.courseProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-            <View style={[styles.courseProgressFill, { width: '64%', backgroundColor: '#0EA5E9' }]} />
-          </View>
-          <Text style={[styles.courseCardDesc, { color: theme.text.secondary }]}>
-            Explore advanced NLP techniques and real-world applications
-          </Text>
-        </GlassCard>
-
-        {/* 9. QUIZ PERFORMANCE SECTION */}
-        <View style={styles.sectionLabelContainer}>
-          <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>QUIZ PERFORMANCE</Text>
-        </View>
-        <GlassCard
-          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 20 }]}
-          opacity={0.05}
-          glow={false}
-        >
-          {/* Two Metric Boxes */}
-          <View style={styles.quizMetricsRow}>
-            <View
-              style={[
-                styles.quizMetricBox,
-                {
-                  backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                  borderColor: 'rgba(59, 130, 246, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.quizMetricLabel, { color: theme.text.secondary }]}>Total Quizzes</Text>
-              <Text style={[styles.quizMetricValue, { color: '#3B82F6' }]}>
-                {userData?.totalQuizzesTaken || 1}
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.quizMetricBox,
-                {
-                  backgroundColor: 'rgba(34, 197, 94, 0.08)',
-                  borderColor: 'rgba(34, 197, 94, 0.1)',
-                },
-              ]}
-            >
-              <Text style={[styles.quizMetricLabel, { color: theme.text.secondary }]}>Average Score</Text>
-              <Text style={[styles.quizMetricValue, { color: '#22C55E' }]}>
-                {userData?.averageScore || 0}%
-              </Text>
-            </View>
-          </View>
-
-          {/* Quiz Result Card */}
-          <View
-            style={[
-              styles.quizResultCard,
-              {
-                backgroundColor: theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)',
-                borderColor: 'rgba(255,255,255,0.07)',
-              },
-            ]}
-          >
-            <View style={styles.quizResultHeaderRow}>
-              <View>
-                <Text style={[styles.quizResultTitle, { color: theme.text.primary }]}>Quiz #1</Text>
-                <Text style={[styles.quizResultDate, { color: theme.text.secondary }]}>4/2/2026</Text>
-              </View>
-
-              {/* Grade Badge F */}
-              <View style={[styles.gradeBadgeF, { backgroundColor: 'rgba(239, 68, 68, 0.15)' }]}>
-                <Text style={styles.gradeBadgeText}>F</Text>
-              </View>
-            </View>
-
-            {/* Score and Progress */}
-            <View style={styles.quizScoreSection}>
-              <Text style={[styles.quizScoreText, { color: theme.text.primary }]}>0 / 10</Text>
-              <View style={[styles.quizScoreProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                <View
-                  style={[
-                    styles.quizScoreProgressFill,
-                    { width: '0%', backgroundColor: '#EF4444' },
-                  ]}
-                />
-              </View>
-            </View>
-
-            {/* Performance Indicator */}
-            <Text style={[styles.quizPerformanceText, { color: '#EF4444' }]}>💪 Needs Improvement</Text>
-          </View>
-        </GlassCard>
 
         {/* 10. ACCOUNT DETAILS SECTION */}
         <View style={styles.sectionLabelContainer}>
@@ -2335,15 +1993,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
   },
-  loadingAnimation: {
-    width: 250,
-    height: 250,
-  },
-  loadingText: {
-    fontSize: 16,
-    marginTop: 10,
-    textAlign: 'center',
-  },
+
 
   // EDIT PROFILE MODAL
   modalOverlay: {

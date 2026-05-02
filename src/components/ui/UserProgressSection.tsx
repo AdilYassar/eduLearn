@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { Circle, G } from 'react-native-svg';
+import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { ThemedText as Text, GlassCard } from './ThemedComponents';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -51,459 +51,421 @@ interface UserProgressSectionProps {
 const UserProgressSection: React.FC<UserProgressSectionProps> = ({ userData, enrollmentStats }) => {
   const { theme } = useTheme();
   
-  // Custom neon chart colors that pop on dark mode
-  const statColors = {
-    color1: '#5B4CDB',
-    color2: '#4DBAB8',
-    color3: '#F5A962',
-    color4: '#E8C368',
-    color5: '#F4988C',
-    color6: '#D95F9F',
-  };
-
   if (userData.role !== 'Student') {
     return null;
   }
 
   return (
-    <View style={{ marginBottom: 20 }}>
-      <Text style={[styles.sectionHeaderTitle, { color: theme.text.primary }]}>📊 User Progress</Text>
-
-      {/* Learning Statistics for Students */}
-      <GlassCard style={[styles.statisticsCard, { borderColor: theme.primary + '40' }]} opacity={0.03} glow={true}>
-        <Text style={[styles.statisticsTitle, { color: theme.primary }]}>Learning Statistics</Text>
-
-        <View style={styles.chartContainer}>
-          <Svg width="150" height="150" viewBox="0 0 150 150">
-            <G rotation="0" origin="75, 75">
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color1} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="0"
-              />
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color2} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="-62.8"
-              />
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color3} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="-125.6"
-              />
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color4} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="-188.4"
-              />
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color5} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="-251.2"
-              />
-              <Circle
-                cx="75" cy="75" r="60"
-                stroke={statColors.color6} strokeWidth="20" fill="none"
-                strokeDasharray="62.8 314.8" strokeDashoffset="-314"
-              />
-            </G>
-          </Svg>
+    <>
+      {/* 6. USER PROGRESS SECTION */}
+      <View style={styles.sectionLabelContainer}>
+        <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>USER PROGRESS</Text>
+      </View>
+      <GlassCard
+        style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 20 }]}
+        opacity={0.05}
+        glow={false}
+      >
+        {/* Title with Subtitle */}
+        <View style={styles.learningStatsHeader}>
+          <Text style={[styles.learningStatsTitle, { color: theme.text.primary }]}>Learning Statistics</Text>
+          <Text style={[styles.learningStatsSubtitle, { color: theme.text.secondary }]}>All time</Text>
         </View>
 
+        {/* Donut Chart + Legend */}
+        <View style={styles.chartAndLegendContainer}>
+          {/* Donut SVG Chart */}
+          <View style={styles.donutChartContainer}>
+            <Svg width="100" height="100" viewBox="0 0 100 100">
+              {/* Arc segments for 4 colored segments - Adjusting dasharray based on actual data if possible, but keeping same visual for now */}
+              <Circle cx="50" cy="50" r="35" fill="none" stroke="#8B5CF6" strokeWidth="8" strokeDasharray="50 360" />
+              <Circle cx="50" cy="50" r="35" fill="none" stroke="#22C55E" strokeWidth="8" strokeDasharray="30 360" strokeDashoffset="-50" />
+              <Circle cx="50" cy="50" r="35" fill="none" stroke="#F97316" strokeWidth="8" strokeDasharray="20 360" strokeDashoffset="-80" />
+              <Circle cx="50" cy="50" r="35" fill="none" stroke="#3B82F6" strokeWidth="8" strokeDasharray="10 360" strokeDashoffset="-100" />
+
+              {/* Center text */}
+              <SvgText x="50" y="45" textAnchor="middle" fontSize="14" fill={theme.text.primary} fontWeight="700">
+                {userData.enrollmentCount || 0}
+              </SvgText>
+              <SvgText x="50" y="60" textAnchor="middle" fontSize="12" fill={theme.text.secondary}>
+                courses
+              </SvgText>
+            </Svg>
+          </View>
+
+          {/* Legend */}
+          <View style={styles.chartLegend}>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#8B5CF6' }]} />
+              <View style={styles.legendTextContainer}>
+                <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Enrolled</Text>
+                <Text style={[styles.legendValue, { color: theme.text.primary }]}>{userData.enrollmentCount || 0}</Text>
+              </View>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
+              <View style={styles.legendTextContainer}>
+                <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Quizzes</Text>
+                <Text style={[styles.legendValue, { color: theme.text.primary }]}>{userData.totalQuizzesTaken || 0}</Text>
+              </View>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#F97316' }]} />
+              <View style={styles.legendTextContainer}>
+                <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Chapters</Text>
+                <Text style={[styles.legendValue, { color: theme.text.primary }]}>{userData.totalChaptersCompleted || 0}</Text>
+              </View>
+            </View>
+            <View style={styles.legendItem}>
+              <View style={[styles.legendDot, { backgroundColor: '#3B82F6' }]} />
+              <View style={styles.legendTextContainer}>
+                <Text style={[styles.legendLabel, { color: theme.text.secondary }]}>Avg Score</Text>
+                <Text style={[styles.legendValue, { color: theme.text.primary }]}>{userData.averageScore || 0}%</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Statistics Grid - 3x2 */}
         <View style={styles.statsGrid}>
-          {/* Row 1 */}
-          <View style={styles.statsRow}>
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color1 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Enrolled{'\n'}Courses</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.enrollmentCount || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color1 }]} />
-              </View>
-            </View>
-
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color2 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Quizzes{'\n'}Taken</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.totalQuizzesTaken || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color2 }]} />
-              </View>
-            </View>
+          {/* Enrolled Courses */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(139, 92, 246, 0.08)', borderColor: 'rgba(139, 92, 246, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>{userData.enrollmentCount || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Enrolled</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#8B5CF6' }]} />
           </View>
 
-          {/* Row 2 */}
-          <View style={styles.statsRow}>
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color3 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Chapters{'\n'}Completed</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.totalChaptersCompleted || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color3 }]} />
-              </View>
-            </View>
-
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color4 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Average{'\n'}Score</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.averageScore || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color4 }]} />
-              </View>
-            </View>
+          {/* Quizzes Taken */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(34, 197, 94, 0.08)', borderColor: 'rgba(34, 197, 94, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#22C55E' }]}>{userData.totalQuizzesTaken || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Quizzes</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#22C55E' }]} />
           </View>
 
-          {/* Row 3 */}
-          <View style={styles.statsRow}>
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color5 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Learning{'\n'}Streak</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.learningStreak || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color5 }]} />
-              </View>
-            </View>
+          {/* Chapters Done */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(249, 115, 22, 0.08)', borderColor: 'rgba(249, 115, 22, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#F97316' }]}>{userData.totalChaptersCompleted || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Chapters</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#F97316' }]} />
+          </View>
 
-            <View style={[styles.statItem, { backgroundColor: 'rgba(255,255,255,0.03)' }]}>
-              <View style={styles.statHeader}>
-                <View style={[styles.colorIndicator, { backgroundColor: statColors.color6 }]} />
-                <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Learning{'\n'}Days</Text>
-              </View>
-              <View style={styles.statValueContainer}>
-                <Text style={[styles.statValue, { color: theme.text.primary }]}>{String(userData.totalLearningDays || 0)}</Text>
-                <View style={[styles.statUnderline, { backgroundColor: statColors.color6 }]} />
-              </View>
-            </View>
+          {/* Avg Score */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(59, 130, 246, 0.08)', borderColor: 'rgba(59, 130, 246, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#3B82F6' }]}>{userData.averageScore || 0}%</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Avg Score</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#3B82F6' }]} />
+          </View>
+
+          {/* Learning Streak */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(236, 72, 153, 0.08)', borderColor: 'rgba(236, 72, 153, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#EC4899' }]}>{userData.learningStreak || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Streak</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#EC4899' }]} />
+          </View>
+
+          {/* Learning Days */}
+          <View style={[styles.statBox, { backgroundColor: 'rgba(14, 165, 233, 0.08)', borderColor: 'rgba(14, 165, 233, 0.1)' }]}>
+            <Text style={[styles.statNumber, { color: '#0EA5E9' }]}>{userData.totalLearningDays || 0}</Text>
+            <Text style={[styles.statLabel, { color: theme.text.secondary }]}>Days</Text>
+            <View style={[styles.statBottomBar, { backgroundColor: '#0EA5E9' }]} />
           </View>
         </View>
       </GlassCard>
 
-      {/* Enrollment Statistics from API */}
+      {/* 7. ENROLLMENT DETAILS SECTION */}
       {enrollmentStats && (
-        <GlassCard style={[styles.enrollmentCard, { borderColor: 'rgba(76, 175, 80, 0.4)' }]} opacity={0.03}>
-          <Text style={[styles.cardTitle, { color: theme.text.primary }]}>Enrollment Details</Text>
-
-          <View style={styles.enrollmentStatRow}>
-            <View style={styles.enrollmentStatLeft}>
-              <Text style={[styles.enrollmentLabel, { color: theme.text.secondary }]}>Total Enrollments</Text>
-              <Text style={styles.enrollmentValue}>{String(enrollmentStats.totalEnrollments || 0)}</Text>
-            </View>
-            <View style={styles.enrollmentProgressContainer}>
-              <View style={[styles.enrollmentProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                <View
-                  style={[
-                    styles.enrollmentProgressFill,
-                    {
-                      width: `${Math.min((enrollmentStats.totalEnrollments || 0) * 10, 100)}%`,
-                      backgroundColor: '#4CAF50',
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.enrollmentProgressText}>
-                {Math.min((enrollmentStats.totalEnrollments || 0) * 10, 100)}%
-              </Text>
-            </View>
+        <>
+          <View style={styles.sectionLabelContainer}>
+            <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>ENROLLMENT DETAILS</Text>
           </View>
-
-          {enrollmentStats.lastEnrollment && (
-            <View style={[styles.lastEnrollmentBox, { backgroundColor: 'rgba(76, 175, 80, 0.05)', borderLeftColor: '#4CAF50' }]}>
-              <Text style={[styles.lastEnrollmentLabel, { color: theme.text.secondary }]}>Latest Enrolled Course</Text>
-              <Text style={[styles.lastEnrollmentTitle, { color: theme.text.primary }]}>
-                📚 {enrollmentStats.lastEnrollment.title || 'N/A'}
-              </Text>
-              {enrollmentStats.lastEnrollment.description && (
-                <Text style={[styles.lastEnrollmentDescription, { color: theme.text.secondary }]}>
-                  {enrollmentStats.lastEnrollment.description}
+          <GlassCard
+            style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 20 }]}
+            opacity={0.05}
+            glow={false}
+          >
+            <View style={styles.enrollmentTopRow}>
+              <View>
+                <Text style={[styles.enrollmentLabel, { color: theme.text.secondary }]}>Total Enrollments</Text>
+                <Text style={[styles.enrollmentNumber, { color: theme.primary }]}>
+                  {enrollmentStats.totalEnrollments || 0}
                 </Text>
-              )}
+              </View>
+              <View style={styles.progressPercentageContainer}>
+                <Text style={[styles.progressPercentage, { color: '#22C55E' }]}>
+                  {enrollmentStats.totalEnrollments ? Math.round(((enrollmentStats.completedCourses || 0) / enrollmentStats.totalEnrollments) * 100) : 0}%
+                </Text>
+                <Text style={[styles.progressSubtitle, { color: theme.text.secondary }]}>overall completion</Text>
+              </View>
             </View>
-          )}
-        </GlassCard>
+
+            <View style={[styles.enrollmentProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+              <View 
+                style={[
+                  styles.enrollmentProgressFill, 
+                  { 
+                    width: `${enrollmentStats.totalEnrollments ? Math.round(((enrollmentStats.completedCourses || 0) / enrollmentStats.totalEnrollments) * 100) : 0}%`, 
+                    backgroundColor: theme.primary 
+                  }
+                ]} 
+              />
+            </View>
+
+            {enrollmentStats.lastEnrollment && (
+              <View style={[styles.latestEnrolledCard, { backgroundColor: theme.isDark ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.07)' }]}>
+                <Text style={[styles.latestEnrolledLabel, { color: theme.text.secondary }]}>LATEST ENROLLED</Text>
+                <Text style={[styles.latestEnrolledCourse, { color: theme.text.primary }]}>
+                  📚 {enrollmentStats.lastEnrollment.title || 'N/A'}
+                </Text>
+                {enrollmentStats.lastEnrollment.description && (
+                  <Text style={[styles.latestEnrolledDesc, { color: theme.text.secondary }]}>
+                    {enrollmentStats.lastEnrollment.description}
+                  </Text>
+                )}
+              </View>
+            )}
+          </GlassCard>
+        </>
       )}
 
-      {/* Enrolled Courses */}
-      <GlassCard style={[styles.enrolledCoursesCard, { borderColor: 'rgba(255, 152, 0, 0.4)' }]} opacity={0.03} glow={true}>
-        <Text style={[styles.cardTitle, { color: theme.text.primary }]}>Enrolled Courses</Text>
-        {userData.enrolledCourses && userData.enrolledCourses.length > 0 ? (
-          userData.enrolledCourses.map((item, index) => {
-            const progressColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
-            const progressPercentage = item.progress || Math.floor(Math.random() * 100);
+      {/* 8. ENROLLED COURSES SECTION */}
+      <View style={styles.sectionLabelContainer}>
+        <Text style={[styles.sectionLabel, { color: theme.text.secondary }]}>ENROLLED COURSES</Text>
+      </View>
+      {userData.enrolledCourses && userData.enrolledCourses.length > 0 ? (
+        userData.enrolledCourses.map((item, index) => {
+          const progressColors = ['#EC4899', '#0EA5E9', '#8B5CF6', '#22C55E', '#F97316'];
+          const color = progressColors[index % progressColors.length];
+          const progress = item.progress || 0;
 
-            return (
-              <View key={String(item._id || item.courseId || index)} style={[styles.courseProgressItem, { backgroundColor: 'rgba(255,255,255,0.03)', borderLeftColor: '#FF9800' }]}>
-                <View style={styles.courseProgressHeader}>
-                  <Text style={[styles.courseProgressTitle, { color: theme.text.primary }]}>
-                    {item.title || `Course ${index + 1}`}
-                  </Text>
-                  <Text style={styles.courseProgressPercentage}>{progressPercentage}%</Text>
-                </View>
-
-                <View style={styles.courseProgressBarContainer}>
-                  <View style={[styles.courseProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
-                    <View
-                      style={[
-                        styles.courseProgressFill,
-                        {
-                          width: `${progressPercentage}%`,
-                          backgroundColor: progressColors[index % progressColors.length],
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-
-                {item.description && (
-                  <Text style={[styles.courseProgressDescription, { color: theme.text.secondary }]} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                )}
-
-                {item.enrolledAt && (
-                  <Text style={[styles.courseProgressDate, { color: theme.text.secondary }]}>
-                    Enrolled: {new Date(item.enrolledAt).toLocaleDateString()}
-                  </Text>
-                )}
+          return (
+            <GlassCard
+              key={item._id || index}
+              style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 16 }]}
+              opacity={0.05}
+              glow={false}
+            >
+              <View style={styles.courseCardHeader}>
+                <Text style={[styles.courseCardName, { color: theme.text.primary }]}>{item.title || 'Course'}</Text>
+                <Text style={[styles.courseCardPercentage, { color: color }]}>{progress}%</Text>
               </View>
-            );
-          })
-        ) : (
-          <View style={styles.noCoursesContainer}>
-            <Text style={[styles.noCoursesText, { color: theme.text.primary }]}>No courses enrolled yet</Text>
-            <Text style={[styles.noCoursesSubtext, { color: theme.text.secondary }]}>Start your learning journey today!</Text>
-          </View>
-        )}
-      </GlassCard>
-    </View>
+              <View style={[styles.courseProgressBar, { backgroundColor: 'rgba(255,255,255,0.1)' }]}>
+                <View style={[styles.courseProgressFill, { width: `${progress}%`, backgroundColor: color }]} />
+              </View>
+              <Text style={[styles.courseCardDesc, { color: theme.text.secondary }]} numberOfLines={2}>
+                {item.description || 'No description available'}
+              </Text>
+            </GlassCard>
+          );
+        })
+      ) : (
+        <GlassCard
+          style={[styles.cardWithBorder, { borderColor: 'rgba(255,255,255,0.07)', padding: 16 }]}
+          opacity={0.05}
+          glow={false}
+        >
+          <Text style={{ color: theme.text.secondary, textAlign: 'center' }}>No courses enrolled yet</Text>
+        </GlassCard>
+      )}
+    </>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionHeaderTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    marginHorizontal: 16,
+  sectionLabelContainer: {
     marginTop: 24,
-    fontFamily: 'Inter-Bold',
+    marginBottom: 12,
   },
-  statisticsCard: {
-    padding: 20,
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    letterSpacing: 0.5,
+  },
+  cardWithBorder: {
+    borderRadius: 20,
     marginBottom: 20,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 1,
+    padding: 0,
+    overflow: 'hidden',
   },
-  statisticsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  learningStatsHeader: {
     marginBottom: 20,
-    textAlign: 'center',
-    fontFamily: 'Inter-Bold',
   },
-  chartContainer: {
+  learningStatsTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 4,
+  },
+  learningStatsSubtitle: {
+    fontSize: 12,
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+  },
+  chartAndLegendContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginBottom: 24,
+    gap: 20,
+  },
+  donutChartContainer: {
+    width: 100,
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chartLegend: {
+    flex: 1,
+    gap: 12,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  legendDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  legendTextContainer: {
+    flex: 1,
+  },
+  legendLabel: {
+    fontSize: 11,
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+  },
+  legendValue: {
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginTop: 2,
   },
   statsGrid: {
-    gap: 16,
-  },
-  statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
   },
-  statItem: {
-    flex: 1,
-    borderRadius: 12,
-    padding: 16,
+  statBox: {
+    width: '31%',
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    gap: 8,
-  },
-  colorIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  statNumber: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+    marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-    fontFamily: 'Inter-SemiBold',
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+    marginBottom: 8,
   },
-  statValueContainer: {
-    alignItems: 'center',
+  statBottomBar: {
+    width: '70%',
+    height: 2,
+    borderRadius: 1,
   },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    fontFamily: 'Inter-Bold',
-  },
-  statUnderline: {
-    width: 30,
-    height: 3,
-    borderRadius: 2,
-    marginTop: 4,
-  },
-  enrollmentCard: {
-    padding: 20,
-    marginBottom: 20,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    fontFamily: 'Inter-Bold',
-  },
-  enrollmentStatRow: {
+  enrollmentTopRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-    gap: 16,
-  },
-  enrollmentStatLeft: {
-    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
   },
   enrollmentLabel: {
-    fontSize: 14,
-    marginBottom: 4,
+    fontSize: 12,
+    fontWeight: '400',
     fontFamily: 'Inter-Regular',
+    marginBottom: 4,
   },
-  enrollmentValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#4CAF50',
+  enrollmentNumber: {
+    fontSize: 28,
+    fontWeight: '700',
     fontFamily: 'Inter-Bold',
   },
-  enrollmentProgressContainer: {
-    flex: 1,
+  progressPercentageContainer: {
     alignItems: 'flex-end',
   },
+  progressPercentage: {
+    fontSize: 18,
+    fontWeight: '700',
+    fontFamily: 'Inter-Bold',
+  },
+  progressSubtitle: {
+    fontSize: 11,
+    fontWeight: '400',
+    fontFamily: 'Inter-Regular',
+  },
   enrollmentProgressBar: {
-    width: '100%',
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
+    marginBottom: 16,
     overflow: 'hidden',
-    marginBottom: 4,
   },
   enrollmentProgressFill: {
     height: '100%',
-    borderRadius: 4,
   },
-  enrollmentProgressText: {
-    fontSize: 12,
-    color: '#4CAF50',
+  latestEnrolledCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  latestEnrolledLabel: {
+    fontSize: 10,
     fontWeight: '600',
     fontFamily: 'Inter-SemiBold',
-  },
-  lastEnrollmentBox: {
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-  },
-  lastEnrollmentLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-    fontFamily: 'Inter-Regular',
-  },
-  lastEnrollmentTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 6,
-    fontFamily: 'Inter-Bold',
+    letterSpacing: 0.5,
   },
-  lastEnrollmentDescription: {
+  latestEnrolledCourse: {
     fontSize: 14,
-    lineHeight: 20,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
+    marginBottom: 4,
+  },
+  latestEnrolledDesc: {
+    fontSize: 12,
+    fontWeight: '400',
     fontFamily: 'Inter-Regular',
   },
-  enrolledCoursesCard: {
-    padding: 20,
-    marginBottom: 20,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 2,
-  },
-  courseProgressItem: {
-    marginBottom: 20,
-    padding: 15,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-  },
-  courseProgressHeader: {
+  courseCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  courseProgressTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-    marginRight: 10,
-    fontFamily: 'Inter-Bold',
+  courseCardName: {
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: 'Inter-SemiBold',
   },
-  courseProgressPercentage: {
-    fontSize: 18,
+  courseCardPercentage: {
+    fontSize: 14,
     fontWeight: '700',
-    color: '#FF9800',
     fontFamily: 'Inter-Bold',
-  },
-  courseProgressBarContainer: {
-    marginBottom: 10,
   },
   courseProgressBar: {
-    width: '100%',
-    height: 10,
-    borderRadius: 5,
+    height: 4,
+    borderRadius: 2,
+    marginBottom: 12,
     overflow: 'hidden',
   },
   courseProgressFill: {
     height: '100%',
-    borderRadius: 5,
+    borderRadius: 2,
   },
-  courseProgressDescription: {
-    fontSize: 13,
-    marginBottom: 6,
-    lineHeight: 18,
-    fontFamily: 'Inter-Regular',
-  },
-  courseProgressDate: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    fontFamily: 'Inter-Regular',
-  },
-  noCoursesContainer: {
-    alignItems: 'center',
-    padding: 30,
-  },
-  noCoursesText: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginBottom: 8,
-    fontFamily: 'Inter-Regular',
-  },
-  noCoursesSubtext: {
-    fontSize: 14,
-    textAlign: 'center',
+  courseCardDesc: {
+    fontSize: 11,
+    fontWeight: '400',
     fontFamily: 'Inter-Regular',
   },
 });

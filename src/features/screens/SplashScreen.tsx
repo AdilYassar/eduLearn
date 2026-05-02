@@ -14,6 +14,7 @@ import { RFValue } from 'react-native-responsive-fontsize';
 import { navigate, replace } from '../../utils/Navigation';
 import { checkAuthStatus } from '@service/authUtils';
 import { BASE_URL } from '@service/config';
+import { checkMessagingPermission } from '@service/deviceTokenService';
 
 const SplashScreen = () => {
   // Logo animation
@@ -110,6 +111,11 @@ const SplashScreen = () => {
     const checkAuthAndNavigate = async () => {
       try {
         console.log('SplashScreen: Checking authentication status...');
+        
+        // Prompt for notification permissions on splash screen as requested
+        console.log('SplashScreen: Requesting notification permissions...');
+        await checkMessagingPermission();
+
         const isAuthenticated = await checkAuthStatus(BASE_URL);
         
         setTimeout(() => {
@@ -118,13 +124,13 @@ const SplashScreen = () => {
             replace('DashboardScreen');
           } else {
             console.log('SplashScreen: User is not authenticated, navigating to introduction');
-            navigate('IntroductionScreen');
+            replace('IntroductionScreen');
           }
         }, 4000);
       } catch (error) {
         console.error('SplashScreen: Error checking authentication:', error);
         setTimeout(() => {
-          navigate('IntroductionScreen');
+          replace('IntroductionScreen');
         }, 4000);
       }
     };
@@ -171,7 +177,7 @@ const SplashScreen = () => {
         ]}
       >
         <Image
-          source={require('../../assets/getStarted/logo.png')}
+          source={require('../../assets/icons/appIcon.png')}
           style={styles.logo}
           resizeMode="contain"
         />

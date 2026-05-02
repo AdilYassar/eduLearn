@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     StyleSheet,
     ActivityIndicator,
+    DeviceEventEmitter,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useDispatch, useSelector } from 'react-redux';
@@ -14,33 +15,29 @@ import { setFriendRequests } from '../../../redux/reducers/socialSlice';
 import type { FriendRequest } from '../../../service/social/types';
 import { UserCircle, Check, X } from 'lucide-react-native';
 
-// ── Ethereal Editorial Design Tokens ──────────────────────────────────────────
-const C = {
-    bg: '#0e0e0e',
-    surface: '#1a1919',
-    surfaceHigh: '#201f1f',
-    surfaceBright: '#2c2c2c',
-    primary: '#f382ff',
-    primaryContainer: '#ed69ff',
-    secondary: '#ac8aff',
-    tertiary: '#ff86c3',
-    onSurface: '#ffffff',
-    onSurfaceVariant: '#adaaaa',
-    outlineVariant: '#484847',
-    error: '#ff6e84',
-};
+import { useTheme } from '../../../context/ThemeContext';
+import { ThemedText } from '../../ui/ThemedComponents';
 
 export const FriendRequests: React.FC = () => {
     const dispatch = useDispatch();
+    const { theme } = useTheme();
     const friendRequests = useSelector((state: any) => state.social.friendRequests);
     const [loading, setLoading] = useState(false);
     const [processingId, setProcessingId] = useState<string | null>(null);
 
-    useFocusEffect(
-        React.useCallback(() => {
-            loadFriendRequests();
-        }, [])
-    );
+    useEffect(() => {
+        loadFriendRequests();
+
+        // Subscribe to real-time social events
+        const subscription = DeviceEventEmitter.addListener('social_event', (event) => {
+            if (event.subType === 'FRIEND_REQUEST_RECEIVED') {
+                console.log('[FriendRequests] 🔄 Refreshing requests due to new event');
+                loadFriendRequests();
+            }
+        });
+
+        return () => subscription.remove();
+    }, []);
 
     const loadFriendRequests = async () => {
         try {
@@ -84,47 +81,47 @@ export const FriendRequests: React.FC = () => {
         const isProcessing = processingId === item.requesterUUID;
 
         return (
-            <View style={styles.requestItem}>
+            <View style={[styles.requestItem, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
                 {/* Aura Ring Avatar */}
-                <View style={styles.auraRing}>
-                    <View style={styles.avatar}>
-                        <UserCircle size={30} color={C.primary} strokeWidth={1.5} />
+                <View style={[styles.auraRing, { borderColor: theme.primary }]}>
+                    <View style={[styles.avatar, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)' }]}>
+                        <UserCircle size={30} color={theme.primary} strokeWidth={1.5} />
                     </View>
                 </View>
 
                 <View style={styles.requestInfo}>
-                    <Text style={styles.requestName}>{item.requester?.name || 'Unknown'}</Text>
+                    <ThemedText weight="bold" size="medium">{item.requester?.name || 'Unknown'}</ThemedText>
                     {item.message && (
-                        <Text style={styles.requestMessage} numberOfLines={2}>
+                        <Text style={[styles.requestMessage, { color: theme.text.secondary }]} numberOfLines={2}>
                             "{item.message}"
                         </Text>
                     )}
-                    <Text style={styles.requestTime}>{formatTime(item.createdAt)}</Text>
+                    <ThemedText variant="secondary" size="tiny">{formatTime(item.createdAt)}</ThemedText>
                 </View>
 
                 <View style={styles.actionButtons}>
                     {/* Accept */}
                     <TouchableOpacity
-                        style={[styles.actionBtn, styles.acceptBtn]}
+                        style={[styles.actionBtn, { backgroundColor: theme.primary }]}
                         onPress={() => handleAccept(item.requesterUUID)}
                         disabled={isProcessing}
                         activeOpacity={0.8}
                     >
                         {isProcessing ? (
-                            <ActivityIndicator size="small" color="#540061" />
+                            <ActivityIndicator size="small" color="#fff" />
                         ) : (
-                            <Check size={16} color="#540061" strokeWidth={2.5} />
+                            <Check size={16} color="#fff" strokeWidth={2.5} />
                         )}
                     </TouchableOpacity>
 
                     {/* Reject */}
                     <TouchableOpacity
-                        style={[styles.actionBtn, styles.rejectBtn]}
+                        style={[styles.actionBtn, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)', borderColor: 'rgba(255,110,132,0.3)', borderWidth: 1 }]}
                         onPress={() => handleReject(item.requesterUUID)}
                         disabled={isProcessing}
                         activeOpacity={0.8}
                     >
-                        <X size={16} color={C.error} strokeWidth={2.5} />
+                        <X size={16} color={theme.isDark ? '#ff6e84' : '#ef4444'} strokeWidth={2.5} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -134,7 +131,7 @@ export const FriendRequests: React.FC = () => {
     if (loading && friendRequests.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={C.primary} />
+                <ActivityIndicator size="large" color={theme.primary} />
             </View>
         );
     }
@@ -142,11 +139,11 @@ export const FriendRequests: React.FC = () => {
     if (friendRequests.length === 0) {
         return (
             <View style={styles.centerContainer}>
-                <View style={styles.emptyIconWrap}>
-                    <UserCircle size={36} color={C.outlineVariant} strokeWidth={1.5} />
+                <View style={[styles.emptyIconWrap, { backgroundColor: theme.isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }]}>
+                    <UserCircle size={36} color={theme.text.secondary} strokeWidth={1.5} />
                 </View>
-                <Text style={styles.emptyText}>No pending requests</Text>
-                <Text style={styles.emptySubtext}>You're all caught up!</Text>
+                <ThemedText weight="bold" size="large">No pending requests</ThemedText>
+                <ThemedText variant="secondary">You're all caught up!</ThemedText>
             </View>
         );
     }
@@ -181,7 +178,6 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingTop: 8,
         paddingBottom: 24,
-        backgroundColor: C.bg,
     },
 
     // ── Request Item ──
@@ -189,7 +185,6 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 14,
-        backgroundColor: C.surface,
         borderRadius: 20,
         marginBottom: 10,
     },
@@ -200,7 +195,6 @@ const styles = StyleSheet.create({
         height: 48,
         borderRadius: 24,
         borderWidth: 2,
-        borderColor: C.primary,
         padding: 2,
         justifyContent: 'center',
         alignItems: 'center',
@@ -210,7 +204,6 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        backgroundColor: C.surfaceHigh,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -220,22 +213,11 @@ const styles = StyleSheet.create({
         flex: 1,
         gap: 2,
     },
-    requestName: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: C.onSurface,
-        marginBottom: 2,
-    },
     requestMessage: {
         fontSize: 12,
-        color: C.onSurfaceVariant,
         fontStyle: 'italic',
         lineHeight: 17,
         marginBottom: 2,
-    },
-    requestTime: {
-        fontSize: 11,
-        color: C.outlineVariant,
     },
 
     // ── Buttons ──
@@ -251,14 +233,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
-    acceptBtn: {
-        backgroundColor: C.primary,
-    },
-    rejectBtn: {
-        backgroundColor: C.surfaceHigh,
-        borderWidth: 1,
-        borderColor: 'rgba(255,110,132,0.3)',
-    },
 
     // ── Empty ──
     centerContainer: {
@@ -266,26 +240,13 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 32,
-        backgroundColor: C.bg,
     },
     emptyIconWrap: {
         width: 72,
         height: 72,
         borderRadius: 36,
-        backgroundColor: C.surface,
         justifyContent: 'center',
         alignItems: 'center',
         marginBottom: 16,
-    },
-    emptyText: {
-        fontSize: 17,
-        fontWeight: '700',
-        color: C.onSurface,
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 14,
-        color: C.onSurfaceVariant,
-        textAlign: 'center',
     },
 });

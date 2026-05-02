@@ -56,12 +56,12 @@ const BottomNavigationBar = ({ backgroundColor = '#2A2A2A', currentScreen = '' }
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => navigate('ScheduleManagementScreen')}
+          onPress={() => navigate('TimelineScreen')}
         >
           <Calendar 
             size={24} 
             color={iconColor}
-            fill={currentScreen === 'ScheduleManagementScreen' ? theme.text.secondary : "transparent"}
+            fill={currentScreen === 'TimelineScreen' ? theme.text.secondary : "transparent"}
           />
         </TouchableOpacity>
 

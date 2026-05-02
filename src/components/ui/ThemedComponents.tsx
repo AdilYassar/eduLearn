@@ -1,18 +1,21 @@
+import React from 'react';
 import { View, Text, TouchableOpacity, ViewStyle, TextStyle, TouchableOpacityProps, StatusBar } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, Edge } from 'react-native-safe-area-context';
 import { useTheme } from '../../context/ThemeContext';
 
 interface ThemedContainerProps {
   children: React.ReactNode;
   style?: ViewStyle;
   useGradient?: boolean;
+  edges?: Edge[];
 }
 
 export const ThemedContainer: React.FC<ThemedContainerProps> = ({
   children,
   style,
   useGradient = true,
+  edges = ['top', 'left', 'right'],
 }) => {
   const { theme } = useTheme();
 
@@ -25,12 +28,12 @@ export const ThemedContainer: React.FC<ThemedContainerProps> = ({
       />
       {useGradient ? (
         <LinearGradient colors={theme.background} style={{ flex: 1 }}>
-          <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+          <SafeAreaView style={{ flex: 1 }} edges={edges}>
             {children}
           </SafeAreaView>
         </LinearGradient>
       ) : (
-        <SafeAreaView style={{ flex: 1 }} edges={['top', 'left', 'right']}>
+        <SafeAreaView style={{ flex: 1 }} edges={edges}>
           {children}
         </SafeAreaView>
       )}
@@ -222,6 +225,9 @@ interface ThemedInputContainerProps {
   style?: ViewStyle;
 }
 
+import { ArrowLeft } from 'lucide-react-native';
+import { goBack } from '../../utils/Navigation';
+
 export const ThemedInputContainer: React.FC<ThemedInputContainerProps> = ({
   children,
   style,
@@ -243,6 +249,63 @@ export const ThemedInputContainer: React.FC<ThemedInputContainerProps> = ({
       ]}
     >
       {children}
+    </View>
+  );
+};
+
+interface ThemedHeaderProps {
+  title: string;
+  showBack?: boolean;
+  onBack?: () => void;
+  rightAction?: React.ReactNode;
+  style?: ViewStyle;
+}
+
+export const ThemedHeader: React.FC<ThemedHeaderProps> = ({
+  title,
+  showBack = false,
+  onBack,
+  rightAction,
+  style,
+}) => {
+  const { theme } = useTheme();
+
+  return (
+    <View style={[
+      {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 12,
+        height: 60,
+      },
+      style
+    ]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+        {showBack && (
+          <TouchableOpacity 
+            onPress={onBack || (() => goBack())}
+            style={{ 
+              marginRight: 16,
+              width: 36,
+              height: 36,
+              borderRadius: 18,
+              backgroundColor: theme.isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              justifyContent: 'center',
+              alignItems: 'center'
+            }}
+          >
+            <ArrowLeft size={20} color={theme.text.primary} />
+          </TouchableOpacity>
+        )}
+        <ThemedText weight="bold" size="large" style={{ letterSpacing: -0.5 }}>
+          {title}
+        </ThemedText>
+      </View>
+      {rightAction && (
+        <View>{rightAction}</View>
+      )}
     </View>
   );
 };

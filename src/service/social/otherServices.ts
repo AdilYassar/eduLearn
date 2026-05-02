@@ -45,9 +45,9 @@ export const groupService = {
    */
   async addMember(
     groupId: string,
-    userUUID: string
+    memberUUID: string
   ): Promise<ApiResponse<{ message: string }>> {
-    return socialApiClient.post(`/groups/${groupId}/members`, { userUUID });
+    return socialApiClient.post(`/groups/${groupId}/members`, { memberUUID });
   },
 };
 

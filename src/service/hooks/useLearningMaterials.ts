@@ -554,18 +554,20 @@ export const useLearningMaterials = () => {
         bookData = result;
       }
       
-      if (!bookData || !bookData.pdf) {
-        console.error('❌ No PDF found in response');
+      const pdfField = bookData.pdf || bookData.pdfUrl || bookData.base64Pdf;
+      
+      if (!bookData || !pdfField) {
+        console.error('❌ No PDF field found in response');
         return null;
       }
       
-      console.log('✅ PDF found:', {
+      console.log('✅ PDF data found:', {
         title: bookData.title,
-        pdfLength: bookData.pdf?.length || 0,
+        hasUrl: pdfField.startsWith('http'),
       });
       
       return {
-        pdf: bookData.pdf,
+        pdf: pdfField,
         title: bookData.title || 'Book',
       };
     } catch (err: any) {

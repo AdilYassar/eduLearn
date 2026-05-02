@@ -16,6 +16,8 @@ module.exports = {
           '@state': './src/state',
           '@types': './src/types',
           '@utils': './src/utils',
+          '@admin': './src/components/admin',
+          '@redux': './src/redux',
           'react-native-webrtc': '@livekit/react-native-webrtc',
         },
       },
